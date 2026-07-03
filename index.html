@@ -1970,16 +1970,16 @@ async function doRegister() {
     APP._isRegistering = true;
 
     try {
-        // Verificar se é o primeiro usuário ANTES de criar a conta Auth
+        // 1. Criar conta Auth primeiro (necessário estar autenticado para acessar Firestore)
+        const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
+        APP.currentUser = cred.user;
+
+        // 2. Agora sim verificar se é o primeiro usuário (já autenticado)
         const usersSnap = await APP.db.collection('user_profiles').get();
         const isFirst = usersSnap.empty;
         const perfil = isFirst ? 'admin' : 'usuario';
 
-        // Criar conta Auth (dispara onAuthStateChanged, mas _isRegistering bloqueia)
-        const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
-        APP.currentUser = cred.user;
-
-        // Criar perfil no Firestore
+        // 3. Criar perfil no Firestore
         const profileData = {
             nome: nome,
             email: email,
