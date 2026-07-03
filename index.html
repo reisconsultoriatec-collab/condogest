@@ -1969,30 +1969,22 @@ async function doRegister() {
     APP._isRegistering = true;
 
     try {
-        // 1. Criar conta no Firebase Auth
+        // 1. Criar APENAS a conta no Firebase Auth (nada no Firestore aqui)
         const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
-        APP.currentUser = cred.user;
 
-        // 2. Aguardar token propagado antes de acessar Firestore
-        await cred.user.getIdToken(true);
+        // 2. Salvar nome no localStorage para usar na criação do perfil durante o login
+        localStorage.setItem('condogest_pending_name', nome);
 
-        // 3. Gravar APENAS o próprio perfil (auth.uid == userId → sempre permitido)
-        //    Todos entram como 'pendente'. O loadUserProfile promove o primeiro a admin.
-        await APP.db.collection('user_profiles').doc(cred.user.uid).set({
-            nome: nome,
-            email: email,
-            perfil: 'usuario',
-            permissoes: ['dashboard'],
-            condosPermitidos: [],
-            status: 'pendente',
-            aprovado: false,
-            criadoEm: new Date().toISOString(),
-            criadoPor: 'self_register'
-        });
-
-        // 4. Desbloquear e deixar loadUserProfile decidir (primeiro user → admin, demais → pendente)
+        // 3. Fazer logout imediato — o perfil será criado no primeiro login
+        await APP.auth.signOut();
         APP._isRegistering = false;
-        await loadUserProfile(cred.user.uid);
+
+        // 4. Mostrar mensagem de sucesso e voltar para aba "Entrar"
+        toast('Conta criada com sucesso! Faça login para continuar.');
+        switchLoginTab('entrar');
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPass').value = '';
+        document.getElementById('loginPass').focus();
 
     } catch(e) {
         APP._isRegistering = false;
@@ -2019,6 +2011,7 @@ async function loadUserProfile(uid) {
     if (!APP.firebaseReady) return;
     try {
         const doc = await APP.db.collection('user_profiles').doc(uid).get();
+
         if (doc.exists) {
             APP.userProfile = doc.data();
 
@@ -2029,30 +2022,23 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Se já é admin e aprovado → entrar
+            // Se já é admin aprovado → entrar direto
             if (APP.userProfile.perfil === 'admin' && APP.userProfile.aprovado === true) {
                 enterApp();
                 return;
             }
 
-            // Se não é admin e não está aprovado → verificar se existe algum admin
+            // Se não está aprovado → verificar se existe algum admin no sistema
             if (APP.userProfile.aprovado !== true) {
                 try {
-                    // Buscar se existe pelo menos 1 admin no sistema
                     const adminSnap = await APP.db.collection('user_profiles')
-                        .where('perfil', '==', 'admin')
-                        .where('aprovado', '==', true)
-                        .limit(1).get();
+                        .where('perfil', '==', 'admin').limit(1).get();
 
                     if (adminSnap.empty) {
-                        // Nenhum admin existe → promover este usuário a admin
+                        // Nenhum admin existe → promover este usuário
                         await APP.db.collection('user_profiles').doc(uid).update({
-                            perfil: 'admin',
-                            aprovado: true,
-                            status: 'ativo',
-                            permissoes: [],
-                            promovidoEm: new Date().toISOString(),
-                            promovidoPor: 'auto_first_admin'
+                            perfil: 'admin', aprovado: true, status: 'ativo',
+                            permissoes: [], promovidoEm: new Date().toISOString()
                         });
                         APP.userProfile.perfil = 'admin';
                         APP.userProfile.aprovado = true;
@@ -2061,24 +2047,24 @@ async function loadUserProfile(uid) {
                         enterApp();
                         return;
                     }
-                } catch(queryErr) {
-                    console.warn('Admin check failed:', queryErr);
-                    // Se a query falhou, assume que há admins e vai para pendente
+                } catch(qErr) {
+                    console.warn('Admin query failed:', qErr);
                 }
 
-                // Existe admin mas este usuário não está aprovado → pendente
                 showPendingScreen();
                 return;
             }
 
-            // Está aprovado → entrar
+            // Está aprovado (não admin) → entrar
             enterApp();
 
         } else {
-            // Perfil não existe no Firestore — criar como pendente
-            // (caso raro: usuário Auth existe mas perfil não)
-            APP.userProfile = {
-                nome: APP.currentUser.email.split('@')[0],
+            // Perfil não existe no Firestore → criar agora (primeiro login após cadastro)
+            const pendingName = localStorage.getItem('condogest_pending_name') || APP.currentUser.email.split('@')[0];
+            localStorage.removeItem('condogest_pending_name');
+
+            const profileData = {
+                nome: pendingName,
                 email: APP.currentUser.email,
                 perfil: 'usuario',
                 permissoes: ['dashboard'],
@@ -2086,20 +2072,21 @@ async function loadUserProfile(uid) {
                 status: 'pendente',
                 aprovado: false,
                 criadoEm: new Date().toISOString(),
-                criadoPor: 'auto_created'
+                criadoPor: 'self_register'
             };
-            await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
 
-            // Verificar se precisa virar admin
+            await APP.db.collection('user_profiles').doc(uid).set(profileData);
+            APP.userProfile = profileData;
+
+            // Verificar se precisa virar admin (nenhum admin no sistema)
             try {
                 const adminSnap = await APP.db.collection('user_profiles')
-                    .where('perfil', '==', 'admin')
-                    .where('aprovado', '==', true)
-                    .limit(1).get();
+                    .where('perfil', '==', 'admin').limit(1).get();
 
                 if (adminSnap.empty) {
                     await APP.db.collection('user_profiles').doc(uid).update({
-                        perfil: 'admin', aprovado: true, status: 'ativo'
+                        perfil: 'admin', aprovado: true, status: 'ativo',
+                        permissoes: [], promovidoEm: new Date().toISOString()
                     });
                     APP.userProfile.perfil = 'admin';
                     APP.userProfile.aprovado = true;
@@ -2108,7 +2095,9 @@ async function loadUserProfile(uid) {
                     enterApp();
                     return;
                 }
-            } catch(e) { /* ignore */ }
+            } catch(qErr) {
+                console.warn('Admin query failed:', qErr);
+            }
 
             showPendingScreen();
         }
