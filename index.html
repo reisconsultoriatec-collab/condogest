@@ -109,7 +109,11 @@ a { text-decoration: none; color: inherit; }
 .login-box h1 { font-size: 1.6rem; margin-bottom: 0.3rem; color: var(--text-primary); }
 .login-box p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem; }
 .login-box .input-group { margin-bottom: 1rem; text-align: left; }
-.login-box .input-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+.login-box .input-group label {
+    display: block; font-size: 0.72rem; font-weight: 700;
+    color: var(--text-secondary); margin-bottom: 5px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
 .login-box .input-group input {
     width: 100%; padding: 0.75rem 1rem;
     border: 1.5px solid var(--border);
@@ -132,6 +136,30 @@ a { text-decoration: none; color: inherit; }
 }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,39,68,0.4); }
 .login-error { color: var(--accent-red); font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
+
+/* LOGIN TABS */
+.login-tabs {
+    display: flex; border-bottom: 2px solid var(--border);
+    margin-bottom: 1.5rem; margin-top: 0.5rem;
+}
+.login-tab {
+    flex: 1; padding: 0.7rem; background: none; border: none;
+    font-size: 0.95rem; font-weight: 500; cursor: pointer;
+    color: var(--text-light); border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: var(--transition);
+    font-family: var(--font-body);
+}
+.login-tab.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.login-tab:hover { color: var(--text-primary); }
+
+/* PASSWORD TOGGLE */
+.pass-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--text-light); font-size: 1.1rem; padding: 4px;
+    transition: var(--transition);
+}
+.pass-toggle:hover { color: var(--primary); }
 
 /* ===== LAYOUT ===== */
 .app-container { display: flex; min-height: 100vh; }
@@ -576,25 +604,69 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 </head>
 <body>
 
-<!-- =================== LOGIN =================== -->
+<!-- =================== LOGIN / CADASTRO =================== -->
 <div id="loginScreen" class="login-overlay">
     <div class="login-box">
         <div class="logo-icon">🏢</div>
-        <h1>CondoGest</h1>
-        <p>Gestão Inteligente de Condomínios</p>
-        <div class="input-group">
-            <label>E-mail</label>
-            <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+        <h1 style="font-style:italic">CondoGest</h1>
+        <p>Gestão de Condomínios</p>
+
+        <!-- Abas Entrar / Cadastrar -->
+        <div class="login-tabs">
+            <button class="login-tab active" id="tabEntrar" onclick="switchLoginTab('entrar')">Entrar</button>
+            <button class="login-tab" id="tabCadastrar" onclick="switchLoginTab('cadastrar')">Cadastrar</button>
         </div>
-        <div class="input-group">
-            <label>Senha</label>
-            <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+
+        <!-- FORM ENTRAR -->
+        <div id="formEntrar">
+            <div class="input-group">
+                <label>E-MAIL</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+            </div>
+            <div class="input-group">
+                <label>SENHA</label>
+                <div style="position:relative">
+                    <input type="password" id="loginPass" placeholder="Sua senha" autocomplete="current-password" style="padding-right:2.5rem">
+                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('loginPass', this)"><i class="ti ti-eye"></i></button>
+                </div>
+            </div>
+            <div class="login-error" id="loginError"></div>
+            <button class="btn-primary" onclick="doLogin()" style="margin-top:1rem">
+                <i class="ti ti-login"></i> Entrar
+            </button>
         </div>
-        <div class="login-error" id="loginError"></div>
-        <button class="btn-primary" onclick="doLogin()" style="margin-top:1rem">Entrar</button>
-        <p style="margin-top:1rem;font-size:0.8rem;color:var(--text-light)">
-            Primeiro acesso? <a href="#" onclick="doRegister()" style="color:var(--primary);font-weight:500">Criar conta</a>
-        </p>
+
+        <!-- FORM CADASTRAR -->
+        <div id="formCadastrar" style="display:none">
+            <div class="input-group">
+                <label>NOME COMPLETO</label>
+                <input type="text" id="regNome" placeholder="Seu nome completo">
+            </div>
+            <div class="input-group">
+                <label>E-MAIL</label>
+                <input type="email" id="regEmail" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>SENHA</label>
+                <div style="position:relative">
+                    <input type="password" id="regPass" placeholder="Mínimo 6 caracteres" style="padding-right:2.5rem">
+                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('regPass', this)"><i class="ti ti-eye"></i></button>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>CONFIRMAR SENHA</label>
+                <div style="position:relative">
+                    <input type="password" id="regPassConfirm" placeholder="Repita a senha" style="padding-right:2.5rem">
+                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('regPassConfirm', this)"><i class="ti ti-eye"></i></button>
+                </div>
+            </div>
+            <div class="login-error" id="regError"></div>
+            <button class="btn-primary" onclick="doRegister()" style="margin-top:1rem">
+                <i class="ti ti-user-plus"></i> Cadastrar
+            </button>
+        </div>
+
+        <p style="margin-top:1.5rem;font-size:0.75rem;color:var(--text-light)">v1.0 Reis Consultoria ©2026</p>
     </div>
 </div>
 
@@ -1817,6 +1889,33 @@ function enterApp() {
     loadAllData();
 }
 
+// ===== LOGIN TAB SWITCH =====
+function switchLoginTab(tab) {
+    if (tab === 'entrar') {
+        document.getElementById('formEntrar').style.display = 'block';
+        document.getElementById('formCadastrar').style.display = 'none';
+        document.getElementById('tabEntrar').classList.add('active');
+        document.getElementById('tabCadastrar').classList.remove('active');
+    } else {
+        document.getElementById('formEntrar').style.display = 'none';
+        document.getElementById('formCadastrar').style.display = 'block';
+        document.getElementById('tabEntrar').classList.remove('active');
+        document.getElementById('tabCadastrar').classList.add('active');
+    }
+}
+
+function togglePassVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'ti ti-eye-off';
+    } else {
+        input.type = 'password';
+        icon.className = 'ti ti-eye';
+    }
+}
+
 async function doLogin() {
     const email = document.getElementById('loginEmail').value.trim();
     const pass = document.getElementById('loginPass').value;
@@ -1845,13 +1944,18 @@ async function doLogin() {
 }
 
 async function doRegister() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPass').value;
-    const errEl = document.getElementById('loginError');
+    const nome = document.getElementById('regNome').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const passConfirm = document.getElementById('regPassConfirm').value;
+    const errEl = document.getElementById('regError');
     errEl.textContent = '';
 
-    if (!email || !pass) { errEl.textContent = 'Preencha email e senha.'; return; }
+    if (!nome) { errEl.textContent = 'Informe seu nome completo.'; return; }
+    if (!email) { errEl.textContent = 'Informe seu e-mail.'; return; }
+    if (!pass) { errEl.textContent = 'Informe uma senha.'; return; }
     if (pass.length < 6) { errEl.textContent = 'Senha deve ter no mínimo 6 caracteres.'; return; }
+    if (pass !== passConfirm) { errEl.textContent = 'As senhas não conferem.'; return; }
 
     if (!APP.firebaseReady) {
         errEl.textContent = 'Firebase não está conectado. Verifique sua conexão.';
@@ -1865,25 +1969,33 @@ async function doRegister() {
         const isFirst = usersSnap.empty;
         const perfil = isFirst ? 'admin' : 'usuario';
         await APP.db.collection('user_profiles').doc(cred.user.uid).set({
-            nome: email.split('@')[0],
+            nome: nome,
             email: email,
             perfil: perfil,
             permissoes: isFirst ? [] : ['dashboard'],
             condosPermitidos: [],
-            status: 'ativo',
+            status: isFirst ? 'ativo' : 'pendente',
             aprovado: isFirst ? true : false,
             criadoEm: new Date().toISOString(),
             criadoPor: isFirst ? 'auto_first_user' : 'self_register'
         });
-        auditLog('REGISTER', { email: email, perfil: perfil, firstUser: isFirst });
+        auditLog('REGISTER', { email: email, nome: nome, perfil: perfil, firstUser: isFirst });
 
         if (isFirst) {
             toast('Conta administrador criada com sucesso!');
+            // O onAuthStateChanged vai chamar loadUserProfile -> enterApp
         } else {
-            toast('Conta criada! Aguarde aprovação do administrador.', 'warning');
+            // Forçar mostrar tela de aprovação imediatamente
+            APP.currentUser = cred.user;
+            APP.userProfile = { nome, email, perfil, aprovado: false, status: 'pendente' };
+            showPendingScreen();
         }
     } catch(e) {
-        errEl.textContent = e.message;
+        if (e.code === 'auth/email-already-in-use') {
+            errEl.textContent = 'Este e-mail já está cadastrado.';
+        } else {
+            errEl.textContent = e.message;
+        }
     }
 }
 
@@ -3681,6 +3793,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Enter key on login
     document.getElementById('loginPass').addEventListener('keypress', e => {
         if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('regPassConfirm').addEventListener('keypress', e => {
+        if (e.key === 'Enter') doRegister();
     });
 });
 </script>
