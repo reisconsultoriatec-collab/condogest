@@ -1966,44 +1966,34 @@ async function doRegister() {
         return;
     }
 
-    // Bloquear onAuthStateChanged durante o cadastro
     APP._isRegistering = true;
 
     try {
-        // 1. Criar conta Auth primeiro (necessário estar autenticado para acessar Firestore)
+        // 1. Criar conta no Firebase Auth
         const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
         APP.currentUser = cred.user;
 
-        // 2. Agora sim verificar se é o primeiro usuário (já autenticado)
-        const usersSnap = await APP.db.collection('user_profiles').get();
-        const isFirst = usersSnap.empty;
-        const perfil = isFirst ? 'admin' : 'usuario';
+        // 2. Aguardar token propagado antes de acessar Firestore
+        await cred.user.getIdToken(true);
 
-        // 3. Criar perfil no Firestore
-        const profileData = {
+        // 3. Gravar APENAS o próprio perfil (auth.uid == userId → sempre permitido)
+        //    Todos entram como 'pendente'. O loadUserProfile promove o primeiro a admin.
+        await APP.db.collection('user_profiles').doc(cred.user.uid).set({
             nome: nome,
             email: email,
-            perfil: perfil,
-            permissoes: isFirst ? [] : ['dashboard'],
+            perfil: 'usuario',
+            permissoes: ['dashboard'],
             condosPermitidos: [],
-            status: isFirst ? 'ativo' : 'pendente',
-            aprovado: isFirst ? true : false,
+            status: 'pendente',
+            aprovado: false,
             criadoEm: new Date().toISOString(),
-            criadoPor: isFirst ? 'auto_first_user' : 'self_register'
-        };
-        await APP.db.collection('user_profiles').doc(cred.user.uid).set(profileData);
-        APP.userProfile = profileData;
+            criadoPor: 'self_register'
+        });
 
-        auditLog('REGISTER', { email, nome, perfil, firstUser: isFirst });
+        // 4. Desbloquear e deixar loadUserProfile decidir (primeiro user → admin, demais → pendente)
+        APP._isRegistering = false;
+        await loadUserProfile(cred.user.uid);
 
-        if (isFirst) {
-            APP._isRegistering = false;
-            toast('Conta administrador criada com sucesso!');
-            enterApp();
-        } else {
-            // Mostrar tela de pendência e deslogar do Auth
-            showPendingScreen();
-        }
     } catch(e) {
         APP._isRegistering = false;
         if (e.code === 'auth/email-already-in-use') {
@@ -2039,53 +2029,91 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Verificar se conta está aprovada
-            // Admin é sempre aprovado; qualquer outro precisa de aprovado === true
-            if (APP.userProfile.perfil !== 'admin' && APP.userProfile.aprovado !== true) {
+            // Se já é admin e aprovado → entrar
+            if (APP.userProfile.perfil === 'admin' && APP.userProfile.aprovado === true) {
+                enterApp();
+                return;
+            }
+
+            // Se não é admin e não está aprovado → verificar se existe algum admin
+            if (APP.userProfile.aprovado !== true) {
+                try {
+                    // Buscar se existe pelo menos 1 admin no sistema
+                    const adminSnap = await APP.db.collection('user_profiles')
+                        .where('perfil', '==', 'admin')
+                        .where('aprovado', '==', true)
+                        .limit(1).get();
+
+                    if (adminSnap.empty) {
+                        // Nenhum admin existe → promover este usuário a admin
+                        await APP.db.collection('user_profiles').doc(uid).update({
+                            perfil: 'admin',
+                            aprovado: true,
+                            status: 'ativo',
+                            permissoes: [],
+                            promovidoEm: new Date().toISOString(),
+                            promovidoPor: 'auto_first_admin'
+                        });
+                        APP.userProfile.perfil = 'admin';
+                        APP.userProfile.aprovado = true;
+                        APP.userProfile.status = 'ativo';
+                        toast('Conta administrador criada com sucesso!');
+                        enterApp();
+                        return;
+                    }
+                } catch(queryErr) {
+                    console.warn('Admin check failed:', queryErr);
+                    // Se a query falhou, assume que há admins e vai para pendente
+                }
+
+                // Existe admin mas este usuário não está aprovado → pendente
                 showPendingScreen();
                 return;
             }
 
+            // Está aprovado → entrar
             enterApp();
-        } else {
-            // Perfil não existe — verificar se é o primeiro usuário
-            const usersSnap = await APP.db.collection('user_profiles').get();
-            const isFirst = usersSnap.empty;
 
-            if (isFirst) {
-                // Primeiro usuário: criar como admin aprovado
-                APP.userProfile = {
-                    nome: APP.currentUser.email.split('@')[0],
-                    email: APP.currentUser.email,
-                    perfil: 'admin',
-                    permissoes: [],
-                    condosPermitidos: [],
-                    status: 'ativo',
-                    aprovado: true,
-                    criadoEm: new Date().toISOString()
-                };
-                await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
-                enterApp();
-            } else {
-                // Não é o primeiro: criar como pendente
-                APP.userProfile = {
-                    nome: APP.currentUser.email.split('@')[0],
-                    email: APP.currentUser.email,
-                    perfil: 'usuario',
-                    permissoes: ['dashboard'],
-                    condosPermitidos: [],
-                    status: 'pendente',
-                    aprovado: false,
-                    criadoEm: new Date().toISOString(),
-                    criadoPor: 'self_register'
-                };
-                await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
-                showPendingScreen();
-            }
+        } else {
+            // Perfil não existe no Firestore — criar como pendente
+            // (caso raro: usuário Auth existe mas perfil não)
+            APP.userProfile = {
+                nome: APP.currentUser.email.split('@')[0],
+                email: APP.currentUser.email,
+                perfil: 'usuario',
+                permissoes: ['dashboard'],
+                condosPermitidos: [],
+                status: 'pendente',
+                aprovado: false,
+                criadoEm: new Date().toISOString(),
+                criadoPor: 'auto_created'
+            };
+            await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
+
+            // Verificar se precisa virar admin
+            try {
+                const adminSnap = await APP.db.collection('user_profiles')
+                    .where('perfil', '==', 'admin')
+                    .where('aprovado', '==', true)
+                    .limit(1).get();
+
+                if (adminSnap.empty) {
+                    await APP.db.collection('user_profiles').doc(uid).update({
+                        perfil: 'admin', aprovado: true, status: 'ativo'
+                    });
+                    APP.userProfile.perfil = 'admin';
+                    APP.userProfile.aprovado = true;
+                    APP.userProfile.status = 'ativo';
+                    toast('Conta administrador criada com sucesso!');
+                    enterApp();
+                    return;
+                }
+            } catch(e) { /* ignore */ }
+
+            showPendingScreen();
         }
     } catch(e) {
         console.error('loadUserProfile:', e);
-        // Em caso de erro, NÃO dar acesso — mostrar mensagem e deslogar
         toast('Erro ao carregar perfil. Tente novamente.', 'error');
         APP.auth.signOut();
     }
