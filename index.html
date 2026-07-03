@@ -1008,7 +1008,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
                     <span>✅ Lançamento de Pagamentos</span>
-                    <button class="btn btn-fill btn-sm" onclick="openModal('modalPagamento')">+ Lançar Pagamento</button>
+                    <button class="btn btn-fill btn-sm" onclick="openPagamentoModal()">+ Lançar Pagamento</button>
                 </div>
                 <div class="filter-bar">
                     <select id="filterPgAno" onchange="renderPagamentos()"></select>
@@ -3184,21 +3184,35 @@ function renderPagamentos() {
             <button class="btn btn-danger btn-sm" onclick="deletePagamento('${p.id}')">🗑️</button>
         </td>
     </tr>`).join('');
+}
 
-    // Populate select for apto in modal
+function populatePagamentoSelects() {
     const pgApto = document.getElementById('pgtoApto');
     if (pgApto) {
-        pgApto.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}" data-nome="${H(m.nome)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+        pgApto.innerHTML = '<option value="">Selecione...</option>' +
+            APP.moradores.map(m => `<option value="${H(m.apto)}" data-nome="${H(m.nome)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
     }
     const pgTaxa = document.getElementById('pgtoTipoTaxa');
     if (pgTaxa) {
-        pgTaxa.innerHTML = APP.taxas.map(t => `<option value="${H(t.descricao)}">${H(t.descricao)} (${fmtMoney(t.valor)})</option>`).join('');
+        pgTaxa.innerHTML = '<option value="">Selecione...</option>' +
+            APP.taxas.map(t => `<option value="${H(t.descricao)}">${H(t.descricao)} (${fmtMoney(t.valor)})</option>`).join('');
     }
+}
+
+function openPagamentoModal() {
+    document.getElementById('pgtoEditId').value = '';
+    document.getElementById('pgtoAno').value = new Date().getFullYear();
+    document.getElementById('pgtoMes').value = String(new Date().getMonth() + 1).padStart(2, '0');
+    document.getElementById('pgtoValor').value = '';
+    document.getElementById('pgtoData').value = new Date().toISOString().split('T')[0];
+    populatePagamentoSelects();
+    openModal('modalPagamento');
 }
 
 function editPagamento(id) {
     const p = APP.pagamentos.find(x => x.id === id);
     if (!p) return;
+    populatePagamentoSelects();
     document.getElementById('pgtoEditId').value = id;
     document.getElementById('pgtoAno').value = p.ano || new Date().getFullYear();
     document.getElementById('pgtoMes').value = p.mes || '01';
@@ -3207,7 +3221,7 @@ function editPagamento(id) {
     setTimeout(() => {
         document.getElementById('pgtoApto').value = p.apto || '';
         document.getElementById('pgtoTipoTaxa').value = p.tipoTaxa || '';
-    }, 100);
+    }, 50);
     openModal('modalPagamento');
 }
 
