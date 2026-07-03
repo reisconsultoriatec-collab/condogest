@@ -1,0 +1,3688 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CondoGest - Gestão de Condomínios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+    --primary: #2563EB;
+    --primary-light: #60A5FA;
+    --primary-dark: #1D4ED8;
+    --secondary: #F59E0B;
+    --secondary-light: #FCD34D;
+    --accent: #10B981;
+    --accent-red: #EF4444;
+    --accent-orange: #F97316;
+    --bg-main: #F0F4F8;
+    --bg-card: #FFFFFF;
+    --bg-sidebar: #1A2744;
+    --bg-sidebar-hover: #243556;
+    --bg-sidebar-active: #2D4A7A;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --text-light: #94A3B8;
+    --text-white: #FFFFFF;
+    --border: #E2E8F0;
+    --border-focus: #2563EB;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.1);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --sidebar-width: 270px;
+    --header-height: 64px;
+    --font-display: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --transition: all 0.25s ease;
+    --gradient-primary: linear-gradient(135deg, #1A2744 0%, #2D4A7A 100%);
+    --gradient-accent: linear-gradient(135deg, #F59E0B 0%, #F97316 100%);
+}
+
+/* DARK THEME */
+[data-theme="dark"] {
+    --bg-main: #0F1729;
+    --bg-card: #1A2744;
+    --bg-sidebar: #0F1729;
+    --bg-sidebar-hover: #1A2744;
+    --bg-sidebar-active: #2D4A7A;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --text-light: #64748B;
+    --border: #243556;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+    font-family: var(--font-body);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+h1,h2,h3,h4 { font-family: var(--font-display); }
+input, select, textarea, button { font-family: var(--font-body); font-size: 0.95rem; }
+a { text-decoration: none; color: inherit; }
+
+/* ===== LOGIN SCREEN ===== */
+.login-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, #0F1729 0%, #1A2744 40%, #2D4A7A 100%);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+}
+.login-box {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 3rem 2.5rem;
+    width: 95%; max-width: 420px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+}
+.login-box .logo-icon {
+    width: 72px; height: 72px;
+    background: var(--gradient-accent);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 2rem; color: #fff;
+    box-shadow: 0 8px 20px rgba(245,158,11,0.3);
+}
+.login-box h1 { font-size: 1.6rem; margin-bottom: 0.3rem; color: var(--text-primary); }
+.login-box p { color: var(--text-secondary); margin-bottom: 2rem; font-size: 0.9rem; }
+.login-box .input-group { margin-bottom: 1rem; text-align: left; }
+.login-box .input-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+.login-box .input-group input {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+.login-box .input-group input:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.btn-primary {
+    width: 100%; padding: 0.8rem;
+    background: linear-gradient(135deg, #1A2744, #2D4A7A);
+    color: #fff; border: none; border-radius: var(--radius-sm);
+    font-weight: 600; cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(26,39,68,0.3);
+}
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,39,68,0.4); }
+.login-error { color: var(--accent-red); font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
+
+/* ===== LAYOUT ===== */
+.app-container { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--bg-sidebar);
+    color: var(--text-white);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    border-right: 1px solid rgba(255,255,255,0.04);
+}
+.sidebar-header {
+    padding: 1.3rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 0.8rem;
+    background: rgba(0,0,0,0.15);
+}
+.sidebar-header .s-logo {
+    width: 42px; height: 42px;
+    background: var(--gradient-accent);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; font-weight: 800; color: #fff;
+    box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+}
+.sidebar-header .s-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; letter-spacing: -0.3px; }
+.sidebar-header .s-sub { font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: 1px; }
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 0.3rem 0; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.nav-section { margin-bottom: 2px; }
+.nav-section-label {
+    padding: 0.8rem 1.2rem 0.4rem;
+    font-size: 0.7rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: space-between;
+    border-left: 3px solid var(--secondary);
+    margin: 0.3rem 0.6rem;
+    padding-left: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition);
+    border-radius: 0 4px 4px 0;
+}
+.nav-section-label:hover { background: rgba(255,255,255,0.04); }
+.nav-section-arrow {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.35);
+    transition: transform 0.3s ease;
+}
+.nav-section.collapsed .nav-section-arrow { transform: rotate(-90deg); }
+.nav-section-items {
+    overflow: hidden;
+    max-height: 500px;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+    opacity: 1;
+}
+.nav-section.collapsed .nav-section-items {
+    max-height: 0;
+    opacity: 0;
+}
+.nav-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.55rem 1rem 0.55rem 2.2rem;
+    margin: 1px 0;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.88rem; font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    border-left: 3px solid transparent;
+}
+.nav-item:hover {
+    background: var(--bg-sidebar-hover);
+    color: rgba(255,255,255,0.95);
+}
+.nav-item.active {
+    background: var(--bg-sidebar-active);
+    color: #fff;
+    font-weight: 500;
+    border-left-color: var(--primary-light);
+}
+.nav-item.active .nav-icon { color: var(--primary-light); }
+.nav-item .nav-icon {
+    font-size: 1.15rem; width: 22px; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+    color: rgba(255,255,255,0.5);
+}
+.nav-item:hover .nav-icon { color: rgba(255,255,255,0.85); }
+.nav-item .nav-badge {
+    margin-left: auto;
+    background: var(--accent-red);
+    color: #fff; font-size: 0.6rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    min-width: 18px; text-align: center;
+}
+
+.sidebar-footer {
+    padding: 1rem 1.2rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.1);
+    display: flex; align-items: center; gap: 0.7rem;
+}
+.sidebar-footer .footer-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--gradient-accent);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+}
+.sidebar-footer .footer-info { flex: 1; min-width: 0; }
+.sidebar-footer .footer-name { font-size: 0.82rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-footer .footer-role { font-size: 0.68rem; color: rgba(255,255,255,0.4); }
+.sidebar-footer a { transition: var(--transition); }
+.sidebar-footer a:hover { color: var(--secondary); }
+.sidebar-session { padding: 0 1.2rem 0.8rem; font-size: 0.68rem; color: rgba(255,255,255,0.3); display: flex; align-items: center; gap: 0.3rem; }
+
+.sidebar-condo-select {
+    width: 100%; padding: 0.55rem 0.7rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: #fff; font-size: 0.82rem;
+    margin-bottom: 0.5rem;
+    transition: var(--transition);
+}
+.sidebar-condo-select:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 3px rgba(245,158,11,0.15);
+    outline: none;
+}
+.sidebar-condo-select option { background: var(--bg-sidebar); color: #fff; }
+
+/* MAIN CONTENT */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    display: flex; flex-direction: column;
+    min-height: 100vh;
+}
+
+/* HEADER */
+.top-header {
+    height: var(--header-height);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 1.5rem;
+    position: sticky; top: 0; z-index: 50;
+    box-shadow: var(--shadow-sm);
+}
+.header-left { display: flex; align-items: center; gap: 1rem; flex: 1; }
+.btn-menu-mobile {
+    display: none; background: none; border: none;
+    font-size: 1.5rem; cursor: pointer; color: var(--text-primary);
+}
+.header-title { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; }
+.header-right { display: flex; align-items: center; gap: 1rem; }
+.btn-icon {
+    width: 38px; height: 38px;
+    border-radius: 50%; border: 1px solid var(--border);
+    background: var(--bg-main); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; color: var(--text-secondary);
+    transition: var(--transition);
+}
+.btn-icon:hover { border-color: var(--primary); color: var(--primary); }
+.user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--gradient-accent);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 0.85rem; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.25);
+}
+
+/* PAGE CONTENT */
+.page-content { padding: 1.5rem; flex: 1; }
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* ===== CARDS ===== */
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+}
+.card-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem; font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+
+/* STATS ROW */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 1.2rem 1.5rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; gap: 1rem;
+}
+.stat-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+}
+.stat-icon.blue { background: rgba(37,99,235,0.1); color: var(--primary); }
+.stat-icon.green { background: rgba(16,185,129,0.1); color: var(--accent); }
+.stat-icon.amber { background: rgba(245,158,11,0.1); color: var(--secondary); }
+.stat-icon.red { background: rgba(239,68,68,0.1); color: var(--accent-red); }
+.stat-info h4 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
+.stat-info span { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* ===== FORM STYLES ===== */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label {
+    display: block; font-size: 0.8rem; font-weight: 500;
+    color: var(--text-secondary); margin-bottom: 4px;
+}
+.form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 0.65rem 0.8rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+}
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* BUTTONS */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius-sm);
+    border: none; cursor: pointer;
+    font-weight: 500; font-size: 0.85rem;
+    transition: var(--transition);
+    display: inline-flex; align-items: center; gap: 0.4rem;
+}
+.btn-fill {
+    background: linear-gradient(135deg, #1A2744, #2D4A7A);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(26,39,68,0.25);
+}
+.btn-fill:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,39,68,0.35); }
+.btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-secondary);
+}
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: var(--accent-red); color: #fff; }
+.btn-success { background: var(--accent); color: #fff; }
+.btn-warning { background: var(--secondary); color: #fff; }
+.btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+
+/* TABLE */
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+table th {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-light);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+}
+table td {
+    padding: 0.7rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.88rem;
+    color: var(--text-primary);
+}
+table tbody tr:hover { background: rgba(37,99,235,0.03); }
+
+.badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 20px; font-size: 0.72rem; font-weight: 600;
+}
+.badge-green { background: rgba(16,185,129,0.12); color: #059669; }
+.badge-red { background: rgba(239,68,68,0.12); color: #DC2626; }
+.badge-blue { background: rgba(37,99,235,0.12); color: var(--primary); }
+.badge-amber { background: rgba(245,158,11,0.12); color: #D97706; }
+
+/* TABS */
+.tabs-bar { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 1.2rem; overflow-x: auto; }
+.tab-btn {
+    padding: 0.7rem 1.2rem;
+    background: none; border: none;
+    font-weight: 500; color: var(--text-secondary);
+    cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: var(--transition);
+    font-size: 0.88rem;
+}
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+.tab-btn:hover { color: var(--primary); }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* MODAL */
+.modal-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 999;
+    align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    width: 100%; max-width: 600px; max-height: 90vh;
+    overflow-y: auto; box-shadow: var(--shadow-lg);
+}
+.modal-header {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.modal-header h3 { font-family: var(--font-display); font-size: 1.1rem; }
+.modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--text-secondary); }
+.modal-body { padding: 1.5rem; }
+.modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+/* TOAST */
+.toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; }
+.toast {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 0.8rem 1.2rem;
+    margin-bottom: 0.5rem;
+    box-shadow: var(--shadow-lg);
+    border-left: 4px solid var(--accent);
+    display: flex; align-items: center; gap: 0.5rem;
+    animation: slideIn 0.3s ease;
+    font-size: 0.88rem;
+}
+.toast.error { border-left-color: var(--accent-red); }
+.toast.warning { border-left-color: var(--secondary); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* FILTER BAR */
+.filter-bar {
+    display: flex; gap: 0.8rem; flex-wrap: wrap;
+    align-items: center; margin-bottom: 1.2rem;
+}
+.filter-bar input, .filter-bar select {
+    padding: 0.5rem 0.8rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+/* CHART CONTAINER */
+.chart-container { position: relative; height: 300px; width: 100%; }
+.charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; }
+
+/* ACCESS CONTROL CHECKBOXES */
+.access-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; }
+.access-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 0.7rem;
+    background: var(--bg-main);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+.access-item input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; }
+
+/* PRINT STYLES */
+@media print {
+    .sidebar, .top-header, .btn, .filter-bar, .no-print { display: none !important; }
+    .main-content { margin-left: 0 !important; }
+    .page-content { padding: 0 !important; }
+    body { background: #fff; }
+    .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main-content { margin-left: 0; }
+    .btn-menu-mobile { display: block; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .filter-bar { flex-direction: column; align-items: stretch; }
+    .chart-container { height: 250px; }
+    .modal-box { max-width: 100%; }
+    html { font-size: 13px; }
+}
+@media (max-width: 480px) {
+    .stats-row { grid-template-columns: 1fr; }
+    .page-content { padding: 1rem; }
+    .card { padding: 1rem; }
+}
+
+/* SIDEBAR OVERLAY ON MOBILE */
+.sidebar-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); z-index: 99;
+}
+.sidebar-overlay.show { display: block; }
+
+/* LOADING */
+.loading-spinner {
+    display: inline-block; width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* EMPTY STATE */
+.empty-state {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text-light);
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<!-- =================== LOGIN =================== -->
+<div id="loginScreen" class="login-overlay">
+    <div class="login-box">
+        <div class="logo-icon">🏢</div>
+        <h1>CondoGest</h1>
+        <p>Gestão Inteligente de Condomínios</p>
+        <div class="input-group">
+            <label>E-mail</label>
+            <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="input-group">
+            <label>Senha</label>
+            <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn-primary" onclick="doLogin()" style="margin-top:1rem">Entrar</button>
+        <p style="margin-top:1rem;font-size:0.8rem;color:var(--text-light)">
+            Primeiro acesso? <a href="#" onclick="doRegister()" style="color:var(--primary);font-weight:500">Criar conta</a>
+        </p>
+    </div>
+</div>
+
+<!-- =================== TELA AGUARDANDO APROVAÇÃO =================== -->
+<div id="pendingScreen" class="login-overlay" style="display:none">
+    <div class="login-box">
+        <div class="logo-icon" style="background:linear-gradient(135deg,#F59E0B,#F97316)">⏳</div>
+        <h1>Aguardando Aprovação</h1>
+        <p style="margin-bottom:1rem">Sua conta foi criada com sucesso, porém está aguardando a aprovação do administrador do sistema.</p>
+        <div style="background:var(--bg-main);border-radius:var(--radius-md);padding:1.2rem;margin-bottom:1.5rem;text-align:left">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem"><strong>E-mail:</strong> <span id="pendingEmail">-</span></p>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem"><strong>Status:</strong> <span style="color:var(--secondary);font-weight:600">Pendente</span></p>
+            <p style="font-size:0.82rem;color:var(--text-light);margin-top:0.8rem"><i class="ti ti-info-circle"></i> Entre em contato com o administrador para liberar seu acesso.</p>
+        </div>
+        <button class="btn-primary" onclick="checkApproval()" style="margin-bottom:0.5rem"><i class="ti ti-refresh"></i> Verificar Aprovação</button>
+        <button class="btn-primary" onclick="pendingLogout()" style="background:transparent;color:var(--text-secondary);border:1.5px solid var(--border);box-shadow:none"><i class="ti ti-logout"></i> Sair</button>
+    </div>
+</div>
+
+<!-- =================== SIDEBAR OVERLAY (MOBILE) =================== -->
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- =================== APP =================== -->
+<div class="app-container" id="appContainer" style="display:none">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="s-logo">CG</div>
+        <div>
+            <div class="s-title">CondoGest</div>
+            <div class="s-sub">Gestão de Condomínios</div>
+        </div>
+    </div>
+
+    <div style="padding:0.8rem 1.2rem">
+        <select class="sidebar-condo-select" id="condoSelect" onchange="switchCondo()">
+            <option value="">Selecione o Condomínio</option>
+        </select>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section" data-section="principal">
+            <div class="nav-section-label" onclick="toggleSection('principal')">
+                <span>Principal</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+                    <span class="nav-icon"><i class="ti ti-chart-pie"></i></span> Dashboard
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="cadastros">
+            <div class="nav-section-label" onclick="toggleSection('cadastros')">
+                <span>Cadastros</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item" data-page="condominios" onclick="navigateTo('condominios')">
+                    <span class="nav-icon"><i class="ti ti-building"></i></span> Condomínios
+                </div>
+                <div class="nav-item" data-page="responsaveis" onclick="navigateTo('responsaveis')">
+                    <span class="nav-icon"><i class="ti ti-user-shield"></i></span> Responsáveis
+                </div>
+                <div class="nav-item" data-page="moradores" onclick="navigateTo('moradores')">
+                    <span class="nav-icon"><i class="ti ti-home-2"></i></span> Moradores
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="financeiro">
+            <div class="nav-section-label" onclick="toggleSection('financeiro')">
+                <span>Financeiro</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item" data-page="taxas" onclick="navigateTo('taxas')">
+                    <span class="nav-icon"><i class="ti ti-receipt-tax"></i></span> Taxas e Cobranças
+                </div>
+                <div class="nav-item" data-page="contas" onclick="navigateTo('contas')">
+                    <span class="nav-icon"><i class="ti ti-file-invoice"></i></span> Contas a Pagar
+                </div>
+                <div class="nav-item" data-page="conciliacao" onclick="navigateTo('conciliacao')">
+                    <span class="nav-icon"><i class="ti ti-building-bank"></i></span> Conciliação Bancária
+                </div>
+                <div class="nav-item" data-page="pagamentos" onclick="navigateTo('pagamentos')">
+                    <span class="nav-icon"><i class="ti ti-circle-check"></i></span> Pagamentos Taxas
+                </div>
+                <div class="nav-item" data-page="inadimplentes" onclick="navigateTo('inadimplentes')">
+                    <span class="nav-icon"><i class="ti ti-alert-triangle"></i></span> Inadimplentes
+                </div>
+                <div class="nav-item" data-page="orcamento" onclick="navigateTo('orcamento')">
+                    <span class="nav-icon"><i class="ti ti-chart-bar"></i></span> Previsão Orçamentária
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="relatorios">
+            <div class="nav-section-label" onclick="toggleSection('relatorios')">
+                <span>Relatórios</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item" data-page="relDespesas" onclick="navigateTo('relDespesas')">
+                    <span class="nav-icon"><i class="ti ti-report-money"></i></span> Despesas
+                </div>
+                <div class="nav-item" data-page="relReceitas" onclick="navigateTo('relReceitas')">
+                    <span class="nav-icon"><i class="ti ti-report-analytics"></i></span> Receitas
+                </div>
+                <div class="nav-item" data-page="relConciliacao" onclick="navigateTo('relConciliacao')">
+                    <span class="nav-icon"><i class="ti ti-report-search"></i></span> Conc. Bancária
+                </div>
+                <div class="nav-item" data-page="balancete" onclick="navigateTo('balancete')">
+                    <span class="nav-icon"><i class="ti ti-scale"></i></span> Balancete
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="sistema">
+            <div class="nav-section-label" onclick="toggleSection('sistema')">
+                <span>Sistema</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item" data-page="usuarios" onclick="navigateTo('usuarios')">
+                    <span class="nav-icon"><i class="ti ti-users-group"></i></span> Usuários
+                </div>
+                <div class="nav-item" data-page="configuracoes" onclick="navigateTo('configuracoes')">
+                    <span class="nav-icon"><i class="ti ti-settings"></i></span> Configurações
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="footer-avatar" id="footerAvatar">U</div>
+        <div class="footer-info">
+            <div class="footer-name" id="footerUser">Usuário</div>
+            <div class="footer-role" id="footerRole">Administrador</div>
+        </div>
+        <a href="#" onclick="doLogout()" title="Sair" style="color:rgba(255,255,255,0.5);font-size:1.1rem"><i class="ti ti-logout"></i></a>
+    </div>
+    <div class="sidebar-session"><i class="ti ti-shield-lock" style="font-size:0.75rem"></i> Sessão segura · Timeout: 1h</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content">
+    <header class="top-header">
+        <div class="header-left">
+            <button class="btn-menu-mobile" onclick="toggleSidebar()">☰</button>
+            <span class="header-title" id="pageTitle">Dashboard</span>
+        </div>
+        <div class="header-right">
+            <button class="btn-icon" onclick="toggleTheme()" title="Tema"><i class="ti ti-moon-stars"></i></button>
+            <button class="btn-icon" onclick="window.print()" title="Imprimir"><i class="ti ti-printer"></i></button>
+            <div class="user-avatar" id="userAvatar" onclick="navigateTo('configuracoes')">U</div>
+        </div>
+    </header>
+
+    <div class="page-content">
+        <!-- ============ DASHBOARD ============ -->
+        <section class="page-section active" id="pg-dashboard">
+            <div class="stats-row" id="dashStats"></div>
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="card-title">📊 Receitas vs Despesas (Mensal)</div>
+                    <div class="chart-container"><canvas id="chartRecDesp"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏠 Inadimplência por Apartamento</div>
+                    <div class="chart-container"><canvas id="chartInadimplencia"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📋 Despesas por Categoria</div>
+                    <div class="chart-container"><canvas id="chartDespCat"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💰 Previsão Orçamentária vs Realizado</div>
+                    <div class="chart-container"><canvas id="chartOrcamento"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ CONDOMÍNIOS ============ -->
+        <section class="page-section" id="pg-condominios">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>🏢 Condomínios Cadastrados</span>
+                    <button class="btn btn-fill btn-sm" onclick="openCondoModal()">+ Novo</button>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Nome</th><th>CNPJ</th><th>Endereço</th><th>Banco</th><th>Ações</th>
+                    </tr></thead><tbody id="tbCondominios"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ RESPONSÁVEIS ============ -->
+        <section class="page-section" id="pg-responsaveis">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>👤 Responsáveis Legais</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalResp')">+ Novo</button>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Nome</th><th>Função</th><th>Período Início</th><th>Período Fim</th><th>Ações</th>
+                    </tr></thead><tbody id="tbResponsaveis"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ MORADORES ============ -->
+        <section class="page-section" id="pg-moradores">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>🏠 Moradores</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalMorador')">+ Novo</button>
+                </div>
+                <div class="filter-bar">
+                    <input type="text" placeholder="Buscar morador..." id="searchMorador" oninput="renderMoradores()">
+                    <select id="filterAlugado" onchange="renderMoradores()">
+                        <option value="">Todos</option>
+                        <option value="sim">Alugados</option>
+                        <option value="nao">Proprietários</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Apto</th><th>Morador</th><th>Telefone</th><th>Email</th><th>Alugado</th><th>Locatário</th><th>Ações</th>
+                    </tr></thead><tbody id="tbMoradores"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ TAXAS E COBRANÇAS ============ -->
+        <section class="page-section" id="pg-taxas">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>💰 Taxas Cadastradas</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalTaxa')">+ Nova Taxa</button>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Recorrente</th><th>Pgto</th><th>Ações</th>
+                    </tr></thead><tbody id="tbTaxas"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ CONTAS A PAGAR ============ -->
+        <section class="page-section" id="pg-contas">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>📋 Contas a Pagar</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalConta')">+ Nova Conta</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="filterContaCat" onchange="renderContas()"><option value="">Todas Categorias</option></select>
+                    <select id="filterContaStatus" onchange="renderContas()">
+                        <option value="">Todos Status</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="pago">Pago</option>
+                        <option value="vencido">Vencido</option>
+                    </select>
+                    <input type="month" id="filterContaMes" onchange="renderContas()">
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Categoria</th><th>Descrição</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ações</th>
+                    </tr></thead><tbody id="tbContas"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ CONCILIAÇÃO BANCÁRIA ============ -->
+        <section class="page-section" id="pg-conciliacao">
+            <div class="card">
+                <div class="card-title">🏦 Conciliação Bancária</div>
+
+                <div class="tabs-bar">
+                    <button class="tab-btn active" onclick="switchTab(this,'tabImport')">Importar Extrato</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabExtrato')">Extrato Importado</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabConciliar')">Conciliar</button>
+                </div>
+
+                <div class="tab-pane active" id="tabImport">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Importe o extrato bancário em qualquer formato (XLS, XLSX, CSV ou TXT). O sistema detecta automaticamente as colunas de data, histórico, valor e tipo.
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Arquivo do Extrato</label>
+                            <input type="file" id="fileExtrato" accept=".xls,.xlsx,.csv,.txt">
+                        </div>
+                    </div>
+                    <button class="btn btn-fill" onclick="importarExtrato()"><i class="ti ti-file-import"></i> Importar Extrato</button>
+
+                    <div id="importPreview" style="display:none;margin-top:1.5rem">
+                        <div class="card-title"><i class="ti ti-eye"></i> Pré-visualização — <span id="importCount">0</span> lançamentos detectados</div>
+                        <div class="table-container" style="max-height:350px;overflow-y:auto">
+                            <table><thead><tr>
+                                <th>Data</th><th>Histórico</th><th>Nº Doc</th><th>Valor</th><th>Tipo</th>
+                            </tr></thead><tbody id="tbImportPreview"></tbody></table>
+                        </div>
+                        <div style="margin-top:1rem;display:flex;gap:0.5rem">
+                            <button class="btn btn-fill" onclick="confirmarImportacao()"><i class="ti ti-check"></i> Confirmar Importação</button>
+                            <button class="btn btn-outline" onclick="cancelarImportacao()"><i class="ti ti-x"></i> Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="tabExtrato">
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th>Data</th><th>Histórico</th><th>Nº Doc</th><th>Valor</th><th>Tipo</th><th>Conciliado</th>
+                        </tr></thead><tbody id="tbExtrato"></tbody></table>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="tabConciliar">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Associe cada lançamento do extrato ao balancete final:
+                    </p>
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th>Data</th><th>Histórico</th><th>Valor</th><th>Categoria</th><th>Ação</th>
+                        </tr></thead><tbody id="tbConciliar"></tbody></table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ PAGAMENTOS DE TAXAS ============ -->
+        <section class="page-section" id="pg-pagamentos">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>✅ Lançamento de Pagamentos</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalPagamento')">+ Lançar Pagamento</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="filterPgAno" onchange="renderPagamentos()"></select>
+                    <select id="filterPgMes" onchange="renderPagamentos()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <input type="text" placeholder="Nº Apartamento" id="filterPgApto" oninput="renderPagamentos()" style="width:140px">
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Ano</th><th>Mês</th><th>Apto</th><th>Morador</th><th>Tipo Taxa</th><th>Valor</th><th>Data Pgto</th><th>Ações</th>
+                    </tr></thead><tbody id="tbPagamentos"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ INADIMPLENTES ============ -->
+        <section class="page-section" id="pg-inadimplentes">
+            <div class="card">
+                <div class="card-title">⚠️ Painel de Inadimplentes</div>
+                <p style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary)">
+                    Exibe apenas o número do apartamento e valores em aberto (sem nome do morador por privacidade).
+                </p>
+                <div class="filter-bar">
+                    <select id="filterInadAno" onchange="renderInadimplentes()"></select>
+                    <select id="filterInadMes" onchange="renderInadimplentes()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Apto</th><th>Ano</th><th>Mês</th><th>Tipo Taxa</th><th>Valor em Aberto</th><th>Associar</th>
+                    </tr></thead><tbody id="tbInadimplentes"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ PREVISÃO ORÇAMENTÁRIA ============ -->
+        <section class="page-section" id="pg-orcamento">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>📈 Previsão Orçamentária</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalOrcamento')">+ Nova Previsão</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="filterOrcAno" onchange="renderOrcamento()"></select>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Ano</th><th>Mês</th><th>Categoria</th><th>Previsto</th><th>Realizado</th><th>Diferença</th><th>Ações</th>
+                    </tr></thead><tbody id="tbOrcamento"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ RELATÓRIO DESPESAS ============ -->
+        <section class="page-section" id="pg-relDespesas">
+            <div class="card">
+                <div class="card-title">📄 Relatório de Despesas</div>
+                <div class="filter-bar">
+                    <select id="relDespAno" onchange="renderRelDespesas()"></select>
+                    <select id="relDespMes" onchange="renderRelDespesas()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')">🖨️ Imprimir / PDF</button>
+                </div>
+                <div id="relDespContent"></div>
+            </div>
+        </section>
+
+        <!-- ============ RELATÓRIO RECEITAS ============ -->
+        <section class="page-section" id="pg-relReceitas">
+            <div class="card">
+                <div class="card-title">📄 Relatório de Receitas</div>
+                <div class="filter-bar">
+                    <select id="relRecAno" onchange="renderRelReceitas()"></select>
+                    <select id="relRecMes" onchange="renderRelReceitas()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')">🖨️ Imprimir / PDF</button>
+                </div>
+                <div id="relRecContent"></div>
+            </div>
+        </section>
+
+        <!-- ============ RELATÓRIO CONCILIAÇÃO ============ -->
+        <section class="page-section" id="pg-relConciliacao">
+            <div class="card">
+                <div class="card-title">📄 Relatório de Conciliação Bancária</div>
+                <div class="filter-bar">
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relConciliacao')">🖨️ Imprimir / PDF</button>
+                </div>
+                <div id="relConcContent"></div>
+            </div>
+        </section>
+
+        <!-- ============ BALANCETE ============ -->
+        <section class="page-section" id="pg-balancete">
+            <div class="card">
+                <div class="card-title">📊 Balancete - Prestação de Contas</div>
+                <div class="filter-bar">
+                    <select id="balAno" onchange="renderBalancete()"></select>
+                    <select id="balMes" onchange="renderBalancete()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')">🖨️ Imprimir / PDF</button>
+                </div>
+                <div id="balContent"></div>
+            </div>
+        </section>
+
+        <!-- ============ USUÁRIOS ============ -->
+        <section class="page-section" id="pg-usuarios">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span>👥 Gestão de Usuários</span>
+                    <button class="btn btn-fill btn-sm" onclick="openModal('modalUsuario')">+ Novo Usuário</button>
+                </div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th>Aprovação</th><th>Ações</th>
+                    </tr></thead><tbody id="tbUsuarios"></tbody></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ CONFIGURAÇÕES ============ -->
+        <section class="page-section" id="pg-configuracoes">
+            <div class="card">
+                <div class="card-title">⚙️ Configurações do Sistema</div>
+                <div class="tabs-bar">
+                    <button class="tab-btn active" onclick="switchTab(this,'tabFirebase')">Firebase</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabCategorias')">Categorias</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabGeral')">Geral</button>
+                </div>
+
+                <div class="tab-pane active" id="tabFirebase">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Configure as credenciais do Firebase para conexão com o banco de dados.
+                    </p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="text" id="cfgApiKey" placeholder="AIza...">
+                        </div>
+                        <div class="form-group">
+                            <label>Auth Domain</label>
+                            <input type="text" id="cfgAuthDomain" placeholder="projeto.firebaseapp.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Project ID</label>
+                            <input type="text" id="cfgProjectId" placeholder="meu-projeto">
+                        </div>
+                        <div class="form-group">
+                            <label>Storage Bucket</label>
+                            <input type="text" id="cfgStorageBucket" placeholder="projeto.appspot.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Messaging Sender ID</label>
+                            <input type="text" id="cfgMessagingSenderId" placeholder="123456789">
+                        </div>
+                        <div class="form-group">
+                            <label>App ID</label>
+                            <input type="text" id="cfgAppId" placeholder="1:123:web:abc">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top:1rem">
+                        <button class="btn btn-fill" onclick="saveFirebaseConfig()">💾 Salvar e Conectar</button>
+                        <button class="btn btn-outline" onclick="testFirebaseConnection()">🔌 Testar Conexão</button>
+                    </div>
+                </div>
+
+                <div class="tab-pane" id="tabCategorias">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Gerencie as categorias de despesas do condomínio.
+                    </p>
+                    <div class="form-row" style="margin-bottom:1rem">
+                        <input type="text" id="newCategoria" placeholder="Nova categoria..." style="flex:1;padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
+                        <button class="btn btn-fill btn-sm" onclick="addCategoria()">+ Adicionar</button>
+                    </div>
+                    <div id="listCategorias"></div>
+                </div>
+
+                <div class="tab-pane" id="tabGeral">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nome do Sistema</label>
+                            <input type="text" id="cfgNomeSistema" value="CondoGest">
+                        </div>
+                        <div class="form-group">
+                            <label>Tema</label>
+                            <select id="cfgTema" onchange="setTheme(this.value)">
+                                <option value="light">Claro</option>
+                                <option value="dark">Escuro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div><!-- /page-content -->
+</main>
+</div><!-- /app-container -->
+
+<!-- =================== MODALS =================== -->
+
+<!-- Modal Condomínio -->
+<div class="modal-overlay" id="modalCondo">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modalCondoTitle">Novo Condomínio</h3>
+            <button class="modal-close" onclick="closeModal('modalCondo')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="condoEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Nome do Condomínio *</label><input type="text" id="condoNome"></div>
+                <div class="form-group"><label>CNPJ</label><input type="text" id="condoCnpj" oninput="maskCNPJ(this)"></div>
+                <div class="form-group" style="grid-column:1/-1"><label>Endereço Completo</label><input type="text" id="condoEndereco"></div>
+                <div class="form-group"><label>Banco</label><input type="text" id="condoBanco"></div>
+                <div class="form-group"><label>Agência</label><input type="text" id="condoAgencia"></div>
+                <div class="form-group"><label>Conta</label><input type="text" id="condoConta"></div>
+                <div class="form-group"><label>PIX</label><input type="text" id="condoPix"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalCondo')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveCondo()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Responsável -->
+<div class="modal-overlay" id="modalResp">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Responsável Legal</h3>
+            <button class="modal-close" onclick="closeModal('modalResp')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="respEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Nome Completo *</label><input type="text" id="respNome"></div>
+                <div class="form-group"><label>Função *</label>
+                    <select id="respFuncao">
+                        <option value="Síndico">Síndico</option>
+                        <option value="Subsíndico">Subsíndico</option>
+                        <option value="Conselheiro">Conselheiro</option>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Período Início</label><input type="date" id="respInicio"></div>
+                <div class="form-group"><label>Período Fim</label><input type="date" id="respFim"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalResp')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveResponsavel()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Morador -->
+<div class="modal-overlay" id="modalMorador">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Cadastro de Morador</h3>
+            <button class="modal-close" onclick="closeModal('modalMorador')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="moradorEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Nº Apartamento *</label><input type="text" id="moradorApto"></div>
+                <div class="form-group"><label>Bloco</label><input type="text" id="moradorBloco"></div>
+                <div class="form-group"><label>Nome Completo *</label><input type="text" id="moradorNome"></div>
+                <div class="form-group"><label>CPF</label><input type="text" id="moradorCpf" oninput="maskCPF(this)"></div>
+                <div class="form-group"><label>Telefone</label><input type="text" id="moradorTel" oninput="maskPhone(this)"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="moradorEmail"></div>
+                <div class="form-group"><label>Alugado?</label>
+                    <select id="moradorAlugado" onchange="toggleLocatario()">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grpLocatario" style="display:none">
+                    <label>Nome do Locatário</label>
+                    <input type="text" id="moradorLocatario">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalMorador')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveMorador()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Taxa -->
+<div class="modal-overlay" id="modalTaxa">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Cadastro de Taxa</h3>
+            <button class="modal-close" onclick="closeModal('modalTaxa')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="taxaEditId">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1"><label>Descrição / Referência *</label><input type="text" id="taxaDescricao" placeholder="Ex: Taxa Condominial, Taxa Extra Pintura..."></div>
+                <div class="form-group"><label>Valor (R$) *</label><input type="number" step="0.01" id="taxaValor"></div>
+                <div class="form-group"><label>Data de Vencimento *</label><input type="date" id="taxaVencimento"></div>
+                <div class="form-group"><label>Tipo</label>
+                    <select id="taxaTipo">
+                        <option value="recorrente">Recorrente (Mensal)</option>
+                        <option value="unica">Taxa Única</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Forma de Pagamento</label>
+                    <select id="taxaFormaPgto">
+                        <option value="pix">PIX</option>
+                        <option value="boleto">Boleto (Ag/Conta)</option>
+                        <option value="ambos">Ambos</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column:1/-1"><label>Observações</label><textarea id="taxaObs" rows="2"></textarea></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalTaxa')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveTaxa()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Conta a Pagar -->
+<div class="modal-overlay" id="modalConta">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Conta a Pagar</h3>
+            <button class="modal-close" onclick="closeModal('modalConta')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="contaEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Categoria *</label>
+                    <select id="contaCategoria"></select>
+                </div>
+                <div class="form-group"><label>Descrição *</label><input type="text" id="contaDescricao"></div>
+                <div class="form-group"><label>Valor (R$) *</label><input type="number" step="0.01" id="contaValor"></div>
+                <div class="form-group"><label>Data Vencimento *</label><input type="date" id="contaVencimento"></div>
+                <div class="form-group"><label>Status</label>
+                    <select id="contaStatus">
+                        <option value="pendente">Pendente</option>
+                        <option value="pago">Pago</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Data Pagamento</label><input type="date" id="contaDataPgto"></div>
+                <div class="form-group" style="grid-column:1/-1"><label>Observações</label><textarea id="contaObs" rows="2"></textarea></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalConta')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveConta()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pagamento -->
+<div class="modal-overlay" id="modalPagamento">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Lançar Pagamento de Taxa</h3>
+            <button class="modal-close" onclick="closeModal('modalPagamento')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="pgtoEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Ano *</label><input type="number" id="pgtoAno" min="2020" max="2040"></div>
+                <div class="form-group"><label>Mês *</label>
+                    <select id="pgtoMes">
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Apartamento *</label><select id="pgtoApto"></select></div>
+                <div class="form-group"><label>Tipo de Taxa *</label><select id="pgtoTipoTaxa"></select></div>
+                <div class="form-group"><label>Valor Pago (R$) *</label><input type="number" step="0.01" id="pgtoValor"></div>
+                <div class="form-group"><label>Data Pagamento *</label><input type="date" id="pgtoData"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalPagamento')">Cancelar</button>
+            <button class="btn btn-fill" onclick="savePagamento()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Orçamento -->
+<div class="modal-overlay" id="modalOrcamento">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Previsão Orçamentária</h3>
+            <button class="modal-close" onclick="closeModal('modalOrcamento')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="orcEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Ano *</label><input type="number" id="orcAno" min="2020" max="2040"></div>
+                <div class="form-group"><label>Mês *</label>
+                    <select id="orcMes">
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Categoria *</label><select id="orcCategoria"></select></div>
+                <div class="form-group"><label>Valor Previsto (R$) *</label><input type="number" step="0.01" id="orcValor"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalOrcamento')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveOrcamento()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Usuário -->
+<div class="modal-overlay" id="modalUsuario">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Cadastro de Usuário</h3>
+            <button class="modal-close" onclick="closeModal('modalUsuario')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="userEditId">
+            <div class="form-grid">
+                <div class="form-group"><label>Nome Completo *</label><input type="text" id="userNome"></div>
+                <div class="form-group"><label>Email *</label><input type="email" id="userEmail"></div>
+                <div class="form-group"><label>Senha (min. 6 caracteres)</label><input type="password" id="userSenha" minlength="6"></div>
+                <div class="form-group"><label>Perfil *</label>
+                    <select id="userPerfil">
+                        <option value="admin">Administrador</option>
+                        <option value="sindico">Síndico</option>
+                        <option value="usuario">Usuário</option>
+                        <option value="visualizador">Visualizador</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Status</label>
+                    <select id="userStatus">
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:1.2rem">
+                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">Permissões de Acesso</label>
+                <div class="access-grid" id="accessGrid">
+                    <label class="access-item"><input type="checkbox" value="dashboard" checked> Dashboard</label>
+                    <label class="access-item"><input type="checkbox" value="condominios"> Condomínios</label>
+                    <label class="access-item"><input type="checkbox" value="responsaveis"> Responsáveis</label>
+                    <label class="access-item"><input type="checkbox" value="moradores"> Moradores</label>
+                    <label class="access-item"><input type="checkbox" value="taxas"> Taxas</label>
+                    <label class="access-item"><input type="checkbox" value="contas"> Contas a Pagar</label>
+                    <label class="access-item"><input type="checkbox" value="conciliacao"> Conciliação</label>
+                    <label class="access-item"><input type="checkbox" value="pagamentos"> Pagamentos</label>
+                    <label class="access-item"><input type="checkbox" value="inadimplentes"> Inadimplentes</label>
+                    <label class="access-item"><input type="checkbox" value="orcamento"> Orçamento</label>
+                    <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
+                    <label class="access-item"><input type="checkbox" value="relReceitas"> Rel. Receitas</label>
+                    <label class="access-item"><input type="checkbox" value="relConciliacao"> Rel. Conciliação</label>
+                    <label class="access-item"><input type="checkbox" value="balancete"> Balancete</label>
+                    <label class="access-item"><input type="checkbox" value="usuarios"> Usuários</label>
+                    <label class="access-item"><input type="checkbox" value="configuracoes"> Configurações</label>
+                </div>
+            </div>
+
+            <div style="margin-top:1rem">
+                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">Condomínios Permitidos</label>
+                <div class="access-grid" id="accessCondos"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalUsuario')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveUsuario()">💾 Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gerar Taxa (PDF/Impressão) -->
+<div class="modal-overlay" id="modalGerarTaxa">
+    <div class="modal-box" style="max-width:700px">
+        <div class="modal-header">
+            <h3>Gerar Taxa para Impressão</h3>
+            <button class="modal-close" onclick="closeModal('modalGerarTaxa')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-grid" style="margin-bottom:1rem">
+                <div class="form-group"><label>Taxa</label><select id="gerarTaxaSelect"></select></div>
+                <div class="form-group"><label>Apartamento</label><select id="gerarAptoSelect"><option value="todos">Todos</option></select></div>
+                <div class="form-group"><label>Mês Referência</label><input type="month" id="gerarMesRef"></div>
+            </div>
+            <button class="btn btn-fill" onclick="gerarTaxaPDF()" style="margin-bottom:1rem">📄 Gerar Documento</button>
+            <div id="taxaPDFContent"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalGerarTaxa')">Fechar</button>
+            <button class="btn btn-fill" onclick="imprimirTaxaGerada()">🖨️ Imprimir / Salvar PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ============================================================
+//  CONDOGEST - SISTEMA DE GESTÃO DE CONDOMÍNIOS
+//  Arquitetura: Single-File HTML/JS + Firebase
+//  Padrão: OdontoSystem (Multi-condomínio / Multi-tenant)
+// ============================================================
+
+// ===== GLOBAL STATE =====
+const APP = {
+    db: null,
+    auth: null,
+    currentUser: null,
+    userProfile: null,
+    currentCondoId: null,
+    condominios: [],
+    moradores: [],
+    responsaveis: [],
+    taxas: [],
+    contas: [],
+    pagamentos: [],
+    extrato: [],
+    orcamento: [],
+    usuarios: [],
+    categorias: ['Água','Energia','Gás','Manutenção','Limpeza','Segurança','Administração','Seguros','Elevadores','Jardim','Outros'],
+    charts: {},
+    firebaseReady: false
+};
+
+// ===== UTILITY: HTML ESCAPE (XSS Protection) =====
+function H(str) {
+    if (str === null || str === undefined) return '';
+    const d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+}
+
+// ===== UTILITY: FORMAT CURRENCY =====
+function fmtMoney(v) {
+    return parseFloat(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function fmtDate(d) {
+    if (!d) return '-';
+    const parts = d.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return d;
+}
+
+const MESES = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+// ===== MASKS =====
+function maskCNPJ(el) {
+    let v = el.value.replace(/\D/g,'').slice(0,14);
+    v = v.replace(/^(\d{2})(\d)/,'$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/,'$1.$2.$3')
+         .replace(/\.(\d{3})(\d)/,'.$1/$2').replace(/(\d{4})(\d)/,'$1-$2');
+    el.value = v;
+}
+function maskCPF(el) {
+    let v = el.value.replace(/\D/g,'').slice(0,11);
+    v = v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+    el.value = v;
+}
+function maskPhone(el) {
+    let v = el.value.replace(/\D/g,'').slice(0,11);
+    v = v.replace(/^(\d{2})(\d)/,'($1) $2').replace(/(\d{5})(\d)/,'$1-$2');
+    el.value = v;
+}
+
+// ===== TOAST =====
+function toast(msg, type = 'success') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+// ===== MODAL =====
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ===== TABS =====
+function switchTab(btn, paneId) {
+    const bar = btn.parentElement;
+    bar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const container = bar.parentElement;
+    container.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.getElementById(paneId).classList.add('active');
+}
+
+// ===== SIDEBAR =====
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+
+// ===== COLLAPSIBLE MENU SECTIONS =====
+function toggleSection(sectionName) {
+    const section = document.querySelector(`.nav-section[data-section="${sectionName}"]`);
+    if (!section) return;
+    section.classList.toggle('collapsed');
+
+    // Salvar estado no localStorage
+    const states = JSON.parse(localStorage.getItem('condogest_menu_state') || '{}');
+    states[sectionName] = section.classList.contains('collapsed');
+    localStorage.setItem('condogest_menu_state', JSON.stringify(states));
+}
+
+function restoreMenuState() {
+    const states = JSON.parse(localStorage.getItem('condogest_menu_state') || '{}');
+    Object.entries(states).forEach(([name, collapsed]) => {
+        if (collapsed) {
+            const section = document.querySelector(`.nav-section[data-section="${name}"]`);
+            if (section) section.classList.add('collapsed');
+        }
+    });
+}
+
+// ===== THEME =====
+function toggleTheme() {
+    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(t);
+}
+function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('condogest_theme', t);
+    document.getElementById('cfgTema').value = t;
+}
+
+// ===== NAVIGATION =====
+function navigateTo(page) {
+    // Check access
+    if (APP.userProfile && APP.userProfile.perfil !== 'admin') {
+        const perms = APP.userProfile.permissoes || [];
+        if (!perms.includes(page) && page !== 'dashboard') {
+            toast('Você não tem permissão para acessar esta área.', 'error');
+            return;
+        }
+    }
+
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    const pg = document.getElementById('pg-' + page);
+    if (pg) pg.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const nav = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (nav) {
+        nav.classList.add('active');
+        // Expandir a seção pai se estiver colapsada
+        const parentSection = nav.closest('.nav-section');
+        if (parentSection && parentSection.classList.contains('collapsed')) {
+            parentSection.classList.remove('collapsed');
+            const name = parentSection.getAttribute('data-section');
+            const states = JSON.parse(localStorage.getItem('condogest_menu_state') || '{}');
+            states[name] = false;
+            localStorage.setItem('condogest_menu_state', JSON.stringify(states));
+        }
+    }
+
+    const titles = {
+        dashboard:'Dashboard', condominios:'Condomínios', responsaveis:'Responsáveis Legais',
+        moradores:'Moradores', taxas:'Taxas e Cobranças', contas:'Contas a Pagar',
+        conciliacao:'Conciliação Bancária', pagamentos:'Pagamentos de Taxas',
+        inadimplentes:'Inadimplentes', orcamento:'Previsão Orçamentária',
+        relDespesas:'Relatório de Despesas', relReceitas:'Relatório de Receitas',
+        relConciliacao:'Relatório de Conciliação', balancete:'Balancete',
+        usuarios:'Gestão de Usuários', configuracoes:'Configurações'
+    };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+
+    // Render data for the page
+    if (page === 'dashboard') renderDashboard();
+    else if (page === 'moradores') renderMoradores();
+    else if (page === 'contas') renderContas();
+    else if (page === 'pagamentos') renderPagamentos();
+    else if (page === 'inadimplentes') renderInadimplentes();
+    else if (page === 'orcamento') renderOrcamento();
+    else if (page === 'relDespesas') renderRelDespesas();
+    else if (page === 'relReceitas') renderRelReceitas();
+    else if (page === 'relConciliacao') renderRelConciliacao();
+    else if (page === 'balancete') renderBalancete();
+
+    // Close mobile sidebar
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+// ===== FIREBASE CONFIG (Hardcoded) =====
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBj33DagdEN9PElUAAdKhCXjAn8_PKVsQs",
+    authDomain: "condogest-353a7.firebaseapp.com",
+    projectId: "condogest-353a7",
+    storageBucket: "condogest-353a7.firebasestorage.app",
+    messagingSenderId: "1008869755689",
+    appId: "1:1008869755689:web:1f2d317de7b5e125a28538"
+};
+
+// ===== SESSION SECURITY =====
+const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hora
+const SESSION_WARNING_MS = 55 * 60 * 1000; // Aviso aos 55 min
+let _lastActivity = Date.now();
+
+function touchActivity() { _lastActivity = Date.now(); }
+function isSessionExpired() { return (Date.now() - _lastActivity) > SESSION_TIMEOUT_MS; }
+function shouldWarnSession() { return (Date.now() - _lastActivity) > SESSION_WARNING_MS; }
+
+// Registrar atividade em cliques e teclas
+document.addEventListener('click', touchActivity, true);
+document.addEventListener('keydown', touchActivity, true);
+
+// Verificar sessão a cada 30 segundos
+setInterval(() => {
+    if (!APP.currentUser) return;
+    if (isSessionExpired()) {
+        toast('Sessão expirada por inatividade. Faça login novamente.', 'warning');
+        doLogout();
+    } else if (shouldWarnSession()) {
+        toast('Sua sessão expira em 5 minutos. Interaja para manter ativa.', 'warning');
+    }
+}, 30000);
+
+// ===== AUDIT TRAIL =====
+async function auditLog(action, details = {}) {
+    if (!APP.firebaseReady || !APP.currentUser) return;
+    try {
+        await APP.db.collection('audit_trail').add({
+            uid: APP.currentUser.uid,
+            email: APP.currentUser.email,
+            action: action,
+            condoId: APP.currentCondoId || null,
+            details: details,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            ip: null // Não acessível no client, mas o campo fica preparado
+        });
+    } catch(e) {
+        console.warn('Audit log error:', e);
+    }
+}
+
+// ===== FIREBASE CONFIG UI =====
+function loadFirebaseConfig() {
+    // Preenche os campos da UI com as credenciais hardcoded
+    document.getElementById('cfgApiKey').value = FIREBASE_CONFIG.apiKey;
+    document.getElementById('cfgAuthDomain').value = FIREBASE_CONFIG.authDomain;
+    document.getElementById('cfgProjectId').value = FIREBASE_CONFIG.projectId;
+    document.getElementById('cfgStorageBucket').value = FIREBASE_CONFIG.storageBucket;
+    document.getElementById('cfgMessagingSenderId').value = FIREBASE_CONFIG.messagingSenderId;
+    document.getElementById('cfgAppId').value = FIREBASE_CONFIG.appId;
+    return FIREBASE_CONFIG;
+}
+
+function saveFirebaseConfig() {
+    toast('As credenciais do Firebase estão configuradas diretamente no código.');
+}
+
+function testFirebaseConnection() {
+    if (!APP.firebaseReady) {
+        toast('Firebase não está conectado.', 'error');
+        return;
+    }
+    APP.db.collection('_test_connection').doc('ping').set({ ts: new Date() })
+        .then(() => {
+            toast('Conexão com Firebase OK!');
+            APP.db.collection('_test_connection').doc('ping').delete();
+        })
+        .catch(err => toast('Erro: ' + err.message, 'error'));
+}
+
+function initFirebase(cfg) {
+    try {
+        if (firebase.apps.length) {
+            firebase.app().delete().then(() => doInit(cfg));
+        } else {
+            doInit(cfg);
+        }
+    } catch(e) {
+        console.error('Firebase init error:', e);
+        toast('Erro ao inicializar Firebase: ' + e.message, 'error');
+    }
+}
+
+function doInit(cfg) {
+    firebase.initializeApp(cfg);
+    APP.auth = firebase.auth();
+    APP.db = firebase.firestore();
+    APP.db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Persistence:', e));
+    APP.firebaseReady = true;
+
+    APP.auth.onAuthStateChanged(user => {
+        if (user) {
+            APP.currentUser = user;
+            touchActivity();
+            loadUserProfile(user.uid);
+        } else {
+            APP.currentUser = null;
+            showLogin();
+        }
+    });
+
+    console.log('Firebase conectado — projeto:', cfg.projectId);
+}
+
+// ===== AUTH =====
+function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('appContainer').style.display = 'none';
+}
+
+function enterApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'flex';
+
+    if (APP.userProfile) {
+        const nome = APP.userProfile.nome || APP.currentUser.email;
+        const inicial = nome.charAt(0).toUpperCase();
+        const perfilLabels = { admin:'Administrador', sindico:'Síndico', usuario:'Usuário', visualizador:'Visualizador' };
+        document.getElementById('footerUser').textContent = nome;
+        document.getElementById('footerRole').textContent = perfilLabels[APP.userProfile.perfil] || APP.userProfile.perfil;
+        document.getElementById('footerAvatar').textContent = inicial;
+        document.getElementById('userAvatar').textContent = inicial;
+    }
+
+    loadAllData();
+}
+
+async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+
+    if (!email || !pass) { errEl.textContent = 'Preencha email e senha.'; return; }
+
+    if (!APP.firebaseReady) {
+        errEl.textContent = 'Firebase não está conectado. Verifique sua conexão.';
+        return;
+    }
+
+    try {
+        const cred = await APP.auth.signInWithEmailAndPassword(email, pass);
+        touchActivity();
+        auditLog('LOGIN', { email: email });
+    } catch(e) {
+        auditLog('LOGIN_FAILED', { email: email, error: e.code });
+        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+            errEl.textContent = 'Usuário ou senha incorretos.';
+        } else {
+            errEl.textContent = e.message;
+        }
+    }
+}
+
+async function doRegister() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+
+    if (!email || !pass) { errEl.textContent = 'Preencha email e senha.'; return; }
+    if (pass.length < 6) { errEl.textContent = 'Senha deve ter no mínimo 6 caracteres.'; return; }
+
+    if (!APP.firebaseReady) {
+        errEl.textContent = 'Firebase não está conectado. Verifique sua conexão.';
+        return;
+    }
+
+    try {
+        const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
+        // Primeiro usuário vira admin aprovado automaticamente
+        const usersSnap = await APP.db.collection('user_profiles').get();
+        const isFirst = usersSnap.empty;
+        const perfil = isFirst ? 'admin' : 'usuario';
+        await APP.db.collection('user_profiles').doc(cred.user.uid).set({
+            nome: email.split('@')[0],
+            email: email,
+            perfil: perfil,
+            permissoes: isFirst ? [] : ['dashboard'],
+            condosPermitidos: [],
+            status: 'ativo',
+            aprovado: isFirst ? true : false,
+            criadoEm: new Date().toISOString(),
+            criadoPor: isFirst ? 'auto_first_user' : 'self_register'
+        });
+        auditLog('REGISTER', { email: email, perfil: perfil, firstUser: isFirst });
+
+        if (isFirst) {
+            toast('Conta administrador criada com sucesso!');
+        } else {
+            toast('Conta criada! Aguarde aprovação do administrador.', 'warning');
+        }
+    } catch(e) {
+        errEl.textContent = e.message;
+    }
+}
+
+function doLogout() {
+    if (APP.firebaseReady && APP.auth) {
+        auditLog('LOGOUT', {});
+        _lastActivity = 0;
+        APP.auth.signOut();
+    } else {
+        APP.currentUser = null;
+        showLogin();
+    }
+}
+
+async function loadUserProfile(uid) {
+    if (!APP.firebaseReady) return;
+    try {
+        const doc = await APP.db.collection('user_profiles').doc(uid).get();
+        if (doc.exists) {
+            APP.userProfile = doc.data();
+
+            // Verificar se conta está inativa
+            if (APP.userProfile.status === 'inativo') {
+                toast('Sua conta está inativa. Contate o administrador.', 'error');
+                APP.auth.signOut();
+                return;
+            }
+
+            // Verificar se conta está aprovada (admin sempre aprovado)
+            if (APP.userProfile.aprovado === false && APP.userProfile.perfil !== 'admin') {
+                showPendingScreen();
+                return;
+            }
+
+            enterApp();
+        } else {
+            // Auto-create profile for first user (becomes admin, auto-approved)
+            const usersSnap = await APP.db.collection('user_profiles').get();
+            const isFirst = usersSnap.size <= 1; // Only this user exists
+            APP.userProfile = {
+                nome: APP.currentUser.email.split('@')[0],
+                email: APP.currentUser.email,
+                perfil: isFirst ? 'admin' : 'usuario',
+                permissoes: isFirst ? [] : ['dashboard'],
+                condosPermitidos: [],
+                status: 'ativo',
+                aprovado: isFirst ? true : false,
+                criadoEm: new Date().toISOString()
+            };
+            await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
+
+            if (!APP.userProfile.aprovado) {
+                showPendingScreen();
+                return;
+            }
+            enterApp();
+        }
+    } catch(e) {
+        console.error('loadUserProfile:', e);
+        APP.userProfile = { nome: APP.currentUser.email, perfil: 'admin', permissoes: [], condosPermitidos: [], aprovado: true };
+        enterApp();
+    }
+}
+
+// ===== TELA AGUARDANDO APROVAÇÃO =====
+function showPendingScreen() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('pendingScreen').style.display = 'flex';
+    document.getElementById('pendingEmail').textContent = APP.currentUser?.email || '-';
+}
+
+async function checkApproval() {
+    if (!APP.firebaseReady || !APP.currentUser) return;
+    try {
+        const doc = await APP.db.collection('user_profiles').doc(APP.currentUser.uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.aprovado === true) {
+                APP.userProfile = data;
+                document.getElementById('pendingScreen').style.display = 'none';
+                toast('Conta aprovada! Bem-vindo ao CondoGest!');
+                auditLog('APPROVAL_CONFIRMED', { email: APP.currentUser.email });
+                enterApp();
+            } else {
+                toast('Sua conta ainda está pendente de aprovação.', 'warning');
+            }
+        }
+    } catch(e) {
+        toast('Erro ao verificar: ' + e.message, 'error');
+    }
+}
+
+function pendingLogout() {
+    document.getElementById('pendingScreen').style.display = 'none';
+    if (APP.firebaseReady && APP.auth) {
+        APP.auth.signOut();
+    } else {
+        showLogin();
+    }
+}
+
+// ===== DATA LOADING =====
+async function loadAllData() {
+    if (!APP.firebaseReady || !APP.currentUser) {
+        renderCategorias();
+        populateYearFilters();
+        renderDashboard();
+        return;
+    }
+
+    try {
+        // Load condominios
+        const condoSnap = await APP.db.collection('condominios').orderBy('nome').get();
+        APP.condominios = [];
+        condoSnap.forEach(d => APP.condominios.push({ id: d.id, ...d.data() }));
+
+        // Filter by user permissions
+        if (APP.userProfile.perfil !== 'admin' && APP.userProfile.condosPermitidos && APP.userProfile.condosPermitidos.length > 0) {
+            APP.condominios = APP.condominios.filter(c => APP.userProfile.condosPermitidos.includes(c.id));
+        }
+
+        renderCondoSelect();
+        renderCondominios();
+
+        // Set current condo
+        if (!APP.currentCondoId && APP.condominios.length > 0) {
+            APP.currentCondoId = APP.condominios[0].id;
+            document.getElementById('condoSelect').value = APP.currentCondoId;
+        }
+
+        if (APP.currentCondoId) {
+            await loadCondoData();
+        }
+
+        renderCategorias();
+        populateYearFilters();
+        renderDashboard();
+
+    } catch(e) {
+        console.error('loadAllData:', e);
+        toast('Erro ao carregar dados: ' + e.message, 'error');
+    }
+}
+
+async function loadCondoData() {
+    if (!APP.firebaseReady || !APP.currentCondoId) return;
+    const cid = APP.currentCondoId;
+
+    try {
+        // Moradores
+        const morSnap = await APP.db.collection('condominios').doc(cid).collection('moradores').orderBy('apto').get();
+        APP.moradores = []; morSnap.forEach(d => APP.moradores.push({ id: d.id, ...d.data() }));
+        renderMoradores();
+
+        // Responsaveis
+        const respSnap = await APP.db.collection('condominios').doc(cid).collection('responsaveis').orderBy('nome').get();
+        APP.responsaveis = []; respSnap.forEach(d => APP.responsaveis.push({ id: d.id, ...d.data() }));
+        renderResponsaveis();
+
+        // Taxas
+        const taxSnap = await APP.db.collection('condominios').doc(cid).collection('taxas').get();
+        APP.taxas = []; taxSnap.forEach(d => APP.taxas.push({ id: d.id, ...d.data() }));
+        renderTaxas();
+
+        // Contas
+        const ctSnap = await APP.db.collection('condominios').doc(cid).collection('contas').orderBy('vencimento','desc').get();
+        APP.contas = []; ctSnap.forEach(d => APP.contas.push({ id: d.id, ...d.data() }));
+        renderContas();
+
+        // Pagamentos
+        const pgSnap = await APP.db.collection('condominios').doc(cid).collection('pagamentos').get();
+        APP.pagamentos = []; pgSnap.forEach(d => APP.pagamentos.push({ id: d.id, ...d.data() }));
+        renderPagamentos();
+
+        // Extrato
+        const exSnap = await APP.db.collection('condominios').doc(cid).collection('extrato').orderBy('data').get();
+        APP.extrato = []; exSnap.forEach(d => APP.extrato.push({ id: d.id, ...d.data() }));
+        renderExtrato();
+
+        // Orçamento
+        const orcSnap = await APP.db.collection('condominios').doc(cid).collection('orcamento').get();
+        APP.orcamento = []; orcSnap.forEach(d => APP.orcamento.push({ id: d.id, ...d.data() }));
+        renderOrcamento();
+
+        // Usuarios
+        const usrSnap = await APP.db.collection('user_profiles').get();
+        APP.usuarios = []; usrSnap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
+        renderUsuarios();
+
+        // Load categorias from settings
+        const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
+        if (catDoc.exists && catDoc.data().list) {
+            APP.categorias = catDoc.data().list;
+        }
+        renderCategorias();
+        populateContaCategorias();
+
+    } catch(e) {
+        console.error('loadCondoData:', e);
+    }
+}
+
+function switchCondo() {
+    APP.currentCondoId = document.getElementById('condoSelect').value;
+    if (APP.currentCondoId) {
+        loadCondoData();
+        renderDashboard();
+    }
+}
+
+// ===== FIRESTORE HELPERS =====
+function condoRef() {
+    return APP.db.collection('condominios').doc(APP.currentCondoId);
+}
+
+async function fbSave(subcol, id, data) {
+    if (!APP.firebaseReady || !APP.currentCondoId) { toast('Selecione um condomínio e configure o Firebase.', 'error'); return null; }
+
+    // Verificar sessão antes de qualquer escrita
+    if (isSessionExpired()) {
+        toast('Sessão expirada. Faça login novamente.', 'error');
+        doLogout();
+        return null;
+    }
+
+    // Injetar metadados de segurança em toda escrita
+    data._condoId = APP.currentCondoId;
+    data._updatedBy = APP.currentUser?.uid || 'unknown';
+    data._updatedAt = new Date().toISOString();
+
+    try {
+        if (id) {
+            await condoRef().collection(subcol).doc(id).update(data);
+            auditLog('UPDATE', { collection: subcol, docId: id, fields: Object.keys(data) });
+            return id;
+        } else {
+            data._createdBy = APP.currentUser?.uid || 'unknown';
+            data._createdAt = new Date().toISOString();
+            const ref = await condoRef().collection(subcol).add(data);
+            auditLog('CREATE', { collection: subcol, docId: ref.id });
+            return ref.id;
+        }
+    } catch(e) {
+        toast('Erro ao salvar: ' + e.message, 'error');
+        auditLog('ERROR', { collection: subcol, error: e.message, action: id ? 'update' : 'create' });
+        return null;
+    }
+}
+
+async function fbDelete(subcol, id) {
+    if (!APP.firebaseReady || !APP.currentCondoId) return;
+
+    if (isSessionExpired()) {
+        toast('Sessão expirada. Faça login novamente.', 'error');
+        doLogout();
+        return;
+    }
+
+    try {
+        await condoRef().collection(subcol).doc(id).delete();
+        auditLog('DELETE', { collection: subcol, docId: id });
+        toast('Registro excluído.');
+    } catch(e) {
+        toast('Erro ao excluir: ' + e.message, 'error');
+        auditLog('ERROR', { collection: subcol, error: e.message, action: 'delete' });
+    }
+}
+
+// ===== CONDO SELECT =====
+function renderCondoSelect() {
+    const sel = document.getElementById('condoSelect');
+    sel.innerHTML = '<option value="">Selecione o Condomínio</option>';
+    APP.condominios.forEach(c => {
+        sel.innerHTML += `<option value="${H(c.id)}">${H(c.nome)}</option>`;
+    });
+    if (APP.currentCondoId) sel.value = APP.currentCondoId;
+}
+
+// ===== CONDOMÍNIOS CRUD =====
+function renderCondominios() {
+    const tb = document.getElementById('tbCondominios');
+    if (APP.condominios.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon">🏢</div><p>Nenhum condomínio cadastrado</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = APP.condominios.map(c => `<tr>
+        <td><strong>${H(c.nome)}</strong></td>
+        <td>${H(c.cnpj||'-')}</td>
+        <td>${H(c.endereco||'-')}</td>
+        <td>${H(c.banco||'-')} ${c.agencia?'Ag:'+H(c.agencia):''} ${c.conta?'Cc:'+H(c.conta):''}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editCondo('${c.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCondo('${c.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function openCondoModal(id) {
+    document.getElementById('condoEditId').value = '';
+    document.getElementById('condoNome').value = '';
+    document.getElementById('condoCnpj').value = '';
+    document.getElementById('condoEndereco').value = '';
+    document.getElementById('condoBanco').value = '';
+    document.getElementById('condoAgencia').value = '';
+    document.getElementById('condoConta').value = '';
+    document.getElementById('condoPix').value = '';
+    document.getElementById('modalCondoTitle').textContent = 'Novo Condomínio';
+    openModal('modalCondo');
+}
+
+function editCondo(id) {
+    const c = APP.condominios.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('condoEditId').value = id;
+    document.getElementById('condoNome').value = c.nome || '';
+    document.getElementById('condoCnpj').value = c.cnpj || '';
+    document.getElementById('condoEndereco').value = c.endereco || '';
+    document.getElementById('condoBanco').value = c.banco || '';
+    document.getElementById('condoAgencia').value = c.agencia || '';
+    document.getElementById('condoConta').value = c.conta || '';
+    document.getElementById('condoPix').value = c.pix || '';
+    document.getElementById('modalCondoTitle').textContent = 'Editar Condomínio';
+    openModal('modalCondo');
+}
+
+async function saveCondo() {
+    const nome = document.getElementById('condoNome').value.trim();
+    if (!nome) { toast('Informe o nome do condomínio', 'error'); return; }
+
+    // Verificar se é admin ou síndico
+    if (APP.userProfile && APP.userProfile.perfil !== 'admin' && APP.userProfile.perfil !== 'sindico') {
+        toast('Apenas administradores e síndicos podem gerenciar condomínios.', 'error');
+        return;
+    }
+
+    const data = {
+        nome: nome,
+        cnpj: document.getElementById('condoCnpj').value.trim(),
+        endereco: document.getElementById('condoEndereco').value.trim(),
+        banco: document.getElementById('condoBanco').value.trim(),
+        agencia: document.getElementById('condoAgencia').value.trim(),
+        conta: document.getElementById('condoConta').value.trim(),
+        pix: document.getElementById('condoPix').value.trim(),
+        _updatedBy: APP.currentUser?.uid || 'unknown',
+        atualizadoEm: new Date().toISOString()
+    };
+
+    const editId = document.getElementById('condoEditId').value;
+
+    if (!APP.firebaseReady) { toast('Firebase não está conectado.', 'error'); return; }
+
+    try {
+        if (editId) {
+            await APP.db.collection('condominios').doc(editId).update(data);
+            auditLog('CONDO_UPDATE', { condoId: editId, nome: nome });
+        } else {
+            data.criadoEm = new Date().toISOString();
+            data.criadoPor = APP.currentUser.uid;
+            const ref = await APP.db.collection('condominios').add(data);
+            auditLog('CONDO_CREATE', { condoId: ref.id, nome: nome });
+        }
+        closeModal('modalCondo');
+        toast('Condomínio salvo com sucesso!');
+        await loadAllData();
+    } catch(e) {
+        toast('Erro: ' + e.message, 'error');
+    }
+}
+
+async function deleteCondo(id) {
+    if (!confirm('Excluir este condomínio? Esta ação é irreversível.')) return;
+
+    if (APP.userProfile?.perfil !== 'admin') {
+        toast('Apenas administradores podem excluir condomínios.', 'error');
+        return;
+    }
+
+    try {
+        const condo = APP.condominios.find(c => c.id === id);
+        await APP.db.collection('condominios').doc(id).delete();
+        auditLog('CONDO_DELETE', { condoId: id, nome: condo?.nome });
+        toast('Condomínio excluído.');
+        if (APP.currentCondoId === id) APP.currentCondoId = null;
+        await loadAllData();
+    } catch(e) {
+        toast('Erro: ' + e.message, 'error');
+    }
+}
+
+// ===== RESPONSÁVEIS =====
+function renderResponsaveis() {
+    const tb = document.getElementById('tbResponsaveis');
+    if (APP.responsaveis.length === 0) {
+        tb.innerHTML = '<tr><td colspan="5" class="empty-state"><p>Nenhum responsável cadastrado</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = APP.responsaveis.map(r => `<tr>
+        <td>${H(r.nome)}</td>
+        <td><span class="badge badge-blue">${H(r.funcao)}</span></td>
+        <td>${fmtDate(r.inicio)}</td>
+        <td>${fmtDate(r.fim)}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editResponsavel('${r.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteResponsavel('${r.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function editResponsavel(id) {
+    const r = APP.responsaveis.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('respEditId').value = id;
+    document.getElementById('respNome').value = r.nome || '';
+    document.getElementById('respFuncao').value = r.funcao || 'Síndico';
+    document.getElementById('respInicio').value = r.inicio || '';
+    document.getElementById('respFim').value = r.fim || '';
+    openModal('modalResp');
+}
+
+async function saveResponsavel() {
+    const nome = document.getElementById('respNome').value.trim();
+    if (!nome) { toast('Informe o nome', 'error'); return; }
+    const data = {
+        nome, funcao: document.getElementById('respFuncao').value,
+        inicio: document.getElementById('respInicio').value,
+        fim: document.getElementById('respFim').value
+    };
+    const id = document.getElementById('respEditId').value;
+    const res = await fbSave('responsaveis', id || null, data);
+    if (res) {
+        closeModal('modalResp');
+        document.getElementById('respEditId').value = '';
+        toast('Responsável salvo!');
+        await loadCondoData();
+    }
+}
+
+async function deleteResponsavel(id) {
+    if (!confirm('Excluir responsável?')) return;
+    await fbDelete('responsaveis', id);
+    await loadCondoData();
+}
+
+// ===== MORADORES =====
+function toggleLocatario() {
+    document.getElementById('grpLocatario').style.display =
+        document.getElementById('moradorAlugado').value === 'sim' ? 'block' : 'none';
+}
+
+function renderMoradores() {
+    const search = (document.getElementById('searchMorador')?.value || '').toLowerCase();
+    const filterAlug = document.getElementById('filterAlugado')?.value || '';
+    let list = APP.moradores;
+    if (search) list = list.filter(m => (m.nome||'').toLowerCase().includes(search) || (m.apto||'').toLowerCase().includes(search));
+    if (filterAlug) list = list.filter(m => m.alugado === filterAlug);
+
+    const tb = document.getElementById('tbMoradores');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum morador encontrado</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = list.map(m => `<tr>
+        <td><strong>${H(m.apto)}</strong>${m.bloco ? ' / Bl '+H(m.bloco) : ''}</td>
+        <td>${H(m.nome)}</td>
+        <td>${H(m.telefone||'-')}</td>
+        <td>${H(m.email||'-')}</td>
+        <td>${m.alugado==='sim'?'<span class="badge badge-amber">Sim</span>':'<span class="badge badge-green">Não</span>'}</td>
+        <td>${H(m.locatario||'-')}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editMorador('${m.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMorador('${m.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function editMorador(id) {
+    const m = APP.moradores.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('moradorEditId').value = id;
+    document.getElementById('moradorApto').value = m.apto || '';
+    document.getElementById('moradorBloco').value = m.bloco || '';
+    document.getElementById('moradorNome').value = m.nome || '';
+    document.getElementById('moradorCpf').value = m.cpf || '';
+    document.getElementById('moradorTel').value = m.telefone || '';
+    document.getElementById('moradorEmail').value = m.email || '';
+    document.getElementById('moradorAlugado').value = m.alugado || 'nao';
+    document.getElementById('moradorLocatario').value = m.locatario || '';
+    toggleLocatario();
+    openModal('modalMorador');
+}
+
+async function saveMorador() {
+    const apto = document.getElementById('moradorApto').value.trim();
+    const nome = document.getElementById('moradorNome').value.trim();
+    if (!apto || !nome) { toast('Preencha apartamento e nome', 'error'); return; }
+    const data = {
+        apto, nome,
+        bloco: document.getElementById('moradorBloco').value.trim(),
+        cpf: document.getElementById('moradorCpf').value.trim(),
+        telefone: document.getElementById('moradorTel').value.trim(),
+        email: document.getElementById('moradorEmail').value.trim(),
+        alugado: document.getElementById('moradorAlugado').value,
+        locatario: document.getElementById('moradorLocatario').value.trim()
+    };
+    const id = document.getElementById('moradorEditId').value;
+    const res = await fbSave('moradores', id || null, data);
+    if (res) {
+        closeModal('modalMorador');
+        document.getElementById('moradorEditId').value = '';
+        toast('Morador salvo!');
+        await loadCondoData();
+    }
+}
+
+async function deleteMorador(id) {
+    if (!confirm('Excluir morador?')) return;
+    await fbDelete('moradores', id);
+    await loadCondoData();
+}
+
+// ===== TAXAS =====
+function renderTaxas() {
+    const tb = document.getElementById('tbTaxas');
+    if (APP.taxas.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma taxa cadastrada</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = APP.taxas.map(t => `<tr>
+        <td>${H(t.descricao)}</td>
+        <td><strong>${fmtMoney(t.valor)}</strong></td>
+        <td>${fmtDate(t.vencimento)}</td>
+        <td>${t.tipo==='recorrente'?'<span class="badge badge-blue">Mensal</span>':'<span class="badge badge-amber">Única</span>'}</td>
+        <td>${H(t.formaPgto||'pix')}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editTaxa('${t.id}')">✏️</button>
+            <button class="btn btn-success btn-sm" onclick="openGerarTaxa()">📄</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTaxa('${t.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function editTaxa(id) {
+    const t = APP.taxas.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('taxaEditId').value = id;
+    document.getElementById('taxaDescricao').value = t.descricao || '';
+    document.getElementById('taxaValor').value = t.valor || '';
+    document.getElementById('taxaVencimento').value = t.vencimento || '';
+    document.getElementById('taxaTipo').value = t.tipo || 'recorrente';
+    document.getElementById('taxaFormaPgto').value = t.formaPgto || 'pix';
+    document.getElementById('taxaObs').value = t.obs || '';
+    openModal('modalTaxa');
+}
+
+async function saveTaxa() {
+    const descricao = document.getElementById('taxaDescricao').value.trim();
+    const valor = parseFloat(document.getElementById('taxaValor').value);
+    if (!descricao || isNaN(valor)) { toast('Preencha descrição e valor', 'error'); return; }
+    const data = {
+        descricao, valor,
+        vencimento: document.getElementById('taxaVencimento').value,
+        tipo: document.getElementById('taxaTipo').value,
+        formaPgto: document.getElementById('taxaFormaPgto').value,
+        obs: document.getElementById('taxaObs').value.trim()
+    };
+    const id = document.getElementById('taxaEditId').value;
+    const res = await fbSave('taxas', id || null, data);
+    if (res) {
+        closeModal('modalTaxa');
+        document.getElementById('taxaEditId').value = '';
+        toast('Taxa salva!');
+        await loadCondoData();
+    }
+}
+
+async function deleteTaxa(id) {
+    if (!confirm('Excluir taxa?')) return;
+    await fbDelete('taxas', id);
+    await loadCondoData();
+}
+
+// ===== GERAR TAXA PDF/IMPRESSÃO =====
+function openGerarTaxa() {
+    const sel = document.getElementById('gerarTaxaSelect');
+    sel.innerHTML = APP.taxas.map(t => `<option value="${t.id}">${H(t.descricao)} - ${fmtMoney(t.valor)}</option>`).join('');
+    const aptoSel = document.getElementById('gerarAptoSelect');
+    aptoSel.innerHTML = '<option value="todos">Todos os Apartamentos</option>';
+    APP.moradores.forEach(m => {
+        aptoSel.innerHTML += `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`;
+    });
+    const now = new Date();
+    document.getElementById('gerarMesRef').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('taxaPDFContent').innerHTML = '';
+    openModal('modalGerarTaxa');
+}
+
+function gerarTaxaPDF() {
+    const taxaId = document.getElementById('gerarTaxaSelect').value;
+    const taxa = APP.taxas.find(t => t.id === taxaId);
+    if (!taxa) return;
+
+    const aptoFilter = document.getElementById('gerarAptoSelect').value;
+    const mesRef = document.getElementById('gerarMesRef').value;
+    const [anoRef, mesNum] = mesRef.split('-');
+    const mesNome = MESES[parseInt(mesNum)] || mesNum;
+
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    let morList = aptoFilter === 'todos' ? APP.moradores : APP.moradores.filter(m => m.apto === aptoFilter);
+
+    let html = morList.map(m => `
+        <div style="border:1px solid #ccc;padding:1.5rem;margin-bottom:1rem;page-break-inside:avoid;border-radius:8px">
+            <div style="text-align:center;margin-bottom:1rem">
+                <h3 style="margin:0;color:var(--primary)">${H(condo.nome || 'Condomínio')}</h3>
+                <p style="font-size:0.8rem;color:#666">${H(condo.endereco||'')} | CNPJ: ${H(condo.cnpj||'')}</p>
+            </div>
+            <hr style="border:none;border-top:1px solid #ddd;margin:0.8rem 0">
+            <table style="width:100%;font-size:0.9rem">
+                <tr><td><strong>Apartamento:</strong> ${H(m.apto)}</td><td><strong>Morador:</strong> ${H(m.nome)}</td></tr>
+                <tr><td><strong>Referência:</strong> ${mesNome}/${anoRef}</td><td><strong>Vencimento:</strong> ${fmtDate(taxa.vencimento)}</td></tr>
+            </table>
+            <hr style="border:none;border-top:1px solid #ddd;margin:0.8rem 0">
+            <table style="width:100%;font-size:0.9rem">
+                <tr><td><strong>Descrição:</strong> ${H(taxa.descricao)}</td></tr>
+                <tr><td style="font-size:1.3rem;font-weight:700;color:var(--primary);padding-top:0.5rem"><strong>Valor: ${fmtMoney(taxa.valor)}</strong></td></tr>
+            </table>
+            <hr style="border:none;border-top:1px solid #ddd;margin:0.8rem 0">
+            <p style="font-size:0.8rem;color:#666">
+                <strong>Dados para Pagamento:</strong>
+                ${taxa.formaPgto==='pix'||taxa.formaPgto==='ambos' ? 'PIX: '+H(condo.pix||'Não informado') : ''}
+                ${taxa.formaPgto==='boleto'||taxa.formaPgto==='ambos' ? ' | Banco: '+H(condo.banco||'')+' Ag: '+H(condo.agencia||'')+' Cc: '+H(condo.conta||'') : ''}
+            </p>
+            ${taxa.obs ? '<p style="font-size:0.8rem;color:#888">Obs: '+H(taxa.obs)+'</p>' : ''}
+        </div>
+    `).join('');
+
+    document.getElementById('taxaPDFContent').innerHTML = html;
+}
+
+function imprimirTaxaGerada() {
+    const content = document.getElementById('taxaPDFContent').innerHTML;
+    if (!content) { toast('Gere o documento primeiro', 'warning'); return; }
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Taxa - CondoGest</title>
+        <style>body{font-family:Arial,sans-serif;padding:20px}@media print{body{padding:0}}</style>
+        </head><body>${content}</body></html>`);
+    w.document.close();
+    w.print();
+}
+
+// ===== CONTAS A PAGAR =====
+function populateContaCategorias() {
+    const selects = ['contaCategoria','filterContaCat','orcCategoria'];
+    selects.forEach(sid => {
+        const el = document.getElementById(sid);
+        if (!el) return;
+        const current = el.value;
+        const isFilter = sid.startsWith('filter');
+        el.innerHTML = isFilter ? '<option value="">Todas Categorias</option>' : '';
+        APP.categorias.forEach(c => {
+            el.innerHTML += `<option value="${H(c)}">${H(c)}</option>`;
+        });
+        if (current) el.value = current;
+    });
+}
+
+function renderContas() {
+    const cat = document.getElementById('filterContaCat')?.value || '';
+    const status = document.getElementById('filterContaStatus')?.value || '';
+    const mes = document.getElementById('filterContaMes')?.value || '';
+
+    let list = APP.contas;
+    if (cat) list = list.filter(c => c.categoria === cat);
+    if (status) {
+        const hoje = new Date().toISOString().split('T')[0];
+        list = list.filter(c => {
+            if (status === 'vencido') return c.status !== 'pago' && c.vencimento < hoje;
+            return c.status === status;
+        });
+    }
+    if (mes) list = list.filter(c => (c.vencimento||'').startsWith(mes));
+
+    const tb = document.getElementById('tbContas');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma conta encontrada</p></td></tr>';
+        return;
+    }
+    const hoje = new Date().toISOString().split('T')[0];
+    tb.innerHTML = list.map(c => {
+        const vencido = c.status !== 'pago' && c.vencimento < hoje;
+        return `<tr>
+        <td><span class="badge badge-blue">${H(c.categoria)}</span></td>
+        <td>${H(c.descricao)}</td>
+        <td><strong>${fmtMoney(c.valor)}</strong></td>
+        <td>${fmtDate(c.vencimento)}</td>
+        <td>${c.status==='pago'?'<span class="badge badge-green">Pago</span>':(vencido?'<span class="badge badge-red">Vencido</span>':'<span class="badge badge-amber">Pendente</span>')}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editConta('${c.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteConta('${c.id}')">🗑️</button>
+        </td>
+    </tr>`;
+    }).join('');
+}
+
+function editConta(id) {
+    const c = APP.contas.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('contaEditId').value = id;
+    document.getElementById('contaCategoria').value = c.categoria || '';
+    document.getElementById('contaDescricao').value = c.descricao || '';
+    document.getElementById('contaValor').value = c.valor || '';
+    document.getElementById('contaVencimento').value = c.vencimento || '';
+    document.getElementById('contaStatus').value = c.status || 'pendente';
+    document.getElementById('contaDataPgto').value = c.dataPgto || '';
+    document.getElementById('contaObs').value = c.obs || '';
+    openModal('modalConta');
+}
+
+async function saveConta() {
+    const cat = document.getElementById('contaCategoria').value;
+    const desc = document.getElementById('contaDescricao').value.trim();
+    const valor = parseFloat(document.getElementById('contaValor').value);
+    if (!cat || !desc || isNaN(valor)) { toast('Preencha os campos obrigatórios', 'error'); return; }
+    const data = {
+        categoria: cat, descricao: desc, valor,
+        vencimento: document.getElementById('contaVencimento').value,
+        status: document.getElementById('contaStatus').value,
+        dataPgto: document.getElementById('contaDataPgto').value,
+        obs: document.getElementById('contaObs').value.trim()
+    };
+    const id = document.getElementById('contaEditId').value;
+    const res = await fbSave('contas', id || null, data);
+    if (res) {
+        closeModal('modalConta');
+        document.getElementById('contaEditId').value = '';
+        toast('Conta salva!');
+        await loadCondoData();
+    }
+}
+
+async function deleteConta(id) {
+    if (!confirm('Excluir conta?')) return;
+    await fbDelete('contas', id);
+    await loadCondoData();
+}
+
+// ===== CONCILIAÇÃO BANCÁRIA =====
+// ===== IMPORTAÇÃO INTELIGENTE DE EXTRATO =====
+let _pendingImport = []; // Buffer de pré-visualização
+
+function importarExtrato() {
+    const file = document.getElementById('fileExtrato').files[0];
+    if (!file) { toast('Selecione um arquivo', 'error'); return; }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let rows = [];
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (ext === 'xls' || ext === 'xlsx') {
+                // Ler com SheetJS
+                const data = new Uint8Array(e.target.result);
+                const wb = XLSX.read(data, { type: 'array', cellDates: true, cellText: true });
+                const ws = wb.Sheets[wb.SheetNames[0]];
+                rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+            } else {
+                // CSV ou TXT — detectar separador
+                const text = typeof e.target.result === 'string' ? e.target.result : new TextDecoder('UTF-8').decode(e.target.result);
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                // Detectar separador mais frequente: ; tab , |
+                const first5 = lines.slice(0, 5).join('');
+                const seps = { ';': (first5.match(/;/g)||[]).length, '\t': (first5.match(/\t/g)||[]).length, ',': (first5.match(/,/g)||[]).length, '|': (first5.match(/\|/g)||[]).length };
+                const sep = Object.entries(seps).sort((a,b) => b[1]-a[1])[0][0];
+                rows = lines.map(l => l.split(sep).map(c => c.trim().replace(/^"|"$/g, '')));
+            }
+
+            if (rows.length < 2) { toast('Arquivo vazio ou sem dados suficientes', 'warning'); return; }
+
+            // Analisar colunas automaticamente
+            const items = autoDetectColumns(rows);
+
+            if (items.length === 0) { toast('Não foi possível detectar lançamentos no arquivo. Verifique o formato.', 'warning'); return; }
+
+            // Mostrar pré-visualização
+            _pendingImport = items;
+            document.getElementById('importCount').textContent = items.length;
+            document.getElementById('importPreview').style.display = 'block';
+            const tb = document.getElementById('tbImportPreview');
+            tb.innerHTML = items.slice(0, 50).map(it => `<tr>
+                <td>${H(it.data)}</td>
+                <td>${H(it.historico)}</td>
+                <td>${H(it.nDoc||'-')}</td>
+                <td style="color:${it.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${it.tipo==='D'?'-':''}${fmtMoney(Math.abs(it.valor))}</td>
+                <td><span class="badge ${it.tipo==='C'?'badge-green':'badge-red'}">${it.tipo==='C'?'Crédito':'Débito'}</span></td>
+            </tr>`).join('') + (items.length > 50 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-light)">... e mais ${items.length - 50} lançamentos</td></tr>` : '');
+
+            toast(`${items.length} lançamentos detectados! Verifique e confirme.`);
+
+        } catch(err) {
+            console.error('Import error:', err);
+            toast('Erro ao processar arquivo: ' + err.message, 'error');
+        }
+    };
+
+    // Ler como ArrayBuffer para XLS/XLSX, como text para CSV/TXT
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'xls' || ext === 'xlsx') {
+        reader.readAsArrayBuffer(file);
+    } else {
+        reader.readAsText(file, 'UTF-8');
+    }
+}
+
+function autoDetectColumns(rows) {
+    // Estratégia: analisar o cabeçalho e as primeiras linhas de dados
+    // para identificar automaticamente qual coluna é data, histórico, valor, etc.
+
+    const header = rows[0].map(h => String(h).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+    const dataRows = rows.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+
+    // Mapear colunas por nome do cabeçalho
+    let colData = -1, colHistorico = -1, colValor = -1, colTipo = -1, colDoc = -1, colSaldo = -1;
+
+    header.forEach((h, i) => {
+        const hl = h.trim();
+        if (colData === -1 && /data|date|dt\s*mov|dt\s*lanc|lancamento|movimento/.test(hl)) colData = i;
+        if (colHistorico === -1 && /hist|descri|detalhe|lancamento|observ|complemento/.test(hl)) colHistorico = i;
+        if (colValor === -1 && /valor|vlr|amount|quantia|montante/.test(hl)) colValor = i;
+        if (colTipo === -1 && /tipo|type|natureza|d\/c|c\/d|dc|cd|debito.credito|credito.debito/.test(hl)) colTipo = i;
+        if (colDoc === -1 && /doc|documento|num|numero|nro|cheque/.test(hl)) colDoc = i;
+        if (colSaldo === -1 && /saldo|balance|acumulado/.test(hl)) colSaldo = i;
+    });
+
+    // Se o cabeçalho não ajudou, tentar por análise dos dados
+    if (colData === -1 || colValor === -1) {
+        // Analisar as primeiras 10 linhas de dados
+        const sample = dataRows.slice(0, 10);
+        const numCols = Math.max(...sample.map(r => r.length), 0);
+
+        for (let c = 0; c < numCols; c++) {
+            const vals = sample.map(r => String(r[c] || '').trim()).filter(v => v);
+            if (vals.length === 0) continue;
+
+            // Detectar coluna de data
+            if (colData === -1) {
+                const dateCount = vals.filter(v => isDateLike(v)).length;
+                if (dateCount >= vals.length * 0.5) { colData = c; continue; }
+            }
+
+            // Detectar coluna de valor numérico
+            if (colValor === -1 && colData !== c) {
+                const numCount = vals.filter(v => isMoneyLike(v)).length;
+                if (numCount >= vals.length * 0.5) { colValor = c; continue; }
+            }
+
+            // Detectar tipo C/D
+            if (colTipo === -1 && colData !== c && colValor !== c) {
+                const cdCount = vals.filter(v => /^[CD]$/i.test(v.trim())).length;
+                if (cdCount >= vals.length * 0.5) { colTipo = c; continue; }
+            }
+        }
+
+        // Histórico = a coluna mais textual que não é data nem valor
+        if (colHistorico === -1) {
+            for (let c = 0; c < numCols; c++) {
+                if (c === colData || c === colValor || c === colTipo || c === colDoc || c === colSaldo) continue;
+                const vals = sample.map(r => String(r[c] || '').trim()).filter(v => v);
+                const textCount = vals.filter(v => v.length > 3 && !/^\d+[.,]\d+$/.test(v)).length;
+                if (textCount >= vals.length * 0.4) { colHistorico = c; break; }
+            }
+        }
+
+        // Doc = coluna numérica restante que não é valor nem saldo
+        if (colDoc === -1) {
+            for (let c = 0; c < numCols; c++) {
+                if (c === colData || c === colValor || c === colTipo || c === colHistorico || c === colSaldo) continue;
+                colDoc = c;
+                break;
+            }
+        }
+    }
+
+    // Fallback mínimo
+    if (colData === -1) colData = 0;
+    if (colValor === -1) colValor = Math.min(dataRows[0]?.length - 1 || 1, 4);
+    if (colHistorico === -1) {
+        for (let c = 0; c < (dataRows[0]?.length||0); c++) {
+            if (c !== colData && c !== colValor && c !== colTipo) { colHistorico = c; break; }
+        }
+    }
+
+    console.log('Colunas detectadas → Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
+
+    // Converter linhas em itens estruturados
+    const items = [];
+    dataRows.forEach(row => {
+        const rawData = String(row[colData] || '').trim();
+        const rawValor = String(row[colValor] || '').trim();
+        const rawHist = colHistorico >= 0 ? String(row[colHistorico] || '').trim() : '';
+        const rawTipo = colTipo >= 0 ? String(row[colTipo] || '').trim().toUpperCase() : '';
+        const rawDoc = colDoc >= 0 ? String(row[colDoc] || '').trim() : '';
+
+        // Validar: precisa ter data e valor mínimos
+        if (!rawData && !rawValor) return;
+        if (!rawHist && !rawValor) return;
+
+        const data = normalizeDate(rawData);
+        const valor = parseMoneyValue(rawValor);
+
+        if (isNaN(valor) || valor === 0) return;
+
+        // Determinar tipo C/D
+        let tipo = 'C';
+        if (rawTipo === 'D' || rawTipo === 'DEBITO' || rawTipo === 'DEB') {
+            tipo = 'D';
+        } else if (rawTipo === 'C' || rawTipo === 'CREDITO' || rawTipo === 'CRED') {
+            tipo = 'C';
+        } else if (valor < 0) {
+            tipo = 'D';
+        } else {
+            // Tentar inferir pelo histórico
+            const histLower = rawHist.toLowerCase();
+            if (/deb|pag|tar|transf\s*env|enviad|saque|iof|imposto/.test(histLower)) tipo = 'D';
+            else if (/cred|dep|receb|pix\s*rec|ted\s*rec|transf\s*rec/.test(histLower)) tipo = 'C';
+        }
+
+        items.push({
+            data: data || rawData,
+            historico: rawHist,
+            nDoc: rawDoc,
+            valor: Math.abs(valor),
+            tipo: tipo,
+            conciliado: false
+        });
+    });
+
+    return items;
+}
+
+// Helpers de detecção
+function isDateLike(v) {
+    return /^\d{2}[\/\-\.]\d{2}[\/\-\.]\d{2,4}$/.test(v) ||
+           /^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(v) ||
+           /^\d{8}$/.test(v) ||
+           /^"\d{8}"$/.test(v);
+}
+
+function isMoneyLike(v) {
+    const clean = v.replace(/[R$\s"]/g, '');
+    return /^-?[\d.,]+$/.test(clean) && clean.length > 0;
+}
+
+function parseMoneyValue(v) {
+    let s = String(v).replace(/[R$\s"]/g, '').trim();
+    // Detectar formato BR (1.234,56) vs US (1,234.56)
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    if (lastComma > lastDot) {
+        // Formato BR: 1.234,56
+        s = s.replace(/\./g, '').replace(',', '.');
+    } else if (lastDot > lastComma) {
+        // Formato US ou sem milhar: 1,234.56 ou 1234.56
+        s = s.replace(/,/g, '');
+    } else {
+        s = s.replace(/,/g, '.');
+    }
+    return parseFloat(s);
+}
+
+function normalizeDate(v) {
+    let s = String(v).replace(/"/g, '').trim();
+    // 20260702 → 02/07/2026
+    if (/^\d{8}$/.test(s)) return s.slice(6,8) + '/' + s.slice(4,6) + '/' + s.slice(0,4);
+    // 2026-07-02 → 02/07/2026
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const p = s.split(/[-T]/); return p[2]+'/'+p[1]+'/'+p[0]; }
+    // 02/07/2026 já está ok
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+    // 02-07-2026
+    if (/^\d{2}-\d{2}-\d{4}$/.test(s)) return s.replace(/-/g, '/');
+    return s;
+}
+
+async function confirmarImportacao() {
+    if (_pendingImport.length === 0) return;
+
+    try {
+        // Salvar no Firestore
+        if (APP.firebaseReady && APP.currentCondoId) {
+            // Firestore batch limit = 500
+            const chunks = [];
+            for (let i = 0; i < _pendingImport.length; i += 450) {
+                chunks.push(_pendingImport.slice(i, i + 450));
+            }
+            for (const chunk of chunks) {
+                const batch = APP.db.batch();
+                chunk.forEach(item => {
+                    const ref = condoRef().collection('extrato').doc();
+                    item._condoId = APP.currentCondoId;
+                    item._createdBy = APP.currentUser?.uid || 'unknown';
+                    item._createdAt = new Date().toISOString();
+                    batch.set(ref, item);
+                });
+                await batch.commit();
+            }
+        }
+
+        APP.extrato = APP.extrato.concat(_pendingImport.map((item, i) => ({ id: 'imp_' + Date.now() + '_' + i, ...item })));
+        auditLog('EXTRATO_IMPORT', { count: _pendingImport.length });
+        _pendingImport = [];
+        document.getElementById('importPreview').style.display = 'none';
+        document.getElementById('fileExtrato').value = '';
+        renderExtrato();
+        toast(`Extrato importado com sucesso!`);
+
+        // Mudar para aba do extrato
+        const tabs = document.querySelectorAll('#pg-conciliacao .tab-btn');
+        if (tabs[1]) switchTab(tabs[1], 'tabExtrato');
+
+    } catch(err) {
+        toast('Erro ao salvar: ' + err.message, 'error');
+    }
+}
+
+function cancelarImportacao() {
+    _pendingImport = [];
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('fileExtrato').value = '';
+}
+
+function renderExtrato() {
+    const tb = document.getElementById('tbExtrato');
+    if (APP.extrato.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum extrato importado</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = APP.extrato.map(e => `<tr>
+        <td>${H(e.data)}</td>
+        <td>${H(e.historico)}</td>
+        <td>${H(e.nDoc||'-')}</td>
+        <td style="color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
+        <td><span class="badge ${e.tipo==='C'?'badge-green':'badge-red'}">${e.tipo==='C'?'Crédito':'Débito'}</span></td>
+        <td>${e.conciliado?'<span class="badge badge-green">✓ Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
+    </tr>`).join('');
+
+    // Render aba conciliação
+    const tbC = document.getElementById('tbConciliar');
+    const pendentes = APP.extrato.filter(e => !e.conciliado);
+    if (pendentes.length === 0) {
+        tbC.innerHTML = '<tr><td colspan="5" class="empty-state"><p>Todos os lançamentos foram conciliados</p></td></tr>';
+        return;
+    }
+    tbC.innerHTML = pendentes.map(e => `<tr>
+        <td>${H(e.data)}</td>
+        <td>${H(e.historico)}</td>
+        <td style="font-weight:600;color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'}">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
+        <td>
+            <select style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);color:var(--text-primary)" id="concCat_${e.id}">
+                <option value="">Selecionar categoria...</option>
+                ${APP.categorias.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('')}
+                <option value="Taxa Condominial">Taxa Condominial</option>
+                <option value="Receita Diversa">Receita Diversa</option>
+            </select>
+        </td>
+        <td><button class="btn btn-success btn-sm" onclick="conciliarItem('${e.id}')"><i class="ti ti-check"></i> Conciliar</button></td>
+    </tr>`).join('');
+}
+
+async function conciliarItem(id) {
+    const catEl = document.getElementById('concCat_' + id);
+    if (!catEl || !catEl.value) { toast('Selecione uma categoria', 'warning'); return; }
+    const item = APP.extrato.find(e => e.id === id);
+    if (!item) return;
+    item.conciliado = true;
+    item.categoriaConciliacao = catEl.value;
+
+    if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+        await condoRef().collection('extrato').doc(id).update({ conciliado: true, categoriaConciliacao: catEl.value });
+    }
+    auditLog('EXTRATO_CONCILIAR', { docId: id, categoria: catEl.value });
+    renderExtrato();
+    toast('Lançamento conciliado!');
+}
+
+// ===== PAGAMENTOS =====
+function populateYearFilters() {
+    const year = new Date().getFullYear();
+    const years = [];
+    for (let y = year - 3; y <= year + 1; y++) years.push(y);
+
+    ['filterPgAno','filterInadAno','filterOrcAno','relDespAno','relRecAno','balAno'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = years.map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
+    });
+}
+
+function renderPagamentos() {
+    const ano = document.getElementById('filterPgAno')?.value || '';
+    const mes = document.getElementById('filterPgMes')?.value || '';
+    const apto = (document.getElementById('filterPgApto')?.value || '').toLowerCase();
+
+    let list = APP.pagamentos;
+    if (ano) list = list.filter(p => p.ano == ano);
+    if (mes) list = list.filter(p => p.mes === mes);
+    if (apto) list = list.filter(p => (p.apto||'').toLowerCase().includes(apto));
+
+    const tb = document.getElementById('tbPagamentos');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Nenhum pagamento encontrado</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = list.map(p => `<tr>
+        <td>${H(p.ano)}</td>
+        <td>${MESES[parseInt(p.mes)]||p.mes}</td>
+        <td><strong>${H(p.apto)}</strong></td>
+        <td>${H(p.moradorNome||'-')}</td>
+        <td><span class="badge badge-blue">${H(p.tipoTaxa)}</span></td>
+        <td><strong>${fmtMoney(p.valor)}</strong></td>
+        <td>${fmtDate(p.dataPgto)}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editPagamento('${p.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePagamento('${p.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+
+    // Populate select for apto in modal
+    const pgApto = document.getElementById('pgtoApto');
+    if (pgApto) {
+        pgApto.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}" data-nome="${H(m.nome)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+    }
+    const pgTaxa = document.getElementById('pgtoTipoTaxa');
+    if (pgTaxa) {
+        pgTaxa.innerHTML = APP.taxas.map(t => `<option value="${H(t.descricao)}">${H(t.descricao)} (${fmtMoney(t.valor)})</option>`).join('');
+    }
+}
+
+function editPagamento(id) {
+    const p = APP.pagamentos.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pgtoEditId').value = id;
+    document.getElementById('pgtoAno').value = p.ano || new Date().getFullYear();
+    document.getElementById('pgtoMes').value = p.mes || '01';
+    document.getElementById('pgtoValor').value = p.valor || '';
+    document.getElementById('pgtoData').value = p.dataPgto || '';
+    setTimeout(() => {
+        document.getElementById('pgtoApto').value = p.apto || '';
+        document.getElementById('pgtoTipoTaxa').value = p.tipoTaxa || '';
+    }, 100);
+    openModal('modalPagamento');
+}
+
+async function savePagamento() {
+    const ano = document.getElementById('pgtoAno').value;
+    const mes = document.getElementById('pgtoMes').value;
+    const apto = document.getElementById('pgtoApto').value;
+    const tipoTaxa = document.getElementById('pgtoTipoTaxa').value;
+    const valor = parseFloat(document.getElementById('pgtoValor').value);
+    const dataPgto = document.getElementById('pgtoData').value;
+    if (!ano || !mes || !apto || !tipoTaxa || isNaN(valor)) { toast('Preencha todos os campos', 'error'); return; }
+
+    const moradorObj = APP.moradores.find(m => m.apto === apto);
+    const data = { ano, mes, apto, tipoTaxa, valor, dataPgto, moradorNome: moradorObj?.nome || '' };
+
+    const id = document.getElementById('pgtoEditId').value;
+    const res = await fbSave('pagamentos', id || null, data);
+    if (res) {
+        closeModal('modalPagamento');
+        document.getElementById('pgtoEditId').value = '';
+        toast('Pagamento registrado!');
+        await loadCondoData();
+    }
+}
+
+async function deletePagamento(id) {
+    if (!confirm('Excluir pagamento?')) return;
+    await fbDelete('pagamentos', id);
+    await loadCondoData();
+}
+
+// ===== INADIMPLENTES =====
+function renderInadimplentes() {
+    const ano = document.getElementById('filterInadAno')?.value || new Date().getFullYear();
+    const mes = document.getElementById('filterInadMes')?.value || '';
+
+    // Build expected payments matrix: all apartments × all recurring taxes × selected months
+    const recTaxas = APP.taxas.filter(t => t.tipo === 'recorrente');
+    const meses = mes ? [mes] : ['01','02','03','04','05','06','07','08','09','10','11','12'];
+
+    const inadimplentes = [];
+    APP.moradores.forEach(m => {
+        recTaxas.forEach(t => {
+            meses.forEach(ms => {
+                const paid = APP.pagamentos.find(p => p.ano == ano && p.mes === ms && p.apto === m.apto && p.tipoTaxa === t.descricao);
+                if (!paid) {
+                    inadimplentes.push({ apto: m.apto, ano, mes: ms, tipoTaxa: t.descricao, valor: t.valor });
+                }
+            });
+        });
+    });
+
+    const tb = document.getElementById('tbInadimplentes');
+    if (inadimplentes.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma inadimplência encontrada</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = inadimplentes.map(i => `<tr>
+        <td><strong>${H(i.apto)}</strong></td>
+        <td>${H(i.ano)}</td>
+        <td>${MESES[parseInt(i.mes)]||i.mes}</td>
+        <td>${H(i.tipoTaxa)}</td>
+        <td style="color:var(--accent-red);font-weight:600">${fmtMoney(i.valor)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxa)}')">🔗 Associar</button></td>
+    </tr>`).join('');
+}
+
+function associarInadimplente(apto, ano, mes, tipoTaxa) {
+    // Open payment modal pre-filled
+    document.getElementById('pgtoEditId').value = '';
+    document.getElementById('pgtoAno').value = ano;
+    document.getElementById('pgtoMes').value = mes;
+    document.getElementById('pgtoData').value = new Date().toISOString().split('T')[0];
+    const taxa = APP.taxas.find(t => t.descricao === tipoTaxa);
+    if (taxa) document.getElementById('pgtoValor').value = taxa.valor;
+    openModal('modalPagamento');
+    setTimeout(() => {
+        document.getElementById('pgtoApto').value = apto;
+        document.getElementById('pgtoTipoTaxa').value = tipoTaxa;
+    }, 100);
+}
+
+// ===== ORÇAMENTO =====
+function renderOrcamento() {
+    const ano = document.getElementById('filterOrcAno')?.value || new Date().getFullYear();
+    let list = APP.orcamento.filter(o => o.ano == ano);
+
+    // Add realized values from contas
+    list = list.map(o => {
+        const realized = APP.contas.filter(c => c.categoria === o.categoria && c.status === 'pago' && (c.vencimento||'').startsWith(`${o.ano}-${o.mes}`))
+            .reduce((s,c) => s + (c.valor||0), 0);
+        return { ...o, realizado: realized, diferenca: (o.valor||0) - realized };
+    });
+
+    const tb = document.getElementById('tbOrcamento');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhuma previsão cadastrada</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = list.map(o => `<tr>
+        <td>${H(o.ano)}</td>
+        <td>${MESES[parseInt(o.mes)]||o.mes}</td>
+        <td><span class="badge badge-blue">${H(o.categoria)}</span></td>
+        <td>${fmtMoney(o.valor)}</td>
+        <td>${fmtMoney(o.realizado||0)}</td>
+        <td style="color:${(o.diferenca||0)>=0?'var(--accent)':'var(--accent-red)'};font-weight:600">${fmtMoney(o.diferenca||0)}</td>
+        <td>
+            <button class="btn btn-outline btn-sm" onclick="editOrcamento('${o.id}')">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrcamento('${o.id}')">🗑️</button>
+        </td>
+    </tr>`).join('');
+}
+
+function editOrcamento(id) {
+    const o = APP.orcamento.find(x => x.id === id);
+    if (!o) return;
+    document.getElementById('orcEditId').value = id;
+    document.getElementById('orcAno').value = o.ano;
+    document.getElementById('orcMes').value = o.mes;
+    document.getElementById('orcCategoria').value = o.categoria;
+    document.getElementById('orcValor').value = o.valor;
+    openModal('modalOrcamento');
+}
+
+async function saveOrcamento() {
+    const ano = document.getElementById('orcAno').value;
+    const mes = document.getElementById('orcMes').value;
+    const cat = document.getElementById('orcCategoria').value;
+    const valor = parseFloat(document.getElementById('orcValor').value);
+    if (!ano || !mes || !cat || isNaN(valor)) { toast('Preencha todos os campos', 'error'); return; }
+    const data = { ano, mes, categoria: cat, valor };
+    const id = document.getElementById('orcEditId').value;
+    const res = await fbSave('orcamento', id || null, data);
+    if (res) {
+        closeModal('modalOrcamento');
+        document.getElementById('orcEditId').value = '';
+        toast('Previsão salva!');
+        await loadCondoData();
+    }
+}
+
+async function deleteOrcamento(id) {
+    if (!confirm('Excluir previsão?')) return;
+    await fbDelete('orcamento', id);
+    await loadCondoData();
+}
+
+// ===== RELATÓRIOS =====
+function renderRelDespesas() {
+    const ano = document.getElementById('relDespAno')?.value || new Date().getFullYear();
+    const mes = document.getElementById('relDespMes')?.value || '';
+    let list = APP.contas.filter(c => (c.vencimento||'').startsWith(ano));
+    if (mes) list = list.filter(c => (c.vencimento||'').startsWith(`${ano}-${mes}`));
+
+    const total = list.reduce((s,c) => s + (c.valor||0), 0);
+    const byCat = {};
+    list.forEach(c => { byCat[c.categoria] = (byCat[c.categoria]||0) + (c.valor||0); });
+
+    let html = `<h4 style="margin-bottom:1rem">Despesas - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h4>`;
+    html += `<table><thead><tr><th>Categoria</th><th>Total</th></tr></thead><tbody>`;
+    Object.entries(byCat).sort((a,b) => b[1]-a[1]).forEach(([cat,val]) => {
+        html += `<tr><td>${H(cat)}</td><td><strong>${fmtMoney(val)}</strong></td></tr>`;
+    });
+    html += `</tbody><tfoot><tr><td><strong>TOTAL GERAL</strong></td><td><strong style="color:var(--accent-red)">${fmtMoney(total)}</strong></td></tr></tfoot></table>`;
+
+    html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento</h4>`;
+    html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Status</th></tr></thead><tbody>`;
+    list.forEach(c => {
+        html += `<tr><td>${fmtDate(c.vencimento)}</td><td>${H(c.categoria)}</td><td>${H(c.descricao)}</td><td>${fmtMoney(c.valor)}</td><td>${c.status==='pago'?'Pago':'Pendente'}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+
+    document.getElementById('relDespContent').innerHTML = html;
+}
+
+function renderRelReceitas() {
+    const ano = document.getElementById('relRecAno')?.value || new Date().getFullYear();
+    const mes = document.getElementById('relRecMes')?.value || '';
+    let list = APP.pagamentos.filter(p => p.ano == ano);
+    if (mes) list = list.filter(p => p.mes === mes);
+
+    const total = list.reduce((s,p) => s + (p.valor||0), 0);
+    const byTaxa = {};
+    list.forEach(p => { byTaxa[p.tipoTaxa] = (byTaxa[p.tipoTaxa]||0) + (p.valor||0); });
+
+    let html = `<h4 style="margin-bottom:1rem">Receitas - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h4>`;
+    html += `<table><thead><tr><th>Tipo de Taxa</th><th>Total</th></tr></thead><tbody>`;
+    Object.entries(byTaxa).forEach(([taxa,val]) => {
+        html += `<tr><td>${H(taxa)}</td><td><strong>${fmtMoney(val)}</strong></td></tr>`;
+    });
+    html += `</tbody><tfoot><tr><td><strong>TOTAL GERAL</strong></td><td><strong style="color:var(--accent)">${fmtMoney(total)}</strong></td></tr></tfoot></table>`;
+
+    html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento</h4>`;
+    html += `<table><thead><tr><th>Mês</th><th>Apto</th><th>Morador</th><th>Tipo</th><th>Valor</th><th>Data Pgto</th></tr></thead><tbody>`;
+    list.forEach(p => {
+        html += `<tr><td>${MESES[parseInt(p.mes)]||p.mes}</td><td>${H(p.apto)}</td><td>${H(p.moradorNome)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtMoney(p.valor)}</td><td>${fmtDate(p.dataPgto)}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+
+    document.getElementById('relRecContent').innerHTML = html;
+}
+
+function renderRelConciliacao() {
+    const conciliados = APP.extrato.filter(e => e.conciliado);
+    const pendentes = APP.extrato.filter(e => !e.conciliado);
+
+    let html = `<h4 style="margin-bottom:1rem">Conciliação Bancária</h4>`;
+    html += `<div class="stats-row" style="margin-bottom:1rem">
+        <div class="stat-card"><div class="stat-icon green">✓</div><div class="stat-info"><h4>${conciliados.length}</h4><span>Conciliados</span></div></div>
+        <div class="stat-card"><div class="stat-icon amber">⏳</div><div class="stat-info"><h4>${pendentes.length}</h4><span>Pendentes</span></div></div>
+        <div class="stat-card"><div class="stat-icon blue">📊</div><div class="stat-info"><h4>${APP.extrato.length}</h4><span>Total</span></div></div>
+    </div>`;
+
+    if (conciliados.length > 0) {
+        html += `<h4 style="margin:1rem 0 0.5rem">Lançamentos Conciliados</h4>`;
+        html += `<table><thead><tr><th>Data</th><th>Histórico</th><th>Valor</th><th>Tipo</th><th>Categoria</th></tr></thead><tbody>`;
+        conciliados.forEach(e => {
+            html += `<tr><td>${H(e.data)}</td><td>${H(e.historico)}</td><td>${fmtMoney(e.valor)}</td><td>${e.tipo}</td><td>${H(e.categoriaConciliacao||'-')}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+    }
+
+    document.getElementById('relConcContent').innerHTML = html;
+}
+
+function renderBalancete() {
+    const ano = document.getElementById('balAno')?.value || new Date().getFullYear();
+    const mes = document.getElementById('balMes')?.value || '';
+
+    // Receitas
+    let receitas = APP.pagamentos.filter(p => p.ano == ano);
+    if (mes) receitas = receitas.filter(p => p.mes === mes);
+    const totalReceitas = receitas.reduce((s,p) => s + (p.valor||0), 0);
+
+    // Despesas
+    let despesas = APP.contas.filter(c => (c.vencimento||'').startsWith(ano));
+    if (mes) despesas = despesas.filter(c => (c.vencimento||'').startsWith(`${ano}-${mes}`));
+    const totalDespesas = despesas.reduce((s,c) => s + (c.valor||0), 0);
+
+    const saldo = totalReceitas - totalDespesas;
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+
+    let html = `
+    <div style="text-align:center;margin-bottom:1.5rem;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-md)">
+        <h3 style="color:var(--primary)">${H(condo.nome||'Condomínio')}</h3>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">CNPJ: ${H(condo.cnpj||'-')} | ${H(condo.endereco||'')}</p>
+        <h4 style="margin-top:0.5rem">Balancete - Prestação de Contas</h4>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">${mes ? MESES[parseInt(mes)]+'/':'Ano '}${ano}</p>
+    </div>
+
+    <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon green">📈</div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Total Receitas</span></div></div>
+        <div class="stat-card"><div class="stat-icon red">📉</div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Total Despesas</span></div></div>
+        <div class="stat-card"><div class="stat-icon ${saldo>=0?'blue':'red'}">💰</div><div class="stat-info"><h4>${fmtMoney(saldo)}</h4><span>Saldo</span></div></div>
+    </div>
+
+    <h4 style="margin:1.5rem 0 0.5rem;color:var(--accent)">RECEITAS</h4>
+    <table><thead><tr><th>Tipo Taxa</th><th>Qtd Pgtos</th><th>Total</th></tr></thead><tbody>`;
+
+    const recByTaxa = {};
+    receitas.forEach(p => {
+        if (!recByTaxa[p.tipoTaxa]) recByTaxa[p.tipoTaxa] = { qtd: 0, total: 0 };
+        recByTaxa[p.tipoTaxa].qtd++;
+        recByTaxa[p.tipoTaxa].total += (p.valor||0);
+    });
+    Object.entries(recByTaxa).forEach(([taxa,v]) => {
+        html += `<tr><td>${H(taxa)}</td><td>${v.qtd}</td><td>${fmtMoney(v.total)}</td></tr>`;
+    });
+    html += `<tr style="font-weight:700"><td>TOTAL RECEITAS</td><td></td><td style="color:var(--accent)">${fmtMoney(totalReceitas)}</td></tr></tbody></table>`;
+
+    html += `<h4 style="margin:1.5rem 0 0.5rem;color:var(--accent-red)">DESPESAS</h4>
+    <table><thead><tr><th>Categoria</th><th>Total</th></tr></thead><tbody>`;
+
+    const despByCat = {};
+    despesas.forEach(c => { despByCat[c.categoria] = (despByCat[c.categoria]||0) + (c.valor||0); });
+    Object.entries(despByCat).sort((a,b) => b[1]-a[1]).forEach(([cat,val]) => {
+        html += `<tr><td>${H(cat)}</td><td>${fmtMoney(val)}</td></tr>`;
+    });
+    html += `<tr style="font-weight:700"><td>TOTAL DESPESAS</td><td style="color:var(--accent-red)">${fmtMoney(totalDespesas)}</td></tr></tbody></table>`;
+
+    html += `<div style="margin-top:1.5rem;padding:1rem;background:${saldo>=0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};border-radius:var(--radius-md);text-align:center">
+        <h3 style="color:${saldo>=0?'var(--accent)':'var(--accent-red)'}">RESULTADO: ${fmtMoney(saldo)}</h3>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">${saldo>=0?'Superávit':'Déficit'} no período</p>
+    </div>`;
+
+    document.getElementById('balContent').innerHTML = html;
+}
+
+function printReport(type) {
+    window.print();
+}
+
+// ===== CATEGORIAS =====
+function renderCategorias() {
+    const el = document.getElementById('listCategorias');
+    if (!el) return;
+    el.innerHTML = APP.categorias.map((c,i) => `
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="flex:1">${H(c)}</span>
+            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">✕</button>
+        </div>
+    `).join('');
+    populateContaCategorias();
+}
+
+async function addCategoria() {
+    const v = document.getElementById('newCategoria').value.trim();
+    if (!v) return;
+    APP.categorias.push(v);
+    document.getElementById('newCategoria').value = '';
+    renderCategorias();
+    if (APP.firebaseReady && APP.currentCondoId) {
+        await condoRef().collection('settings').doc('categorias').set({ list: APP.categorias });
+    }
+    toast('Categoria adicionada!');
+}
+
+async function removeCategoria(i) {
+    APP.categorias.splice(i, 1);
+    renderCategorias();
+    if (APP.firebaseReady && APP.currentCondoId) {
+        await condoRef().collection('settings').doc('categorias').set({ list: APP.categorias });
+    }
+}
+
+// ===== USUÁRIOS =====
+function renderUsuarios() {
+    const tb = document.getElementById('tbUsuarios');
+    if (APP.usuarios.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum usuário</p></td></tr>';
+        return;
+    }
+
+    // Ordenar: pendentes primeiro, depois por nome
+    const sorted = [...APP.usuarios].sort((a,b) => {
+        if (a.aprovado === false && b.aprovado !== false) return -1;
+        if (a.aprovado !== false && b.aprovado === false) return 1;
+        return (a.nome||'').localeCompare(b.nome||'');
+    });
+
+    tb.innerHTML = sorted.map(u => {
+        const isPending = u.aprovado === false;
+        const approvalBadge = isPending
+            ? '<span class="badge badge-amber">Pendente</span>'
+            : '<span class="badge badge-green">Aprovado</span>';
+        const approvalBtn = isPending
+            ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="Aprovar"><i class="ti ti-check"></i></button>
+               <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="Rejeitar"><i class="ti ti-x"></i></button>`
+            : '';
+
+        return `<tr style="${isPending?'background:rgba(245,158,11,0.05)':''}">
+            <td>${H(u.nome)} ${isPending?'<span style="font-size:0.7rem;color:var(--secondary)"> (novo)</span>':''}</td>
+            <td>${H(u.email)}</td>
+            <td><span class="badge badge-blue">${H(u.perfil)}</span></td>
+            <td>${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-red">Inativo</span>'}</td>
+            <td>${approvalBadge}</td>
+            <td>
+                ${approvalBtn}
+                <button class="btn btn-outline btn-sm" onclick="editUsuario('${u.id}')"><i class="ti ti-pencil"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // Populate condos in user modal
+    const ac = document.getElementById('accessCondos');
+    if (ac) {
+        ac.innerHTML = APP.condominios.map(c =>
+            `<label class="access-item"><input type="checkbox" value="${H(c.id)}"> ${H(c.nome)}</label>`
+        ).join('');
+    }
+
+    // Mostrar contagem de pendentes no menu
+    const pendingCount = APP.usuarios.filter(u => u.aprovado === false).length;
+    const navUsuarios = document.querySelector('.nav-item[data-page="usuarios"]');
+    const existingBadge = navUsuarios?.querySelector('.nav-badge');
+    if (existingBadge) existingBadge.remove();
+    if (pendingCount > 0 && navUsuarios) {
+        const badge = document.createElement('span');
+        badge.className = 'nav-badge';
+        badge.textContent = pendingCount;
+        navUsuarios.appendChild(badge);
+    }
+}
+
+async function approveUser(userId) {
+    if (!confirm('Aprovar este usuário? Ele terá acesso ao sistema.')) return;
+    try {
+        await APP.db.collection('user_profiles').doc(userId).update({
+            aprovado: true,
+            aprovadoPor: APP.currentUser.uid,
+            aprovadoEm: new Date().toISOString()
+        });
+        auditLog('USER_APPROVED', { targetUserId: userId });
+        toast('Usuário aprovado com sucesso!');
+        await loadCondoData();
+    } catch(e) {
+        toast('Erro ao aprovar: ' + e.message, 'error');
+    }
+}
+
+async function rejectUser(userId) {
+    if (!confirm('Rejeitar este usuário? A conta será desativada.')) return;
+    try {
+        await APP.db.collection('user_profiles').doc(userId).update({
+            aprovado: false,
+            status: 'inativo',
+            rejeitadoPor: APP.currentUser.uid,
+            rejeitadoEm: new Date().toISOString()
+        });
+        auditLog('USER_REJECTED', { targetUserId: userId });
+        toast('Usuário rejeitado.');
+        await loadCondoData();
+    } catch(e) {
+        toast('Erro ao rejeitar: ' + e.message, 'error');
+    }
+}
+
+function editUsuario(id) {
+    const u = APP.usuarios.find(x => x.id === id);
+    if (!u) return;
+    document.getElementById('userEditId').value = id;
+    document.getElementById('userNome').value = u.nome || '';
+    document.getElementById('userEmail').value = u.email || '';
+    document.getElementById('userSenha').value = '';
+    document.getElementById('userPerfil').value = u.perfil || 'usuario';
+    document.getElementById('userStatus').value = u.status || 'ativo';
+
+    // Set permission checkboxes
+    document.querySelectorAll('#accessGrid input[type="checkbox"]').forEach(cb => {
+        cb.checked = u.perfil === 'admin' || (u.permissoes||[]).includes(cb.value);
+    });
+
+    // Set condo checkboxes
+    document.querySelectorAll('#accessCondos input[type="checkbox"]').forEach(cb => {
+        cb.checked = (u.condosPermitidos||[]).includes(cb.value);
+    });
+
+    openModal('modalUsuario');
+}
+
+async function saveUsuario() {
+    const nome = document.getElementById('userNome').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const senha = document.getElementById('userSenha').value;
+    const perfil = document.getElementById('userPerfil').value;
+    const status = document.getElementById('userStatus').value;
+
+    if (!nome || !email) { toast('Preencha nome e email', 'error'); return; }
+
+    const permissoes = [];
+    document.querySelectorAll('#accessGrid input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
+
+    const condosPermitidos = [];
+    document.querySelectorAll('#accessCondos input[type="checkbox"]:checked').forEach(cb => condosPermitidos.push(cb.value));
+
+    const editId = document.getElementById('userEditId').value;
+
+    if (!APP.firebaseReady) { toast('Configure o Firebase', 'error'); return; }
+
+    try {
+        if (editId) {
+            // Update existing user profile
+            await APP.db.collection('user_profiles').doc(editId).update({
+                nome, perfil, status, permissoes, condosPermitidos,
+                atualizadoEm: new Date().toISOString()
+            });
+        } else {
+            // Create new user in Firebase Auth
+            if (!senha || senha.length < 6) { toast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
+            // Note: In production, user creation should be done via Admin SDK / Cloud Function
+            // For now, we store the profile and the user creates their own account
+            const tempId = 'pending_' + Date.now();
+            await APP.db.collection('user_profiles').doc(tempId).set({
+                nome, email, perfil, status, permissoes, condosPermitidos,
+                pendingPassword: true,
+                criadoEm: new Date().toISOString()
+            });
+            toast('Usuário criado! O usuário deve criar a conta na tela de login.');
+        }
+
+        closeModal('modalUsuario');
+        document.getElementById('userEditId').value = '';
+        toast('Usuário salvo!');
+        await loadCondoData();
+    } catch(e) {
+        toast('Erro: ' + e.message, 'error');
+    }
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+    // Stats
+    const totalMoradores = APP.moradores.length;
+    const totalReceitas = APP.pagamentos.reduce((s,p) => s + (p.valor||0), 0);
+    const totalDespesas = APP.contas.reduce((s,c) => s + (c.valor||0), 0);
+
+    // Count inadimplentes
+    const recTaxas = APP.taxas.filter(t => t.tipo === 'recorrente');
+    const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const curYear = new Date().getFullYear();
+    let inadCount = 0;
+    APP.moradores.forEach(m => {
+        recTaxas.forEach(t => {
+            const paid = APP.pagamentos.find(p => p.ano == curYear && p.mes === curMonth && p.apto === m.apto && p.tipoTaxa === t.descricao);
+            if (!paid) inadCount++;
+        });
+    });
+
+    document.getElementById('dashStats').innerHTML = `
+        <div class="stat-card"><div class="stat-icon blue">🏠</div><div class="stat-info"><h4>${totalMoradores}</h4><span>Moradores</span></div></div>
+        <div class="stat-card"><div class="stat-icon green">📈</div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Receitas</span></div></div>
+        <div class="stat-card"><div class="stat-icon amber">📉</div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Despesas</span></div></div>
+        <div class="stat-card"><div class="stat-icon red">⚠️</div><div class="stat-info"><h4>${inadCount}</h4><span>Inadimplentes</span></div></div>
+    `;
+
+    renderCharts();
+}
+
+function renderCharts() {
+    // Destroy existing charts
+    Object.values(APP.charts).forEach(c => c.destroy && c.destroy());
+    APP.charts = {};
+
+    const mesesLabels = MESES.slice(1);
+
+    // Chart 1: Receitas vs Despesas
+    const recByMonth = new Array(12).fill(0);
+    const despByMonth = new Array(12).fill(0);
+    const curYear = new Date().getFullYear();
+
+    APP.pagamentos.filter(p => p.ano == curYear).forEach(p => {
+        const mi = parseInt(p.mes) - 1;
+        if (mi >= 0 && mi < 12) recByMonth[mi] += (p.valor||0);
+    });
+    APP.contas.filter(c => (c.vencimento||'').startsWith(String(curYear))).forEach(c => {
+        const mi = parseInt((c.vencimento||'').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) despByMonth[mi] += (c.valor||0);
+    });
+
+    const ctx1 = document.getElementById('chartRecDesp')?.getContext('2d');
+    if (ctx1) {
+        APP.charts.recDesp = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: mesesLabels,
+                datasets: [
+                    { label: 'Receitas', data: recByMonth, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 4 },
+                    { label: 'Despesas', data: despByMonth, backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 4 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // Chart 2: Inadimplência por Apto
+    const inadByApto = {};
+    const recTaxas = APP.taxas.filter(t => t.tipo === 'recorrente');
+    APP.moradores.forEach(m => {
+        let count = 0;
+        recTaxas.forEach(t => {
+            for (let ms = 1; ms <= 12; ms++) {
+                const paid = APP.pagamentos.find(p => p.ano == curYear && p.mes === String(ms).padStart(2,'0') && p.apto === m.apto && p.tipoTaxa === t.descricao);
+                if (!paid) count++;
+            }
+        });
+        if (count > 0) inadByApto[m.apto] = count;
+    });
+
+    const ctx2 = document.getElementById('chartInadimplencia')?.getContext('2d');
+    if (ctx2) {
+        const labels2 = Object.keys(inadByApto).slice(0, 15);
+        APP.charts.inad = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: labels2,
+                datasets: [{ label: 'Meses em aberto', data: labels2.map(a => inadByApto[a]), backgroundColor: 'rgba(245,158,11,0.7)', borderRadius: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+        });
+    }
+
+    // Chart 3: Despesas por Categoria
+    const despByCat = {};
+    APP.contas.forEach(c => { despByCat[c.categoria] = (despByCat[c.categoria]||0) + (c.valor||0); });
+    const ctx3 = document.getElementById('chartDespCat')?.getContext('2d');
+    if (ctx3) {
+        const catLabels = Object.keys(despByCat);
+        const colors3 = ['#0E7490','#F59E0B','#10B981','#EF4444','#8B5CF6','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
+        APP.charts.despCat = new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{ data: catLabels.map(c => despByCat[c]), backgroundColor: colors3.slice(0, catLabels.length) }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+        });
+    }
+
+    // Chart 4: Orçamento Previsto vs Realizado
+    const orcByMonth = new Array(12).fill(0);
+    const realByMonth = new Array(12).fill(0);
+    APP.orcamento.filter(o => o.ano == curYear).forEach(o => {
+        const mi = parseInt(o.mes) - 1;
+        if (mi >= 0 && mi < 12) orcByMonth[mi] += (o.valor||0);
+    });
+    APP.contas.filter(c => c.status === 'pago' && (c.vencimento||'').startsWith(String(curYear))).forEach(c => {
+        const mi = parseInt((c.vencimento||'').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) realByMonth[mi] += (c.valor||0);
+    });
+
+    const ctx4 = document.getElementById('chartOrcamento')?.getContext('2d');
+    if (ctx4) {
+        APP.charts.orc = new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: mesesLabels,
+                datasets: [
+                    { label: 'Previsto', data: orcByMonth, borderColor: '#0E7490', backgroundColor: 'rgba(14,116,144,0.1)', fill: true, tension: 0.3 },
+                    { label: 'Realizado', data: realByMonth, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme
+    const savedTheme = localStorage.getItem('condogest_theme');
+    if (savedTheme) setTheme(savedTheme);
+
+    // Restaurar estado dos menus colapsáveis
+    restoreMenuState();
+
+    // Inicializar Firebase com config hardcoded
+    initFirebase(FIREBASE_CONFIG);
+
+    // Preencher campos de configuração na UI
+    loadFirebaseConfig();
+
+    // Year for payment modal
+    document.getElementById('pgtoAno').value = new Date().getFullYear();
+    document.getElementById('orcAno').value = new Date().getFullYear();
+
+    // Enter key on login
+    document.getElementById('loginPass').addEventListener('keypress', e => {
+        if (e.key === 'Enter') doLogin();
+    });
+});
+</script>
+</body>
+</html>
