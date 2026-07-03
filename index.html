@@ -1874,6 +1874,20 @@ function doInit(cfg) {
 function showLogin() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('pendingScreen').style.display = 'none';
+
+    // Limpar todos os campos de login e cadastro
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginError').textContent = '';
+    document.getElementById('regNome').value = '';
+    document.getElementById('regEmail').value = '';
+    document.getElementById('regPass').value = '';
+    document.getElementById('regPassConfirm').value = '';
+    document.getElementById('regError').textContent = '';
+
+    // Voltar para aba Entrar
+    switchLoginTab('entrar');
 }
 
 function enterApp() {
