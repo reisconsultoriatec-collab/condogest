@@ -1856,9 +1856,13 @@ function doInit(cfg) {
         if (user) {
             APP.currentUser = user;
             touchActivity();
+            // Se estiver no meio de um cadastro, NÃO processar aqui
+            // O doRegister controla o fluxo diretamente
+            if (APP._isRegistering) return;
             loadUserProfile(user.uid);
         } else {
             APP.currentUser = null;
+            APP._isRegistering = false;
             showLogin();
         }
     });
@@ -1962,13 +1966,21 @@ async function doRegister() {
         return;
     }
 
+    // Bloquear onAuthStateChanged durante o cadastro
+    APP._isRegistering = true;
+
     try {
-        const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
-        // Primeiro usuário vira admin aprovado automaticamente
+        // Verificar se é o primeiro usuário ANTES de criar a conta Auth
         const usersSnap = await APP.db.collection('user_profiles').get();
         const isFirst = usersSnap.empty;
         const perfil = isFirst ? 'admin' : 'usuario';
-        await APP.db.collection('user_profiles').doc(cred.user.uid).set({
+
+        // Criar conta Auth (dispara onAuthStateChanged, mas _isRegistering bloqueia)
+        const cred = await APP.auth.createUserWithEmailAndPassword(email, pass);
+        APP.currentUser = cred.user;
+
+        // Criar perfil no Firestore
+        const profileData = {
             nome: nome,
             email: email,
             perfil: perfil,
@@ -1978,19 +1990,22 @@ async function doRegister() {
             aprovado: isFirst ? true : false,
             criadoEm: new Date().toISOString(),
             criadoPor: isFirst ? 'auto_first_user' : 'self_register'
-        });
-        auditLog('REGISTER', { email: email, nome: nome, perfil: perfil, firstUser: isFirst });
+        };
+        await APP.db.collection('user_profiles').doc(cred.user.uid).set(profileData);
+        APP.userProfile = profileData;
+
+        auditLog('REGISTER', { email, nome, perfil, firstUser: isFirst });
 
         if (isFirst) {
+            APP._isRegistering = false;
             toast('Conta administrador criada com sucesso!');
-            // O onAuthStateChanged vai chamar loadUserProfile -> enterApp
+            enterApp();
         } else {
-            // Forçar mostrar tela de aprovação imediatamente
-            APP.currentUser = cred.user;
-            APP.userProfile = { nome, email, perfil, aprovado: false, status: 'pendente' };
+            // Mostrar tela de pendência e deslogar do Auth
             showPendingScreen();
         }
     } catch(e) {
+        APP._isRegistering = false;
         if (e.code === 'auth/email-already-in-use') {
             errEl.textContent = 'Este e-mail já está cadastrado.';
         } else {
@@ -2024,39 +2039,55 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Verificar se conta está aprovada (admin sempre aprovado)
-            if (APP.userProfile.aprovado === false && APP.userProfile.perfil !== 'admin') {
+            // Verificar se conta está aprovada
+            // Admin é sempre aprovado; qualquer outro precisa de aprovado === true
+            if (APP.userProfile.perfil !== 'admin' && APP.userProfile.aprovado !== true) {
                 showPendingScreen();
                 return;
             }
 
             enterApp();
         } else {
-            // Auto-create profile for first user (becomes admin, auto-approved)
+            // Perfil não existe — verificar se é o primeiro usuário
             const usersSnap = await APP.db.collection('user_profiles').get();
-            const isFirst = usersSnap.size <= 1; // Only this user exists
-            APP.userProfile = {
-                nome: APP.currentUser.email.split('@')[0],
-                email: APP.currentUser.email,
-                perfil: isFirst ? 'admin' : 'usuario',
-                permissoes: isFirst ? [] : ['dashboard'],
-                condosPermitidos: [],
-                status: 'ativo',
-                aprovado: isFirst ? true : false,
-                criadoEm: new Date().toISOString()
-            };
-            await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
+            const isFirst = usersSnap.empty;
 
-            if (!APP.userProfile.aprovado) {
+            if (isFirst) {
+                // Primeiro usuário: criar como admin aprovado
+                APP.userProfile = {
+                    nome: APP.currentUser.email.split('@')[0],
+                    email: APP.currentUser.email,
+                    perfil: 'admin',
+                    permissoes: [],
+                    condosPermitidos: [],
+                    status: 'ativo',
+                    aprovado: true,
+                    criadoEm: new Date().toISOString()
+                };
+                await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
+                enterApp();
+            } else {
+                // Não é o primeiro: criar como pendente
+                APP.userProfile = {
+                    nome: APP.currentUser.email.split('@')[0],
+                    email: APP.currentUser.email,
+                    perfil: 'usuario',
+                    permissoes: ['dashboard'],
+                    condosPermitidos: [],
+                    status: 'pendente',
+                    aprovado: false,
+                    criadoEm: new Date().toISOString(),
+                    criadoPor: 'self_register'
+                };
+                await APP.db.collection('user_profiles').doc(uid).set(APP.userProfile);
                 showPendingScreen();
-                return;
             }
-            enterApp();
         }
     } catch(e) {
         console.error('loadUserProfile:', e);
-        APP.userProfile = { nome: APP.currentUser.email, perfil: 'admin', permissoes: [], condosPermitidos: [], aprovado: true };
-        enterApp();
+        // Em caso de erro, NÃO dar acesso — mostrar mensagem e deslogar
+        toast('Erro ao carregar perfil. Tente novamente.', 'error');
+        APP.auth.signOut();
     }
 }
 
@@ -2090,6 +2121,7 @@ async function checkApproval() {
 }
 
 function pendingLogout() {
+    APP._isRegistering = false;
     document.getElementById('pendingScreen').style.display = 'none';
     if (APP.firebaseReady && APP.auth) {
         APP.auth.signOut();
@@ -2108,6 +2140,11 @@ async function loadAllData() {
     }
 
     try {
+        // Carregar usuários SEMPRE (independente do condomínio)
+        const usrSnap = await APP.db.collection('user_profiles').get();
+        APP.usuarios = []; usrSnap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
+        renderUsuarios();
+
         // Load condominios
         const condoSnap = await APP.db.collection('condominios').orderBy('nome').get();
         APP.condominios = [];
@@ -2180,11 +2217,6 @@ async function loadCondoData() {
         const orcSnap = await APP.db.collection('condominios').doc(cid).collection('orcamento').get();
         APP.orcamento = []; orcSnap.forEach(d => APP.orcamento.push({ id: d.id, ...d.data() }));
         renderOrcamento();
-
-        // Usuarios
-        const usrSnap = await APP.db.collection('user_profiles').get();
-        APP.usuarios = []; usrSnap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
-        renderUsuarios();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
