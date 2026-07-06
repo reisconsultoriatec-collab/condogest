@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
 <!-- Firebase Compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -759,6 +760,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="nav-item" data-page="pagamentos" onclick="navigateTo('pagamentos')">
                     <span class="nav-icon"><i class="ti ti-circle-check"></i></span> Pagamentos Taxas
                 </div>
+                <div class="nav-item" data-page="boletos" onclick="navigateTo('boletos')">
+                    <span class="nav-icon"><i class="ti ti-file-barcode"></i></span> Boletos / PIX
+                </div>
                 <div class="nav-item" data-page="inadimplentes" onclick="navigateTo('inadimplentes')">
                     <span class="nav-icon"><i class="ti ti-alert-triangle"></i></span> Inadimplentes
                 </div>
@@ -1033,6 +1037,68 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             </div>
         </section>
 
+        <!-- ============ BOLETOS / PIX ============ -->
+        <section class="page-section" id="pg-boletos">
+            <div class="card">
+                <div class="card-title"><i class="ti ti-file-barcode"></i> Boletos / PIX</div>
+
+                <div class="tabs-bar" id="boletoTabsBar">
+                    <button class="tab-btn active" id="btnTabTaxasApto" onclick="switchTab(this,'tabTaxasApto')">Taxas por Apartamento</button>
+                    <button class="tab-btn" id="btnTabGerarBoleto" onclick="switchTab(this,'tabGerarBoleto')">Gerar Boleto</button>
+                </div>
+
+                <!-- ABA 1: Taxas por Apartamento -->
+                <div class="tab-pane active" id="tabTaxasApto">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Vincule taxas específicas a cada apartamento. Um apartamento pode ter múltiplas taxas (ex: condominial + 2 vagas de garagem).
+                    </p>
+                    <button class="btn btn-fill btn-sm" onclick="openTaxaAptoModal()" style="margin-bottom:1rem"><i class="ti ti-plus"></i> Vincular Taxa ao Apartamento</button>
+                    <div class="filter-bar">
+                        <select id="filterTaxaApto" onchange="renderTaxasApto()">
+                            <option value="">Todos os Apartamentos</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th>Apto</th><th>Descrição da Taxa</th><th>Valor Unitário</th><th>Qtd</th><th>Subtotal</th><th>Ações</th>
+                        </tr></thead><tbody id="tbTaxasApto"></tbody></table>
+                    </div>
+                </div>
+
+                <!-- ABA 2: Gerar Boleto -->
+                <div class="tab-pane" id="tabGerarBoleto">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Selecione o apartamento e o mês de referência para gerar o boleto com QR Code PIX.
+                    </p>
+                    <div class="form-grid" style="margin-bottom:1rem">
+                        <div class="form-group">
+                            <label>Apartamento *</label>
+                            <select id="boletoApto" onchange="previewBoleto()">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Mês Referência *</label>
+                            <input type="month" id="boletoMesRef" onchange="previewBoleto()">
+                        </div>
+                        <div class="form-group">
+                            <label>Vencimento</label>
+                            <input type="date" id="boletoVencimento">
+                        </div>
+                    </div>
+
+                    <div id="boletoPreview" style="display:none">
+                        <div id="boletoContent" style="border:1px solid var(--border);border-radius:var(--radius-md);padding:2rem;background:#fff;color:#1E293B;max-width:800px">
+                            <!-- Boleto será renderizado aqui -->
+                        </div>
+                        <div style="margin-top:1rem;display:flex;gap:0.5rem">
+                            <button class="btn btn-fill" onclick="imprimirBoleto()"><i class="ti ti-printer"></i> Imprimir / Salvar PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ============ INADIMPLENTES ============ -->
         <section class="page-section" id="pg-inadimplentes">
             <div class="card">
@@ -1161,7 +1227,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
                 <div class="table-container">
                     <table><thead><tr>
-                        <th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th>Aprovação</th><th>Ações</th>
+                        <th>Nome</th><th>Email</th><th>Perfil</th><th>Apto</th><th>Status</th><th>Aprovação</th><th>Ações</th>
                     </tr></thead><tbody id="tbUsuarios"></tbody></table>
                 </div>
             </div>
@@ -1502,6 +1568,11 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="inativo">Inativo</option>
                     </select>
                 </div>
+                <div class="form-group"><label>Apartamento Vinculado</label>
+                    <select id="userApto">
+                        <option value="">Nenhum (Admin/Síndico)</option>
+                    </select>
+                </div>
             </div>
 
             <div style="margin-top:1.2rem">
@@ -1515,6 +1586,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label class="access-item"><input type="checkbox" value="contas"> Contas a Pagar</label>
                     <label class="access-item"><input type="checkbox" value="conciliacao"> Conciliação</label>
                     <label class="access-item"><input type="checkbox" value="pagamentos"> Pagamentos</label>
+                    <label class="access-item"><input type="checkbox" value="boletos"> Boletos / PIX</label>
                     <label class="access-item"><input type="checkbox" value="inadimplentes"> Inadimplentes</label>
                     <label class="access-item"><input type="checkbox" value="orcamento"> Orçamento</label>
                     <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
@@ -1561,6 +1633,48 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     </div>
 </div>
 
+<!-- Modal Taxa por Apartamento -->
+<div class="modal-overlay" id="modalTaxaApto">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Vincular Taxa ao Apartamento</h3>
+            <button class="modal-close" onclick="closeModal('modalTaxaApto')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="taxaAptoEditId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Apartamento *</label>
+                    <select id="taxaAptoApto"></select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição da Taxa *</label>
+                    <input type="text" id="taxaAptoDescricao" placeholder="Ex: Taxa Condominial, Vaga Garagem...">
+                </div>
+                <div class="form-group">
+                    <label>Valor Unitário (R$) *</label>
+                    <input type="number" step="0.01" id="taxaAptoValor">
+                </div>
+                <div class="form-group">
+                    <label>Quantidade *</label>
+                    <input type="number" id="taxaAptoQtd" value="1" min="1" max="10">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Observações</label>
+                    <input type="text" id="taxaAptoObs" placeholder="Ex: Vaga coberta G1, Vaga descoberta G2...">
+                </div>
+            </div>
+            <div style="margin-top:0.8rem;padding:0.8rem;background:var(--bg-main);border-radius:var(--radius-sm)">
+                <p style="font-size:0.8rem;color:var(--text-secondary)"><i class="ti ti-info-circle"></i> <strong>Dica:</strong> Para um apto que paga 2 vagas de garagem, crie uma entrada com Qtd = 2 ou duas entradas separadas (ex: "Vaga G1" e "Vaga G2") com valores diferentes se necessário.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalTaxaApto')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveTaxaApto()"><i class="ti ti-device-floppy"></i> Salvar</button>
+        </div>
+    </div>
+</div>
+
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1586,6 +1700,7 @@ const APP = {
     pagamentos: [],
     extrato: [],
     orcamento: [],
+    taxasApto: [],
     usuarios: [],
     categorias: ['Água','Energia','Gás','Manutenção','Limpeza','Segurança','Administração','Seguros','Elevadores','Jardim','Outros'],
     charts: {},
@@ -1730,6 +1845,7 @@ function navigateTo(page) {
         moradores:'Moradores', taxas:'Taxas e Cobranças', contas:'Contas a Pagar',
         conciliacao:'Conciliação Bancária', pagamentos:'Pagamentos de Taxas',
         inadimplentes:'Inadimplentes', orcamento:'Previsão Orçamentária',
+        boletos:'Boletos / PIX',
         relDespesas:'Relatório de Despesas', relReceitas:'Relatório de Receitas',
         relConciliacao:'Relatório de Conciliação', balancete:'Balancete',
         usuarios:'Gestão de Usuários', configuracoes:'Configurações'
@@ -1743,6 +1859,7 @@ function navigateTo(page) {
     else if (page === 'pagamentos') renderPagamentos();
     else if (page === 'inadimplentes') renderInadimplentes();
     else if (page === 'orcamento') renderOrcamento();
+    else if (page === 'boletos') { renderTaxasApto(); populateBoletoSelects(); }
     else if (page === 'relDespesas') renderRelDespesas();
     else if (page === 'relReceitas') renderRelReceitas();
     else if (page === 'relConciliacao') renderRelConciliacao();
@@ -1894,6 +2011,7 @@ function showLogin() {
 
 function enterApp() {
     document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('pendingScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'flex';
 
     if (APP.userProfile) {
@@ -1906,7 +2024,74 @@ function enterApp() {
         document.getElementById('userAvatar').textContent = inicial;
     }
 
+    applyMenuPermissions();
+    applyBoletoPermissions();
+
+    // Sempre iniciar no Dashboard
+    navigateTo('dashboard');
+
     loadAllData();
+}
+
+// ===== PERMISSÕES DA TELA DE BOLETOS =====
+function applyBoletoPermissions() {
+    const perfil = APP.userProfile?.perfil || 'usuario';
+    const isGestor = perfil === 'admin' || perfil === 'sindico';
+
+    const btnTaxasApto = document.getElementById('btnTabTaxasApto');
+    const tabTaxasApto = document.getElementById('tabTaxasApto');
+    const btnGerarBoleto = document.getElementById('btnTabGerarBoleto');
+    const tabGerarBoleto = document.getElementById('tabGerarBoleto');
+
+    if (!isGestor) {
+        // Usuário comum: esconder aba "Taxas por Apartamento", mostrar só "Gerar Boleto"
+        if (btnTaxasApto) btnTaxasApto.style.display = 'none';
+        if (tabTaxasApto) tabTaxasApto.classList.remove('active');
+        if (btnGerarBoleto) { btnGerarBoleto.classList.add('active'); }
+        if (tabGerarBoleto) tabGerarBoleto.classList.add('active');
+    } else {
+        // Admin/Síndico: mostrar tudo
+        if (btnTaxasApto) btnTaxasApto.style.display = '';
+    }
+}
+
+// ===== APLICAR PERMISSÕES NO MENU =====
+function applyMenuPermissions() {
+    const perfil = APP.userProfile?.perfil || 'usuario';
+    const permissoes = APP.userProfile?.permissoes || [];
+    const isAdmin = perfil === 'admin';
+    const isSindico = perfil === 'sindico';
+    const isGestor = isAdmin || isSindico;
+
+    // Admin e Síndico veem tudo
+    if (isGestor) {
+        document.querySelectorAll('.nav-item').forEach(item => item.style.display = '');
+        document.querySelectorAll('.nav-section').forEach(sec => sec.style.display = '');
+        return;
+    }
+
+    // Para outros perfis, ocultar itens sem permissão
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+        const page = item.getAttribute('data-page');
+        // Dashboard é sempre visível
+        if (page === 'dashboard') {
+            item.style.display = '';
+        } else if (permissoes.includes(page)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    // Ocultar seções inteiras se nenhum item visível dentro delas
+    document.querySelectorAll('.nav-section').forEach(section => {
+        const visibleItems = section.querySelectorAll('.nav-item[data-page]');
+        let hasVisible = false;
+        visibleItems.forEach(item => {
+            if (item.style.display !== 'none') hasVisible = true;
+        });
+        section.style.display = hasVisible ? '' : 'none';
+    });
 }
 
 // ===== LOGIN TAB SWITCH =====
@@ -2250,6 +2435,12 @@ async function loadCondoData() {
         const orcSnap = await APP.db.collection('condominios').doc(cid).collection('orcamento').get();
         APP.orcamento = []; orcSnap.forEach(d => APP.orcamento.push({ id: d.id, ...d.data() }));
         renderOrcamento();
+
+        // Taxas por Apartamento
+        const taSnap = await APP.db.collection('condominios').doc(cid).collection('taxas_apartamento').orderBy('apto').get();
+        APP.taxasApto = []; taSnap.forEach(d => APP.taxasApto.push({ id: d.id, ...d.data() }));
+        renderTaxasApto();
+        populateBoletoSelects();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
@@ -3371,6 +3562,361 @@ async function deleteOrcamento(id) {
     await loadCondoData();
 }
 
+// ===== BOLETOS / PIX =====
+
+// Dados em APP.taxasApto = []
+// Estrutura: { id, apto, descricao, valor, quantidade, obs }
+
+async function loadTaxasApto() {
+    if (!APP.firebaseReady || !APP.currentCondoId) return;
+    try {
+        const snap = await condoRef().collection('taxas_apartamento').orderBy('apto').get();
+        APP.taxasApto = [];
+        snap.forEach(d => APP.taxasApto.push({ id: d.id, ...d.data() }));
+    } catch(e) {
+        console.warn('loadTaxasApto:', e);
+        APP.taxasApto = APP.taxasApto || [];
+    }
+    renderTaxasApto();
+    populateBoletoSelects();
+}
+
+function renderTaxasApto() {
+    const filterApto = document.getElementById('filterTaxaApto')?.value || '';
+    let list = APP.taxasApto || [];
+    if (filterApto) list = list.filter(t => t.apto === filterApto);
+
+    // Populate filter
+    const filterSel = document.getElementById('filterTaxaApto');
+    if (filterSel) {
+        const aptos = [...new Set((APP.taxasApto||[]).map(t => t.apto))].sort();
+        const current = filterSel.value;
+        filterSel.innerHTML = '<option value="">Todos os Apartamentos</option>' +
+            aptos.map(a => `<option value="${H(a)}">${H(a)}</option>`).join('');
+        filterSel.value = current;
+    }
+
+    const tb = document.getElementById('tbTaxasApto');
+    if (!tb) return;
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma taxa vinculada a apartamentos</p></td></tr>';
+        return;
+    }
+
+    // Agrupar por apto
+    const byApto = {};
+    list.forEach(t => {
+        if (!byApto[t.apto]) byApto[t.apto] = [];
+        byApto[t.apto].push(t);
+    });
+
+    let html = '';
+    Object.entries(byApto).sort((a,b) => a[0].localeCompare(b[0])).forEach(([apto, taxas]) => {
+        const totalApto = taxas.reduce((s,t) => s + (t.valor||0) * (t.quantidade||1), 0);
+        taxas.forEach((t, idx) => {
+            const sub = (t.valor||0) * (t.quantidade||1);
+            html += `<tr>
+                ${idx === 0 ? `<td rowspan="${taxas.length}" style="vertical-align:middle;font-weight:700;font-size:1rem">${H(apto)}</td>` : ''}
+                <td>${H(t.descricao)} ${t.obs ? '<span style="color:var(--text-light);font-size:0.78rem">('+H(t.obs)+')</span>' : ''}</td>
+                <td>${fmtMoney(t.valor)}</td>
+                <td style="text-align:center">${t.quantidade||1}</td>
+                <td><strong>${fmtMoney(sub)}</strong></td>
+                <td>
+                    <button class="btn btn-outline btn-sm" onclick="editTaxaApto('${t.id}')"><i class="ti ti-pencil"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteTaxaApto('${t.id}')"><i class="ti ti-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        html += `<tr style="background:rgba(37,99,235,0.04)"><td colspan="4" style="text-align:right;font-weight:600">Total Apto ${H(apto)}:</td><td><strong style="color:var(--primary)">${fmtMoney(totalApto)}</strong></td><td></td></tr>`;
+    });
+
+    tb.innerHTML = html;
+}
+
+function openTaxaAptoModal() {
+    document.getElementById('taxaAptoEditId').value = '';
+    document.getElementById('taxaAptoDescricao').value = '';
+    document.getElementById('taxaAptoValor').value = '';
+    document.getElementById('taxaAptoQtd').value = '1';
+    document.getElementById('taxaAptoObs').value = '';
+
+    // Populate apto select
+    const sel = document.getElementById('taxaAptoApto');
+    sel.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+
+    openModal('modalTaxaApto');
+}
+
+function editTaxaApto(id) {
+    const t = (APP.taxasApto||[]).find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('taxaAptoEditId').value = id;
+    document.getElementById('taxaAptoDescricao').value = t.descricao || '';
+    document.getElementById('taxaAptoValor').value = t.valor || '';
+    document.getElementById('taxaAptoQtd').value = t.quantidade || 1;
+    document.getElementById('taxaAptoObs').value = t.obs || '';
+
+    const sel = document.getElementById('taxaAptoApto');
+    sel.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+    sel.value = t.apto;
+
+    openModal('modalTaxaApto');
+}
+
+async function saveTaxaApto() {
+    const apto = document.getElementById('taxaAptoApto').value;
+    const descricao = document.getElementById('taxaAptoDescricao').value.trim();
+    const valor = parseFloat(document.getElementById('taxaAptoValor').value);
+    const quantidade = parseInt(document.getElementById('taxaAptoQtd').value) || 1;
+    const obs = document.getElementById('taxaAptoObs').value.trim();
+
+    if (!apto || !descricao || isNaN(valor)) { toast('Preencha apartamento, descrição e valor', 'error'); return; }
+
+    const data = { apto, descricao, valor, quantidade, obs };
+    const id = document.getElementById('taxaAptoEditId').value;
+    const res = await fbSave('taxas_apartamento', id || null, data);
+    if (res) {
+        closeModal('modalTaxaApto');
+        toast('Taxa vinculada com sucesso!');
+        await loadTaxasApto();
+    }
+}
+
+async function deleteTaxaApto(id) {
+    if (!confirm('Desvincular esta taxa do apartamento?')) return;
+    await fbDelete('taxas_apartamento', id);
+    await loadTaxasApto();
+}
+
+// ===== GERAÇÃO DE BOLETO COM QR PIX =====
+
+function populateBoletoSelects() {
+    const sel = document.getElementById('boletoApto');
+    if (!sel) return;
+
+    const isGestor = APP.userProfile && (APP.userProfile.perfil === 'admin' || APP.userProfile.perfil === 'sindico');
+    const userApto = APP.userProfile?.apartamentoVinculado || '';
+
+    let aptos = [...new Set((APP.taxasApto||[]).map(t => t.apto))].sort();
+
+    // Se não é admin/síndico, filtra apenas o apartamento vinculado
+    if (!isGestor && userApto) {
+        aptos = aptos.filter(a => a === userApto);
+    }
+
+    sel.innerHTML = '<option value="">Selecione o Apartamento...</option>' +
+        aptos.map(a => {
+            const morador = APP.moradores.find(m => m.apto === a);
+            return `<option value="${H(a)}">${H(a)}${morador ? ' - '+H(morador.nome) : ''}</option>`;
+        }).join('');
+
+    // Se usuário tem apartamento vinculado e só tem uma opção, selecionar automaticamente
+    if (!isGestor && userApto && aptos.length === 1) {
+        sel.value = userApto;
+        previewBoleto();
+    }
+
+    // Default month
+    const now = new Date();
+    const mesRef = document.getElementById('boletoMesRef');
+    if (mesRef && !mesRef.value) {
+        mesRef.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    }
+}
+
+function previewBoleto() {
+    const apto = document.getElementById('boletoApto').value;
+    const mesRef = document.getElementById('boletoMesRef').value;
+    const vencimento = document.getElementById('boletoVencimento').value;
+
+    if (!apto || !mesRef) {
+        document.getElementById('boletoPreview').style.display = 'none';
+        return;
+    }
+
+    const [anoRef, mesNum] = mesRef.split('-');
+    const mesNome = MESES[parseInt(mesNum)] || mesNum;
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const morador = APP.moradores.find(m => m.apto === apto) || {};
+    const taxasDoApto = (APP.taxasApto||[]).filter(t => t.apto === apto);
+
+    if (taxasDoApto.length === 0) {
+        toast('Nenhuma taxa vinculada a este apartamento. Vincule na aba "Taxas por Apartamento".', 'warning');
+        document.getElementById('boletoPreview').style.display = 'none';
+        return;
+    }
+
+    const totalGeral = taxasDoApto.reduce((s,t) => s + (t.valor||0) * (t.quantidade||1), 0);
+
+    // Gerar QR Code PIX
+    let qrHtml = '';
+    const pixKey = condo.pix;
+    if (pixKey) {
+        const pixPayload = gerarPixPayload({
+            chave: pixKey,
+            nome: (condo.nome || 'Condominio').substring(0, 25),
+            cidade: 'SAO PAULO',
+            valor: totalGeral.toFixed(2),
+            txid: `COND${apto}${anoRef}${mesNum}`
+        });
+        try {
+            const qr = qrcode(0, 'M');
+            qr.addData(pixPayload);
+            qr.make();
+            qrHtml = `
+                <div style="text-align:center;margin-top:1.5rem;padding:1.2rem;border:2px dashed #ccc;border-radius:12px;background:#fafafa">
+                    <p style="font-weight:700;font-size:0.95rem;margin-bottom:0.8rem;color:#1A2744">📱 Pague via PIX</p>
+                    <div style="display:inline-block;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0">
+                        ${qr.createImgTag(4, 8)}
+                    </div>
+                    <p style="font-size:0.75rem;color:#64748B;margin-top:0.8rem">Chave PIX: <strong>${H(pixKey)}</strong></p>
+                    <p style="font-size:0.7rem;color:#94A3B8;margin-top:0.3rem">Escaneie o QR Code com o app do seu banco</p>
+                </div>`;
+        } catch(e) {
+            console.warn('QR error:', e);
+            qrHtml = `<p style="text-align:center;color:#64748B;margin-top:1rem">Chave PIX: <strong>${H(pixKey)}</strong></p>`;
+        }
+    }
+
+    // Dados bancários
+    let dadosBancarios = '';
+    if (condo.banco) {
+        dadosBancarios = `<p style="font-size:0.82rem;color:#475569;margin-top:0.5rem"><strong>Depósito/Transferência:</strong> Banco ${H(condo.banco)} | Ag: ${H(condo.agencia||'-')} | Cc: ${H(condo.conta||'-')}</p>`;
+    }
+
+    // Montar boleto
+    const html = `
+        <div style="text-align:center;padding-bottom:1rem;border-bottom:2px solid #1A2744;margin-bottom:1.2rem">
+            <h2 style="color:#1A2744;margin:0;font-size:1.3rem">${H(condo.nome || 'Condomínio')}</h2>
+            <p style="font-size:0.82rem;color:#64748B;margin-top:0.2rem">${H(condo.endereco||'')}${condo.cnpj ? ' | CNPJ: '+H(condo.cnpj) : ''}</p>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+            <div>
+                <p style="font-size:0.75rem;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px">Apartamento</p>
+                <p style="font-size:1.1rem;font-weight:700">${H(apto)}</p>
+            </div>
+            <div>
+                <p style="font-size:0.75rem;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px">Morador</p>
+                <p style="font-size:1rem;font-weight:600">${H(morador.nome||'-')}</p>
+            </div>
+            <div>
+                <p style="font-size:0.75rem;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px">Referência</p>
+                <p style="font-size:1rem;font-weight:600">${mesNome}/${anoRef}</p>
+            </div>
+            <div>
+                <p style="font-size:0.75rem;color:#94A3B8;text-transform:uppercase;letter-spacing:0.5px">Vencimento</p>
+                <p style="font-size:1rem;font-weight:600">${vencimento ? fmtDate(vencimento) : 'Não definido'}</p>
+            </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;margin-bottom:0.5rem">
+            <thead><tr style="background:#f1f5f9">
+                <th style="text-align:left;padding:0.6rem 0.8rem;font-size:0.75rem;text-transform:uppercase;color:#64748B;border-bottom:2px solid #e2e8f0">Descrição</th>
+                <th style="text-align:center;padding:0.6rem 0.8rem;font-size:0.75rem;text-transform:uppercase;color:#64748B;border-bottom:2px solid #e2e8f0">Qtd</th>
+                <th style="text-align:right;padding:0.6rem 0.8rem;font-size:0.75rem;text-transform:uppercase;color:#64748B;border-bottom:2px solid #e2e8f0">Vlr Unit.</th>
+                <th style="text-align:right;padding:0.6rem 0.8rem;font-size:0.75rem;text-transform:uppercase;color:#64748B;border-bottom:2px solid #e2e8f0">Subtotal</th>
+            </tr></thead>
+            <tbody>
+                ${taxasDoApto.map(t => {
+                    const sub = (t.valor||0) * (t.quantidade||1);
+                    return `<tr>
+                        <td style="padding:0.6rem 0.8rem;border-bottom:1px solid #f1f5f9">${H(t.descricao)} ${t.obs ? '<span style="font-size:0.78rem;color:#94A3B8">('+H(t.obs)+')</span>' : ''}</td>
+                        <td style="text-align:center;padding:0.6rem 0.8rem;border-bottom:1px solid #f1f5f9">${t.quantidade||1}</td>
+                        <td style="text-align:right;padding:0.6rem 0.8rem;border-bottom:1px solid #f1f5f9">${fmtMoney(t.valor)}</td>
+                        <td style="text-align:right;padding:0.6rem 0.8rem;border-bottom:1px solid #f1f5f9;font-weight:600">${fmtMoney(sub)}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+            <tfoot>
+                <tr style="background:#1A2744;color:#fff">
+                    <td colspan="3" style="padding:0.8rem;font-weight:700;font-size:1.05rem;border-radius:0 0 0 8px">TOTAL A PAGAR</td>
+                    <td style="text-align:right;padding:0.8rem;font-weight:800;font-size:1.2rem;border-radius:0 0 8px 0">${fmtMoney(totalGeral)}</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        ${qrHtml}
+        ${dadosBancarios}
+
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px dashed #ccc;text-align:center">
+            <p style="font-size:0.72rem;color:#94A3B8">Documento gerado por CondoGest em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</p>
+        </div>
+    `;
+
+    document.getElementById('boletoContent').innerHTML = html;
+    document.getElementById('boletoPreview').style.display = 'block';
+}
+
+// ===== GERADOR PIX PAYLOAD (Padrão BR Code / EMV) =====
+function gerarPixPayload({ chave, nome, cidade, valor, txid }) {
+    function tlv(id, val) {
+        const len = String(val.length).padStart(2, '0');
+        return id + len + val;
+    }
+
+    // Merchant Account Information (PIX)
+    const mai = tlv('00', 'br.gov.bcb.pix') + tlv('01', chave);
+
+    let payload = '';
+    payload += tlv('00', '01');                          // Payload Format Indicator
+    payload += tlv('26', mai);                           // Merchant Account Info
+    payload += tlv('52', '0000');                         // MCC
+    payload += tlv('53', '986');                          // Currency (BRL)
+    if (valor && parseFloat(valor) > 0) {
+        payload += tlv('54', valor);                     // Transaction Amount
+    }
+    payload += tlv('58', 'BR');                           // Country
+    payload += tlv('59', nome.substring(0, 25));         // Merchant Name
+    payload += tlv('60', cidade.substring(0, 15));       // Merchant City
+
+    // Additional Data
+    if (txid) {
+        payload += tlv('62', tlv('05', txid.substring(0, 25)));
+    }
+
+    // CRC16 placeholder
+    payload += '6304';
+
+    // Calcular CRC16 (CCITT-FALSE)
+    const crc = crc16(payload);
+    payload += crc;
+
+    return payload;
+}
+
+function crc16(str) {
+    let crc = 0xFFFF;
+    for (let i = 0; i < str.length; i++) {
+        crc ^= str.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+            if (crc & 0x8000) {
+                crc = (crc << 1) ^ 0x1021;
+            } else {
+                crc = crc << 1;
+            }
+            crc &= 0xFFFF;
+        }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+function imprimirBoleto() {
+    const content = document.getElementById('boletoContent')?.innerHTML;
+    if (!content) { toast('Gere o boleto primeiro', 'warning'); return; }
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Boleto - CondoGest</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <style>
+            body { font-family:'Inter',Arial,sans-serif; padding:30px; color:#1E293B; max-width:800px; margin:0 auto; }
+            table { border-collapse:collapse; width:100%; }
+            @media print { body { padding:15px; } }
+        </style>
+    </head><body>${content}</body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 300);
+}
+
 // ===== RELATÓRIOS =====
 function renderRelDespesas() {
     const ano = document.getElementById('relDespAno')?.value || new Date().getFullYear();
@@ -3553,7 +4099,7 @@ async function removeCategoria(i) {
 function renderUsuarios() {
     const tb = document.getElementById('tbUsuarios');
     if (APP.usuarios.length === 0) {
-        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum usuário</p></td></tr>';
+        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum usuário</p></td></tr>';
         return;
     }
 
@@ -3573,11 +4119,15 @@ function renderUsuarios() {
             ? `<button class="btn btn-success btn-sm" onclick="approveUser('${u.id}')" title="Aprovar"><i class="ti ti-check"></i></button>
                <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}')" title="Rejeitar"><i class="ti ti-x"></i></button>`
             : '';
+        const aptoDisplay = u.apartamentoVinculado
+            ? `<span class="badge badge-blue">${H(u.apartamentoVinculado)}</span>`
+            : '<span style="color:var(--text-light);font-size:0.78rem">—</span>';
 
         return `<tr style="${isPending?'background:rgba(245,158,11,0.05)':''}">
             <td>${H(u.nome)} ${isPending?'<span style="font-size:0.7rem;color:var(--secondary)"> (novo)</span>':''}</td>
             <td>${H(u.email)}</td>
             <td><span class="badge badge-blue">${H(u.perfil)}</span></td>
+            <td>${aptoDisplay}</td>
             <td>${u.status==='ativo'?'<span class="badge badge-green">Ativo</span>':'<span class="badge badge-red">Inativo</span>'}</td>
             <td>${approvalBadge}</td>
             <td>
@@ -3593,6 +4143,13 @@ function renderUsuarios() {
         ac.innerHTML = APP.condominios.map(c =>
             `<label class="access-item"><input type="checkbox" value="${H(c.id)}"> ${H(c.nome)}</label>`
         ).join('');
+    }
+
+    // Populate apartment select in user modal
+    const aptoSel = document.getElementById('userApto');
+    if (aptoSel) {
+        aptoSel.innerHTML = '<option value="">Nenhum (Admin/Síndico)</option>' +
+            APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
     }
 
     // Mostrar contagem de pendentes no menu
@@ -3651,6 +4208,12 @@ function editUsuario(id) {
     document.getElementById('userPerfil').value = u.perfil || 'usuario';
     document.getElementById('userStatus').value = u.status || 'ativo';
 
+    // Populate apartment select now (moradores already loaded)
+    const aptoSel = document.getElementById('userApto');
+    aptoSel.innerHTML = '<option value="">Nenhum (Admin/Síndico)</option>' +
+        APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+    aptoSel.value = u.apartamentoVinculado || '';
+
     // Set permission checkboxes
     document.querySelectorAll('#accessGrid input[type="checkbox"]').forEach(cb => {
         cb.checked = u.perfil === 'admin' || (u.permissoes||[]).includes(cb.value);
@@ -3670,6 +4233,7 @@ async function saveUsuario() {
     const senha = document.getElementById('userSenha').value;
     const perfil = document.getElementById('userPerfil').value;
     const status = document.getElementById('userStatus').value;
+    const apartamentoVinculado = document.getElementById('userApto').value;
 
     if (!nome || !email) { toast('Preencha nome e email', 'error'); return; }
 
@@ -3685,19 +4249,15 @@ async function saveUsuario() {
 
     try {
         if (editId) {
-            // Update existing user profile
             await APP.db.collection('user_profiles').doc(editId).update({
-                nome, perfil, status, permissoes, condosPermitidos,
+                nome, perfil, status, permissoes, condosPermitidos, apartamentoVinculado,
                 atualizadoEm: new Date().toISOString()
             });
         } else {
-            // Create new user in Firebase Auth
             if (!senha || senha.length < 6) { toast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
-            // Note: In production, user creation should be done via Admin SDK / Cloud Function
-            // For now, we store the profile and the user creates their own account
             const tempId = 'pending_' + Date.now();
             await APP.db.collection('user_profiles').doc(tempId).set({
-                nome, email, perfil, status, permissoes, condosPermitidos,
+                nome, email, perfil, status, permissoes, condosPermitidos, apartamentoVinculado,
                 pendingPassword: true,
                 criadoEm: new Date().toISOString()
             });
