@@ -610,7 +610,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 <!-- =================== LOGIN / CADASTRO =================== -->
 <div id="loginScreen" class="login-overlay">
     <div class="login-box">
-        <div class="logo-icon">??</div>
+        <div class="logo-icon"><i class="ti ti-building" style="font-size:2rem"></i></div>
         <h1 style="font-style:italic">CondoGest</h1>
         <p>Gestão de Condomínios</p>
 
@@ -676,7 +676,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 <!-- =================== TELA AGUARDANDO APROVAÇÃO =================== -->
 <div id="pendingScreen" class="login-overlay" style="display:none">
     <div class="login-box">
-        <div class="logo-icon" style="background:linear-gradient(135deg,#F59E0B,#F97316)">?</div>
+        <div class="logo-icon" style="background:linear-gradient(135deg,#F59E0B,#F97316)"><i class="ti ti-hourglass" style="font-size:2rem"></i></div>
         <h1>Aguardando Aprovação</h1>
         <p style="margin-bottom:1rem">Sua conta foi criada com sucesso, porém está aguardando a aprovação do administrador do sistema.</p>
         <div style="background:var(--bg-main);border-radius:var(--radius-md);padding:1.2rem;margin-bottom:1.5rem;text-align:left">
@@ -824,7 +824,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 <main class="main-content">
     <header class="top-header">
         <div class="header-left">
-            <button class="btn-menu-mobile" onclick="toggleSidebar()">?</button>
+            <button class="btn-menu-mobile" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
             <span class="header-title" id="pageTitle">Dashboard</span>
         </div>
         <div class="header-right">
@@ -840,19 +840,19 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="stats-row" id="dashStats"></div>
             <div class="charts-grid">
                 <div class="card">
-                    <div class="card-title">?? Receitas vs Despesas (Mensal)</div>
+                    <div class="card-title"><i class="ti ti-chart-bar"></i> Receitas vs Despesas (Mensal)</div>
                     <div class="chart-container"><canvas id="chartRecDesp"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="card-title">?? Inadimplência por Apartamento</div>
+                    <div class="card-title"><i class="ti ti-home-exclamation"></i> Inadimplência por Apartamento</div>
                     <div class="chart-container"><canvas id="chartInadimplencia"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="card-title">?? Despesas por Categoria</div>
+                    <div class="card-title"><i class="ti ti-list-details"></i> Despesas por Categoria</div>
                     <div class="chart-container"><canvas id="chartDespCat"></canvas></div>
                 </div>
                 <div class="card">
-                    <div class="card-title">?? Previsão Orçamentária vs Realizado</div>
+                    <div class="card-title"><i class="ti ti-coins"></i> Previsão Orçamentária vs Realizado</div>
                     <div class="chart-container"><canvas id="chartOrcamento"></canvas></div>
                 </div>
             </div>
@@ -862,7 +862,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-condominios">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Condomínios Cadastrados</span>
+                    <span><i class="ti ti-building"></i> Condomínios Cadastrados</span>
                     <button class="btn btn-fill btn-sm" onclick="openCondoModal()">+ Novo</button>
                 </div>
                 <div class="table-container">
@@ -877,7 +877,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-responsaveis">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Responsáveis Legais</span>
+                    <span><i class="ti ti-user-shield"></i> Responsáveis Legais</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalResp')">+ Novo</button>
                 </div>
                 <div class="table-container">
@@ -892,7 +892,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-moradores">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Moradores</span>
+                    <span><i class="ti ti-home-2"></i> Moradores</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalMorador')">+ Novo</button>
                 </div>
                 <div class="filter-bar">
@@ -915,7 +915,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-taxas">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Taxas Cadastradas</span>
+                    <span><i class="ti ti-receipt-tax"></i> Taxas Cadastradas</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalTaxa')">+ Nova Taxa</button>
                 </div>
                 <div class="table-container">
@@ -930,7 +930,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-contas">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Contas a Pagar</span>
+                    <span><i class="ti ti-file-invoice"></i> Contas a Pagar</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalConta')">+ Nova Conta</button>
                 </div>
                 <div class="filter-bar">
@@ -954,7 +954,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ CONCILIAÇÃO BANCÁRIA ============ -->
         <section class="page-section" id="pg-conciliacao">
             <div class="card">
-                <div class="card-title">?? Conciliação Bancária</div>
+                <div class="card-title"><i class="ti ti-building-bank"></i> Conciliação Bancária</div>
 
                 <div class="tabs-bar">
                     <button class="tab-btn active" onclick="switchTab(this,'tabImport')">Importar Extrato</button>
@@ -1013,7 +1013,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-pagamentos">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>? Lançamento de Pagamentos</span>
+                    <span><i class="ti ti-circle-check"></i> Lançamento de Pagamentos</span>
                     <button class="btn btn-fill btn-sm" onclick="openPagamentoModal()">+ Lançar Pagamento</button>
                 </div>
                 <div class="filter-bar">
@@ -1102,7 +1102,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ INADIMPLENTES ============ -->
         <section class="page-section" id="pg-inadimplentes">
             <div class="card">
-                <div class="card-title">?? Painel de Inadimplentes</div>
+                <div class="card-title"><i class="ti ti-alert-triangle"></i> Painel de Inadimplentes</div>
                 <p style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary)">
                     Exibe apenas o número do apartamento e valores em aberto (sem nome do morador por privacidade).
                 </p>
@@ -1130,7 +1130,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-orcamento">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Previsão Orçamentária</span>
+                    <span><i class="ti ti-chart-bar"></i> Previsão Orçamentária</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalOrcamento')">+ Nova Previsão</button>
                 </div>
                 <div class="filter-bar">
@@ -1147,7 +1147,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ RELATÓRIO DESPESAS ============ -->
         <section class="page-section" id="pg-relDespesas">
             <div class="card">
-                <div class="card-title">?? Relatório de Despesas</div>
+                <div class="card-title"><i class="ti ti-report-money"></i> Relatório de Despesas</div>
                 <div class="filter-bar">
                     <select id="relDespAno" onchange="renderRelDespesas()"></select>
                     <select id="relDespMes" onchange="renderRelDespesas()">
@@ -1159,7 +1159,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')">??? Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
                 </div>
                 <div id="relDespContent"></div>
             </div>
@@ -1168,7 +1168,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ RELATÓRIO RECEITAS ============ -->
         <section class="page-section" id="pg-relReceitas">
             <div class="card">
-                <div class="card-title">?? Relatório de Receitas</div>
+                <div class="card-title"><i class="ti ti-report-analytics"></i> Relatório de Receitas</div>
                 <div class="filter-bar">
                     <select id="relRecAno" onchange="renderRelReceitas()"></select>
                     <select id="relRecMes" onchange="renderRelReceitas()">
@@ -1180,7 +1180,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')">??? Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
                 </div>
                 <div id="relRecContent"></div>
             </div>
@@ -1189,9 +1189,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ RELATÓRIO CONCILIAÇÃO ============ -->
         <section class="page-section" id="pg-relConciliacao">
             <div class="card">
-                <div class="card-title">?? Relatório de Conciliação Bancária</div>
+                <div class="card-title"><i class="ti ti-report-search"></i> Relatório de Conciliação Bancária</div>
                 <div class="filter-bar">
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relConciliacao')">??? Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relConciliacao')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
                 </div>
                 <div id="relConcContent"></div>
             </div>
@@ -1200,7 +1200,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ BALANCETE ============ -->
         <section class="page-section" id="pg-balancete">
             <div class="card">
-                <div class="card-title">?? Balancete - Prestação de Contas</div>
+                <div class="card-title"><i class="ti ti-scale"></i> Balancete - Prestação de Contas</div>
                 <div class="filter-bar">
                     <select id="balAno" onchange="renderBalancete()"></select>
                     <select id="balMes" onchange="renderBalancete()">
@@ -1212,7 +1212,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')">??? Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
                 </div>
                 <div id="balContent"></div>
             </div>
@@ -1222,7 +1222,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <section class="page-section" id="pg-usuarios">
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
-                    <span>?? Gestão de Usuários</span>
+                    <span><i class="ti ti-users-group"></i> Gestão de Usuários</span>
                     <button class="btn btn-fill btn-sm" onclick="openModal('modalUsuario')">+ Novo Usuário</button>
                 </div>
                 <div class="table-container">
@@ -1236,7 +1236,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ CONFIGURAÇÕES ============ -->
         <section class="page-section" id="pg-configuracoes">
             <div class="card">
-                <div class="card-title">?? Configurações do Sistema</div>
+                <div class="card-title"><i class="ti ti-settings"></i> Configurações do Sistema</div>
                 <div class="tabs-bar">
                     <button class="tab-btn active" onclick="switchTab(this,'tabFirebase')">Firebase</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabCategorias')">Categorias</button>
@@ -1274,8 +1274,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         </div>
                     </div>
                     <div class="form-row" style="margin-top:1rem">
-                        <button class="btn btn-fill" onclick="saveFirebaseConfig()">?? Salvar e Conectar</button>
-                        <button class="btn btn-outline" onclick="testFirebaseConnection()">?? Testar Conexão</button>
+                        <button class="btn btn-fill" onclick="saveFirebaseConfig()"><i class="ti ti-device-floppy"></i> Salvar e Conectar</button>
+                        <button class="btn btn-outline" onclick="testFirebaseConnection()"><i class="ti ti-plug"></i> Testar Conexão</button>
                     </div>
                 </div>
 
@@ -1335,7 +1335,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalCondo')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveCondo()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveCondo()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1366,7 +1366,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalResp')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveResponsavel()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveResponsavel()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1401,7 +1401,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalMorador')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveMorador()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveMorador()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1437,7 +1437,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalTaxa')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveTaxa()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveTaxa()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1470,7 +1470,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalConta')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveConta()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveConta()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1504,7 +1504,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalPagamento')">Cancelar</button>
-            <button class="btn btn-fill" onclick="savePagamento()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="savePagamento()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1536,7 +1536,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalOrcamento')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveOrcamento()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveOrcamento()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1605,7 +1605,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalUsuario')">Cancelar</button>
-            <button class="btn btn-fill" onclick="saveUsuario()">?? Salvar</button>
+            <button class="btn btn-fill" onclick="saveUsuario()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1623,12 +1623,12 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="form-group"><label>Apartamento</label><select id="gerarAptoSelect"><option value="todos">Todos</option></select></div>
                 <div class="form-group"><label>Mês Referência</label><input type="month" id="gerarMesRef"></div>
             </div>
-            <button class="btn btn-fill" onclick="gerarTaxaPDF()" style="margin-bottom:1rem">?? Gerar Documento</button>
+            <button class="btn btn-fill" onclick="gerarTaxaPDF()" style="margin-bottom:1rem"><i class="ti ti-file-text"></i> Gerar Documento</button>
             <div id="taxaPDFContent"></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalGerarTaxa')">Fechar</button>
-            <button class="btn btn-fill" onclick="imprimirTaxaGerada()">??? Imprimir / Salvar PDF</button>
+            <button class="btn btn-fill" onclick="imprimirTaxaGerada()"><i class="ti ti-printer"></i> Imprimir / Salvar PDF</button>
         </div>
     </div>
 </div>
@@ -2223,20 +2223,20 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Se já é admin aprovado ? entrar direto
+            // Se já é admin aprovado → entrar direto
             if (APP.userProfile.perfil === 'admin' && APP.userProfile.aprovado === true) {
                 enterApp();
                 return;
             }
 
-            // Se não está aprovado ? verificar se existe algum admin no sistema
+            // Se não está aprovado → verificar se existe algum admin no sistema
             if (APP.userProfile.aprovado !== true) {
                 try {
                     const adminSnap = await APP.db.collection('user_profiles')
                         .where('perfil', '==', 'admin').limit(1).get();
 
                     if (adminSnap.empty) {
-                        // Nenhum admin existe ? promover este usuário
+                        // Nenhum admin existe → promover este usuário
                         await APP.db.collection('user_profiles').doc(uid).update({
                             perfil: 'admin', aprovado: true, status: 'ativo',
                             permissoes: [], promovidoEm: new Date().toISOString()
@@ -2256,11 +2256,11 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Está aprovado (não admin) ? entrar
+            // Está aprovado (não admin) → entrar
             enterApp();
 
         } else {
-            // Perfil não existe no Firestore ? criar agora (primeiro login após cadastro)
+            // Perfil não existe no Firestore → criar agora (primeiro login após cadastro)
             const pendingName = localStorage.getItem('condogest_pending_name') || APP.currentUser.email.split('@')[0];
             localStorage.removeItem('condogest_pending_name');
 
@@ -2535,7 +2535,7 @@ function renderCondoSelect() {
 function renderCondominios() {
     const tb = document.getElementById('tbCondominios');
     if (APP.condominios.length === 0) {
-        tb.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon">??</div><p>Nenhum condomínio cadastrado</p></td></tr>';
+        tb.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="empty-icon"><i class="ti ti-building" style="font-size:3rem"></i></div><p>Nenhum condomínio cadastrado</p></td></tr>';
         return;
     }
     tb.innerHTML = APP.condominios.map(c => `<tr>
@@ -2544,8 +2544,8 @@ function renderCondominios() {
         <td>${H(c.endereco||'-')}</td>
         <td>${H(c.banco||'-')} ${c.agencia?'Ag:'+H(c.agencia):''} ${c.conta?'Cc:'+H(c.conta):''}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editCondo('${c.id}')">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteCondo('${c.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editCondo('${c.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCondo('${c.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -2655,8 +2655,8 @@ function renderResponsaveis() {
         <td>${fmtDate(r.inicio)}</td>
         <td>${fmtDate(r.fim)}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editResponsavel('${r.id}')">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteResponsavel('${r.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editResponsavel('${r.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteResponsavel('${r.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -2722,8 +2722,8 @@ function renderMoradores() {
         <td>${m.alugado==='sim'?'<span class="badge badge-amber">Sim</span>':'<span class="badge badge-green">Não</span>'}</td>
         <td>${H(m.locatario||'-')}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editMorador('${m.id}')">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteMorador('${m.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editMorador('${m.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteMorador('${m.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -2787,9 +2787,9 @@ function renderTaxas() {
         <td>${t.tipo==='recorrente'?'<span class="badge badge-blue">Mensal</span>':'<span class="badge badge-amber">Única</span>'}</td>
         <td>${H(t.formaPgto||'pix')}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editTaxa('${t.id}')">??</button>
-            <button class="btn btn-success btn-sm" onclick="openGerarTaxa()">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteTaxa('${t.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editTaxa('${t.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-success btn-sm" onclick="openGerarTaxa()"><i class="ti ti-file-text"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTaxa('${t.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -2949,8 +2949,8 @@ function renderContas() {
         <td>${fmtDate(c.vencimento)}</td>
         <td>${c.status==='pago'?'<span class="badge badge-green">Pago</span>':(vencido?'<span class="badge badge-red">Vencido</span>':'<span class="badge badge-amber">Pendente</span>')}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editConta('${c.id}')">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteConta('${c.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editConta('${c.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteConta('${c.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`;
     }).join('');
@@ -3144,7 +3144,7 @@ function autoDetectColumns(rows) {
         }
     }
 
-    console.log('Colunas detectadas ? Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
+    console.log('Colunas detectadas → Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
 
     // Converter linhas em itens estruturados
     const items = [];
@@ -3224,9 +3224,9 @@ function parseMoneyValue(v) {
 
 function normalizeDate(v) {
     let s = String(v).replace(/"/g, '').trim();
-    // 20260702 ? 02/07/2026
+    // 20260702 → 02/07/2026
     if (/^\d{8}$/.test(s)) return s.slice(6,8) + '/' + s.slice(4,6) + '/' + s.slice(0,4);
-    // 2026-07-02 ? 02/07/2026
+    // 2026-07-02 → 02/07/2026
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const p = s.split(/[-T]/); return p[2]+'/'+p[1]+'/'+p[0]; }
     // 02/07/2026 já está ok
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
@@ -3294,7 +3294,7 @@ function renderExtrato() {
         <td>${H(e.nDoc||'-')}</td>
         <td style="color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
         <td><span class="badge ${e.tipo==='C'?'badge-green':'badge-red'}">${e.tipo==='C'?'Crédito':'Débito'}</span></td>
-        <td>${e.conciliado?'<span class="badge badge-green">? Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
+        <td>${e.conciliado?'<span class="badge badge-green">✓ Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
     </tr>`).join('');
 
     // Render aba conciliação
@@ -3616,8 +3616,8 @@ function renderOrcamento() {
         <td>${fmtMoney(o.realizado||0)}</td>
         <td style="color:${(o.diferenca||0)>=0?'var(--accent)':'var(--accent-red)'};font-weight:600">${fmtMoney(o.diferenca||0)}</td>
         <td>
-            <button class="btn btn-outline btn-sm" onclick="editOrcamento('${o.id}')">??</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteOrcamento('${o.id}')">???</button>
+            <button class="btn btn-outline btn-sm" onclick="editOrcamento('${o.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="btn btn-danger btn-sm" onclick="deleteOrcamento('${o.id}')"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -3859,7 +3859,7 @@ function previewBoleto() {
             qr.make();
             qrHtml = `
                 <div style="text-align:center;margin-top:1.5rem;padding:1.2rem;border:2px dashed #ccc;border-radius:12px;background:#fafafa">
-                    <p style="font-weight:700;font-size:0.95rem;margin-bottom:0.8rem;color:#1A2744">?? Pague via PIX</p>
+                    <p style="font-weight:700;font-size:0.95rem;margin-bottom:0.8rem;color:#1A2744"><i class="ti ti-device-mobile" style="font-size:1.1rem"></i> Pague via PIX</p>
                     <div style="display:inline-block;padding:8px;background:#fff;border-radius:8px;border:1px solid #e2e8f0">
                         ${qr.createImgTag(4, 8)}
                     </div>
@@ -4072,9 +4072,9 @@ function renderRelConciliacao() {
 
     let html = `<h4 style="margin-bottom:1rem">Conciliação Bancária</h4>`;
     html += `<div class="stats-row" style="margin-bottom:1rem">
-        <div class="stat-card"><div class="stat-icon green">?</div><div class="stat-info"><h4>${conciliados.length}</h4><span>Conciliados</span></div></div>
-        <div class="stat-card"><div class="stat-icon amber">?</div><div class="stat-info"><h4>${pendentes.length}</h4><span>Pendentes</span></div></div>
-        <div class="stat-card"><div class="stat-icon blue">??</div><div class="stat-info"><h4>${APP.extrato.length}</h4><span>Total</span></div></div>
+        <div class="stat-card"><div class="stat-icon green">✓</div><div class="stat-info"><h4>${conciliados.length}</h4><span>Conciliados</span></div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-hourglass"></i></div><div class="stat-info"><h4>${pendentes.length}</h4><span>Pendentes</span></div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-chart-pie"></i></div><div class="stat-info"><h4>${APP.extrato.length}</h4><span>Total</span></div></div>
     </div>`;
 
     if (conciliados.length > 0) {
@@ -4115,9 +4115,9 @@ function renderBalancete() {
     </div>
 
     <div class="stats-row">
-        <div class="stat-card"><div class="stat-icon green">??</div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Total Receitas</span></div></div>
-        <div class="stat-card"><div class="stat-icon red">??</div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Total Despesas</span></div></div>
-        <div class="stat-card"><div class="stat-icon ${saldo>=0?'blue':'red'}">??</div><div class="stat-info"><h4>${fmtMoney(saldo)}</h4><span>Saldo</span></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-trending-up"></i></div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Total Receitas</span></div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Total Despesas</span></div></div>
+        <div class="stat-card"><div class="stat-icon ${saldo>=0?'blue':'red'}"><i class="ti ti-coins"></i></div><div class="stat-info"><h4>${fmtMoney(saldo)}</h4><span>Saldo</span></div></div>
     </div>
 
     <h4 style="margin:1.5rem 0 0.5rem;color:var(--accent)">RECEITAS</h4>
@@ -4163,7 +4163,7 @@ function renderCategorias() {
     el.innerHTML = APP.categorias.map((c,i) => `
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
             <span style="flex:1">${H(c)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">?</button>
+            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">✕</button>
         </div>
     `).join('');
     populateContaCategorias();
@@ -4388,10 +4388,10 @@ function renderDashboard() {
     });
 
     document.getElementById('dashStats').innerHTML = `
-        <div class="stat-card"><div class="stat-icon blue">??</div><div class="stat-info"><h4>${totalMoradores}</h4><span>Moradores</span></div></div>
-        <div class="stat-card"><div class="stat-icon green">??</div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Receitas</span></div></div>
-        <div class="stat-card"><div class="stat-icon amber">??</div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Despesas</span></div></div>
-        <div class="stat-card"><div class="stat-icon red">??</div><div class="stat-info"><h4>${inadCount}</h4><span>Inadimplentes</span></div></div>
+        <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-home-2"></i></div><div class="stat-info"><h4>${totalMoradores}</h4><span>Moradores</span></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-trending-up"></i></div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Receitas</span></div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Despesas</span></div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div><div class="stat-info"><h4>${inadCount}</h4><span>Inadimplentes</span></div></div>
     `;
 
     renderCharts();
