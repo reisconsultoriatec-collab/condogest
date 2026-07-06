@@ -991,7 +991,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="tab-pane" id="tabExtrato">
                     <div class="table-container">
                         <table><thead><tr>
-                            <th>Data</th><th>Histórico</th><th>Nº Doc</th><th>Valor</th><th>Tipo</th><th>Conciliado</th>
+                            <th>Data</th><th>Histórico</th><th>Nº Doc</th><th>Valor</th><th>Tipo</th><th>Conciliado</th><th>Ações</th>
                         </tr></thead><tbody id="tbExtrato"></tbody></table>
                     </div>
                 </div>
@@ -1002,7 +1002,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     </p>
                     <div class="table-container">
                         <table><thead><tr>
-                            <th>Data</th><th>Histórico</th><th>Valor</th><th>Categoria</th><th>Ação</th>
+                            <th>Data</th><th>Histórico</th><th>Valor</th><th>Categoria</th><th>Ações</th>
                         </tr></thead><tbody id="tbConciliar"></tbody></table>
                     </div>
                 </div>
@@ -2223,20 +2223,20 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Se já é admin aprovado → entrar direto
+            // Se já é admin aprovado ? entrar direto
             if (APP.userProfile.perfil === 'admin' && APP.userProfile.aprovado === true) {
                 enterApp();
                 return;
             }
 
-            // Se não está aprovado → verificar se existe algum admin no sistema
+            // Se não está aprovado ? verificar se existe algum admin no sistema
             if (APP.userProfile.aprovado !== true) {
                 try {
                     const adminSnap = await APP.db.collection('user_profiles')
                         .where('perfil', '==', 'admin').limit(1).get();
 
                     if (adminSnap.empty) {
-                        // Nenhum admin existe → promover este usuário
+                        // Nenhum admin existe ? promover este usuário
                         await APP.db.collection('user_profiles').doc(uid).update({
                             perfil: 'admin', aprovado: true, status: 'ativo',
                             permissoes: [], promovidoEm: new Date().toISOString()
@@ -2256,11 +2256,11 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Está aprovado (não admin) → entrar
+            // Está aprovado (não admin) ? entrar
             enterApp();
 
         } else {
-            // Perfil não existe no Firestore → criar agora (primeiro login após cadastro)
+            // Perfil não existe no Firestore ? criar agora (primeiro login após cadastro)
             const pendingName = localStorage.getItem('condogest_pending_name') || APP.currentUser.email.split('@')[0];
             localStorage.removeItem('condogest_pending_name');
 
@@ -3144,7 +3144,7 @@ function autoDetectColumns(rows) {
         }
     }
 
-    console.log('Colunas detectadas → Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
+    console.log('Colunas detectadas ? Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
 
     // Converter linhas em itens estruturados
     const items = [];
@@ -3224,9 +3224,9 @@ function parseMoneyValue(v) {
 
 function normalizeDate(v) {
     let s = String(v).replace(/"/g, '').trim();
-    // 20260702 → 02/07/2026
+    // 20260702 ? 02/07/2026
     if (/^\d{8}$/.test(s)) return s.slice(6,8) + '/' + s.slice(4,6) + '/' + s.slice(0,4);
-    // 2026-07-02 → 02/07/2026
+    // 2026-07-02 ? 02/07/2026
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const p = s.split(/[-T]/); return p[2]+'/'+p[1]+'/'+p[0]; }
     // 02/07/2026 já está ok
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
@@ -3285,7 +3285,7 @@ function cancelarImportacao() {
 function renderExtrato() {
     const tb = document.getElementById('tbExtrato');
     if (APP.extrato.length === 0) {
-        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum extrato importado</p></td></tr>';
+        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum extrato importado</p></td></tr>';
         return;
     }
     tb.innerHTML = APP.extrato.map(e => `<tr>
@@ -3294,14 +3294,16 @@ function renderExtrato() {
         <td>${H(e.nDoc||'-')}</td>
         <td style="color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
         <td><span class="badge ${e.tipo==='C'?'badge-green':'badge-red'}">${e.tipo==='C'?'Crédito':'Débito'}</span></td>
-        <td>${e.conciliado?'<span class="badge badge-green">✓ Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
+        <td>${e.conciliado?'<span class="badge badge-green">Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteExtrato('${e.id}')" title="Excluir"><i class="ti ti-trash"></i></button></td>
     </tr>`).join('');
 
-    // Render aba conciliação
+    // Render aba conciliação - categorias atualizadas
+    const cats = APP.categorias || [];
     const tbC = document.getElementById('tbConciliar');
     const pendentes = APP.extrato.filter(e => !e.conciliado);
     if (pendentes.length === 0) {
-        tbC.innerHTML = '<tr><td colspan="5" class="empty-state"><p>Todos os lançamentos foram conciliados</p></td></tr>';
+        tbC.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Todos os lançamentos foram conciliados</p></td></tr>';
         return;
     }
     tbC.innerHTML = pendentes.map(e => `<tr>
@@ -3311,13 +3313,27 @@ function renderExtrato() {
         <td>
             <select style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);color:var(--text-primary)" id="concCat_${e.id}">
                 <option value="">Selecionar categoria...</option>
-                ${APP.categorias.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('')}
+                ${cats.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('')}
                 <option value="Taxa Condominial">Taxa Condominial</option>
                 <option value="Receita Diversa">Receita Diversa</option>
             </select>
         </td>
-        <td><button class="btn btn-success btn-sm" onclick="conciliarItem('${e.id}')"><i class="ti ti-check"></i> Conciliar</button></td>
+        <td style="white-space:nowrap">
+            <button class="btn btn-success btn-sm" onclick="conciliarItem('${e.id}')"><i class="ti ti-check"></i> Conciliar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteExtrato('${e.id}')" title="Excluir"><i class="ti ti-trash"></i></button>
+        </td>
     </tr>`).join('');
+}
+
+async function deleteExtrato(id) {
+    if (!confirm('Excluir este lançamento do extrato?')) return;
+    if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+        try { await condoRef().collection('extrato').doc(id).delete(); } catch(e) { console.warn('Delete error:', e); }
+    }
+    APP.extrato = APP.extrato.filter(e => e.id !== id);
+    auditLog('EXTRATO_DELETE', { docId: id });
+    renderExtrato();
+    toast('Lançamento excluído.');
 }
 
 async function conciliarItem(id) {
@@ -4072,7 +4088,7 @@ function renderRelConciliacao() {
 
     let html = `<h4 style="margin-bottom:1rem">Conciliação Bancária</h4>`;
     html += `<div class="stats-row" style="margin-bottom:1rem">
-        <div class="stat-card"><div class="stat-icon green">✓</div><div class="stat-info"><h4>${conciliados.length}</h4><span>Conciliados</span></div></div>
+        <div class="stat-card"><div class="stat-icon green">?</div><div class="stat-info"><h4>${conciliados.length}</h4><span>Conciliados</span></div></div>
         <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-hourglass"></i></div><div class="stat-info"><h4>${pendentes.length}</h4><span>Pendentes</span></div></div>
         <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-chart-pie"></i></div><div class="stat-info"><h4>${APP.extrato.length}</h4><span>Total</span></div></div>
     </div>`;
@@ -4163,7 +4179,7 @@ function renderCategorias() {
     el.innerHTML = APP.categorias.map((c,i) => `
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
             <span style="flex:1">${H(c)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">?</button>
         </div>
     `).join('');
     populateContaCategorias();
