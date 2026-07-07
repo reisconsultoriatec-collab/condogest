@@ -3289,9 +3289,13 @@ async function confirmarImportacao() {
                 });
                 await batch.commit();
             }
+
+            // Recarregar extrato do Firestore para obter os IDs reais dos documentos
+            const exSnap = await condoRef().collection('extrato').orderBy('data').get();
+            APP.extrato = [];
+            exSnap.forEach(d => APP.extrato.push({ id: d.id, ...d.data() }));
         }
 
-        APP.extrato = APP.extrato.concat(_pendingImport.map((item, i) => ({ id: 'imp_' + Date.now() + '_' + i, ...item })));
         auditLog('EXTRATO_IMPORT', { count: _pendingImport.length });
         _pendingImport = [];
         document.getElementById('importPreview').style.display = 'none';
@@ -3461,7 +3465,7 @@ async function deleteSelectedConc() {
     let deleted = 0;
 
     for (const id of ids) {
-        if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+        if (APP.firebaseReady && APP.currentCondoId) {
             try { await condoRef().collection('extrato').doc(id).delete(); } catch(e) { console.warn('Delete error:', e); }
         }
         APP.extrato = APP.extrato.filter(e => e.id !== id);
@@ -3475,7 +3479,7 @@ async function deleteSelectedConc() {
 
 async function deleteExtrato(id) {
     if (!confirm('Excluir este lançamento do extrato?')) return;
-    if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+    if (APP.firebaseReady && APP.currentCondoId) {
         try { await condoRef().collection('extrato').doc(id).delete(); } catch(e) { console.warn('Delete error:', e); }
     }
     APP.extrato = APP.extrato.filter(e => e.id !== id);
@@ -3492,7 +3496,7 @@ async function conciliarItem(id) {
     item.conciliado = true;
     item.categoriaConciliacao = catEl.value;
 
-    if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+    if (APP.firebaseReady && APP.currentCondoId) {
         await condoRef().collection('extrato').doc(id).update({ conciliado: true, categoriaConciliacao: catEl.value });
     }
     auditLog('EXTRATO_CONCILIAR', { docId: id, categoria: catEl.value });
