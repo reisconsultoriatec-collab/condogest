@@ -989,6 +989,29 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
 
                 <div class="tab-pane" id="tabExtrato">
+                    <div class="filter-bar">
+                        <select id="filterExtAno" onchange="renderExtrato()"></select>
+                        <select id="filterExtMes" onchange="renderExtrato()">
+                            <option value="">Todos os meses</option>
+                            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                            <option value="03">Março</option><option value="04">Abril</option>
+                            <option value="05">Maio</option><option value="06">Junho</option>
+                            <option value="07">Julho</option><option value="08">Agosto</option>
+                            <option value="09">Setembro</option><option value="10">Outubro</option>
+                            <option value="11">Novembro</option><option value="12">Dezembro</option>
+                        </select>
+                        <select id="filterExtTipo" onchange="renderExtrato()">
+                            <option value="">Todos os tipos</option>
+                            <option value="C">Crédito</option>
+                            <option value="D">Débito</option>
+                        </select>
+                        <select id="filterExtConc" onchange="renderExtrato()">
+                            <option value="">Todos</option>
+                            <option value="sim">Conciliados</option>
+                            <option value="nao">Pendentes</option>
+                        </select>
+                    </div>
+                    <div id="extratoResumo" style="margin-bottom:0.8rem"></div>
                     <div class="table-container">
                         <table><thead><tr>
                             <th>Data</th><th>Histórico</th><th>Nº Doc</th><th>Valor</th><th>Tipo</th><th>Conciliado</th><th>Ações</th>
@@ -997,11 +1020,20 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
 
                 <div class="tab-pane" id="tabConciliar">
-                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                    <p style="margin-bottom:0.8rem;color:var(--text-secondary);font-size:0.88rem">
                         Associe cada lançamento do extrato ao balancete final:
                     </p>
+                    <div style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+                        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;color:var(--text-secondary)">
+                            <input type="checkbox" id="selectAllConc" onchange="toggleSelectAllConc()" style="accent-color:var(--primary);width:16px;height:16px"> Selecionar todos
+                        </label>
+                        <button class="btn btn-danger btn-sm" onclick="deleteSelectedConc()" id="btnDeleteSelected" style="display:none">
+                            <i class="ti ti-trash"></i> Excluir selecionados (<span id="countSelected">0</span>)
+                        </button>
+                    </div>
                     <div class="table-container">
                         <table><thead><tr>
+                            <th style="width:30px"><input type="checkbox" id="selectAllConcHead" onchange="toggleSelectAllConc()" style="accent-color:var(--primary)"></th>
                             <th>Data</th><th>Histórico</th><th>Valor</th><th>Categoria</th><th>Ações</th>
                         </tr></thead><tbody id="tbConciliar"></tbody></table>
                     </div>
@@ -3282,31 +3314,97 @@ function cancelarImportacao() {
     document.getElementById('fileExtrato').value = '';
 }
 
-function renderExtrato() {
-    const tb = document.getElementById('tbExtrato');
-    if (APP.extrato.length === 0) {
-        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum extrato importado</p></td></tr>';
-        return;
-    }
-    tb.innerHTML = APP.extrato.map(e => `<tr>
-        <td>${H(e.data)}</td>
-        <td>${H(e.historico)}</td>
-        <td>${H(e.nDoc||'-')}</td>
-        <td style="color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
-        <td><span class="badge ${e.tipo==='C'?'badge-green':'badge-red'}">${e.tipo==='C'?'Crédito':'Débito'}</span></td>
-        <td>${e.conciliado?'<span class="badge badge-green">Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteExtrato('${e.id}')" title="Excluir"><i class="ti ti-trash"></i></button></td>
-    </tr>`).join('');
+function parseExtDate(raw) {
+    if (!raw) return null;
+    const d = String(raw).replace(/"/g,'').trim();
+    let m = d.match(/^(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})$/);
+    if (m) return { mes: m[2], ano: m[3] };
+    m = d.match(/^(\d{4})[\/\-\.](\d{2})[\/\-\.](\d{2})/);
+    if (m) return { mes: m[2], ano: m[1] };
+    m = d.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (m) return { mes: m[2], ano: m[1] };
+    return null;
+}
 
-    // Render aba conciliação - categorias atualizadas
+function renderExtrato() {
+    // Populate year filter for extrato
+    const extAnos = [...new Set((APP.extrato||[]).map(e => { const p = parseExtDate(e.data); return p ? p.ano : null; }).filter(Boolean))].sort();
+    const filterAnoEl = document.getElementById('filterExtAno');
+    if (filterAnoEl && filterAnoEl.options.length <= 1) {
+        const curYear = String(new Date().getFullYear());
+        filterAnoEl.innerHTML = '<option value="">Todos os anos</option>' + extAnos.map(a => `<option value="${a}" ${a===curYear?'selected':''}>${a}</option>`).join('');
+    }
+
+    // Apply filters
+    const fAno = document.getElementById('filterExtAno')?.value || '';
+    const fMes = document.getElementById('filterExtMes')?.value || '';
+    const fTipo = document.getElementById('filterExtTipo')?.value || '';
+    const fConc = document.getElementById('filterExtConc')?.value || '';
+
+    let list = APP.extrato || [];
+    if (fAno || fMes) {
+        list = list.filter(e => {
+            const p = parseExtDate(e.data);
+            if (!p) return false;
+            if (fAno && p.ano !== fAno) return false;
+            if (fMes && p.mes !== fMes) return false;
+            return true;
+        });
+    }
+    if (fTipo) list = list.filter(e => e.tipo === fTipo);
+    if (fConc === 'sim') list = list.filter(e => e.conciliado);
+    if (fConc === 'nao') list = list.filter(e => !e.conciliado);
+
+    // Resumo
+    const totalCred = list.filter(e => e.tipo === 'C').reduce((s,e) => s + Math.abs(e.valor||0), 0);
+    const totalDeb = list.filter(e => e.tipo === 'D').reduce((s,e) => s + Math.abs(e.valor||0), 0);
+    const concCount = list.filter(e => e.conciliado).length;
+    const pendCount = list.filter(e => !e.conciliado).length;
+    document.getElementById('extratoResumo').innerHTML = `<div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.82rem;color:var(--text-secondary)">
+        <span><strong>${list.length}</strong> lançamentos</span>
+        <span style="color:var(--accent)"><i class="ti ti-arrow-up"></i> Créditos: <strong>${fmtMoney(totalCred)}</strong></span>
+        <span style="color:var(--accent-red)"><i class="ti ti-arrow-down"></i> Débitos: <strong>${fmtMoney(totalDeb)}</strong></span>
+        <span style="color:var(--accent)"><i class="ti ti-check"></i> ${concCount} conciliados</span>
+        <span style="color:var(--secondary)"><i class="ti ti-clock"></i> ${pendCount} pendentes</span>
+    </div>`;
+
+    const tb = document.getElementById('tbExtrato');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum lançamento encontrado</p></td></tr>';
+    } else {
+        tb.innerHTML = list.map(e => `<tr>
+            <td>${H(e.data)}</td>
+            <td>${H(e.historico)}</td>
+            <td>${H(e.nDoc||'-')}</td>
+            <td style="color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'};font-weight:600">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
+            <td><span class="badge ${e.tipo==='C'?'badge-green':'badge-red'}">${e.tipo==='C'?'Crédito':'Débito'}</span></td>
+            <td>${e.conciliado?'<span class="badge badge-green">Conciliado</span>':'<span class="badge badge-amber">Pendente</span>'}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteExtrato('${e.id}')" title="Excluir"><i class="ti ti-trash"></i></button></td>
+        </tr>`).join('');
+    }
+
+    // Render aba conciliação
+    renderConciliar();
+}
+
+function renderConciliar() {
     const cats = APP.categorias || [];
     const tbC = document.getElementById('tbConciliar');
-    const pendentes = APP.extrato.filter(e => !e.conciliado);
+    const pendentes = (APP.extrato||[]).filter(e => !e.conciliado);
+
+    // Reset select all
+    const selAll = document.getElementById('selectAllConc');
+    const selAllHead = document.getElementById('selectAllConcHead');
+    if (selAll) selAll.checked = false;
+    if (selAllHead) selAllHead.checked = false;
+    document.getElementById('btnDeleteSelected').style.display = 'none';
+
     if (pendentes.length === 0) {
         tbC.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Todos os lançamentos foram conciliados</p></td></tr>';
         return;
     }
     tbC.innerHTML = pendentes.map(e => `<tr>
+        <td><input type="checkbox" class="conc-check" value="${e.id}" onchange="updateSelectedCount()" style="accent-color:var(--primary);width:16px;height:16px"></td>
         <td>${H(e.data)}</td>
         <td>${H(e.historico)}</td>
         <td style="font-weight:600;color:${e.tipo==='C'?'var(--accent)':'var(--accent-red)'}">${e.tipo==='D'?'-':''}${fmtMoney(Math.abs(e.valor))}</td>
@@ -3323,6 +3421,56 @@ function renderExtrato() {
             <button class="btn btn-danger btn-sm" onclick="deleteExtrato('${e.id}')" title="Excluir"><i class="ti ti-trash"></i></button>
         </td>
     </tr>`).join('');
+}
+
+function toggleSelectAllConc() {
+    const checks = document.querySelectorAll('.conc-check');
+    const selAll = document.getElementById('selectAllConc');
+    const selAllHead = document.getElementById('selectAllConcHead');
+    const isChecked = selAll?.checked || selAllHead?.checked;
+    checks.forEach(cb => cb.checked = isChecked);
+    if (selAll) selAll.checked = isChecked;
+    if (selAllHead) selAllHead.checked = isChecked;
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.conc-check:checked');
+    const btn = document.getElementById('btnDeleteSelected');
+    const count = document.getElementById('countSelected');
+    if (checked.length > 0) {
+        btn.style.display = 'inline-flex';
+        count.textContent = checked.length;
+    } else {
+        btn.style.display = 'none';
+    }
+    // Sync header checkbox
+    const total = document.querySelectorAll('.conc-check').length;
+    const selAll = document.getElementById('selectAllConc');
+    const selAllHead = document.getElementById('selectAllConcHead');
+    if (selAll) selAll.checked = checked.length === total && total > 0;
+    if (selAllHead) selAllHead.checked = checked.length === total && total > 0;
+}
+
+async function deleteSelectedConc() {
+    const checked = document.querySelectorAll('.conc-check:checked');
+    if (checked.length === 0) return;
+    if (!confirm(`Excluir ${checked.length} lançamentos selecionados? Esta ação é irreversível.`)) return;
+
+    const ids = Array.from(checked).map(cb => cb.value);
+    let deleted = 0;
+
+    for (const id of ids) {
+        if (APP.firebaseReady && APP.currentCondoId && !id.startsWith('imp_') && !id.startsWith('new_')) {
+            try { await condoRef().collection('extrato').doc(id).delete(); } catch(e) { console.warn('Delete error:', e); }
+        }
+        APP.extrato = APP.extrato.filter(e => e.id !== id);
+        deleted++;
+    }
+
+    auditLog('EXTRATO_BULK_DELETE', { count: deleted });
+    renderExtrato();
+    toast(`${deleted} lançamentos excluídos.`);
 }
 
 async function deleteExtrato(id) {
@@ -3358,7 +3506,7 @@ function populateYearFilters() {
     const years = [];
     for (let y = year - 3; y <= year + 1; y++) years.push(y);
 
-    ['filterPgAno','filterInadAno','filterOrcAno','relDespAno','relRecAno','balAno'].forEach(id => {
+    ['filterPgAno','filterInadAno','filterOrcAno','relDespAno','relRecAno','balAno','filterExtAno'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = years.map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
@@ -4504,9 +4652,14 @@ function renderCharts() {
         });
     }
 
-    // Chart 3: Despesas por Categoria
+    // Chart 3: Despesas por Categoria (Contas + Extrato Conciliado)
     const despByCat = {};
     APP.contas.forEach(c => { despByCat[c.categoria] = (despByCat[c.categoria]||0) + (c.valor||0); });
+    // Incluir débitos do extrato conciliado
+    (APP.extrato||[]).filter(e => e.conciliado && e.tipo === 'D').forEach(e => {
+        const cat = e.categoriaConciliacao || 'Outros';
+        despByCat[cat] = (despByCat[cat]||0) + Math.abs(e.valor||0);
+    });
     const ctx3 = document.getElementById('chartDespCat')?.getContext('2d');
     if (ctx3) {
         const catLabels = Object.keys(despByCat);
