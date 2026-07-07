@@ -4378,14 +4378,22 @@ async function saveUsuario() {
 
 // ===== DASHBOARD =====
 function renderDashboard() {
-    // Stats
+    // Stats - incluir extrato conciliado
     const totalMoradores = APP.moradores.length;
-    const totalReceitas = APP.pagamentos.reduce((s,p) => s + (p.valor||0), 0);
-    const totalDespesas = APP.contas.reduce((s,c) => s + (c.valor||0), 0);
+    const totalPgtosRec = APP.pagamentos.reduce((s,p) => s + (p.valor||0), 0);
+    const totalContasDesp = APP.contas.reduce((s,c) => s + (c.valor||0), 0);
+
+    // Extrato conciliado (todos os meses, ano corrente)
+    const curYear = new Date().getFullYear();
+    const { receitasExtrato, despesasExtrato } = typeof getExtratoConciliado === 'function' ? getExtratoConciliado(curYear, '') : { receitasExtrato:[], despesasExtrato:[] };
+    const totalRecExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
+    const totalDespExtrato = despesasExtrato.reduce((s,e) => s + e.valor, 0);
+
+    const totalReceitas = totalPgtosRec + totalRecExtrato;
+    const totalDespesas = totalContasDesp + totalDespExtrato;
 
     // Count inadimplentes usando taxasApto
     const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-    const curYear = new Date().getFullYear();
     let inadCount = 0;
     (APP.taxasApto||[]).forEach(ta => {
         const totalDevido = (ta.valor||0) * (ta.quantidade||1);
@@ -4406,6 +4414,23 @@ function renderDashboard() {
     renderCharts();
 }
 
+function getExtratoByMonth(ano) {
+    const recByMonth = new Array(12).fill(0);
+    const despByMonth = new Array(12).fill(0);
+    (APP.extrato||[]).filter(e => e.conciliado && e.data).forEach(e => {
+        let eMes = -1;
+        const d = e.data;
+        let eAno = '';
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) { eAno = d.slice(6,10); eMes = parseInt(d.slice(3,5)) - 1; }
+        else if (/^\d{4}-\d{2}-\d{2}/.test(d)) { eAno = d.slice(0,4); eMes = parseInt(d.slice(5,7)) - 1; }
+        else if (/^\d{8}$/.test(d)) { eAno = d.slice(0,4); eMes = parseInt(d.slice(4,6)) - 1; }
+        if (eAno !== String(ano) || eMes < 0 || eMes > 11) return;
+        if (e.tipo === 'C') recByMonth[eMes] += Math.abs(e.valor||0);
+        else despByMonth[eMes] += Math.abs(e.valor||0);
+    });
+    return { recByMonth, despByMonth };
+}
+
 function renderCharts() {
     // Destroy existing charts
     Object.values(APP.charts).forEach(c => c.destroy && c.destroy());
@@ -4413,7 +4438,7 @@ function renderCharts() {
 
     const mesesLabels = MESES.slice(1);
 
-    // Chart 1: Receitas vs Despesas
+    // Chart 1: Receitas vs Despesas (Pagamentos + Contas + Extrato Conciliado)
     const recByMonth = new Array(12).fill(0);
     const despByMonth = new Array(12).fill(0);
     const curYear = new Date().getFullYear();
@@ -4426,6 +4451,13 @@ function renderCharts() {
         const mi = parseInt((c.vencimento||'').split('-')[1]) - 1;
         if (mi >= 0 && mi < 12) despByMonth[mi] += (c.valor||0);
     });
+
+    // Somar extrato conciliado por mes
+    const ext = getExtratoByMonth(curYear);
+    for (let i = 0; i < 12; i++) {
+        recByMonth[i] += ext.recByMonth[i];
+        despByMonth[i] += ext.despByMonth[i];
+    }
 
     const ctx1 = document.getElementById('chartRecDesp')?.getContext('2d');
     if (ctx1) {
