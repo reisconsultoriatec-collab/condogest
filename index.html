@@ -1023,13 +1023,31 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <p style="margin-bottom:0.8rem;color:var(--text-secondary);font-size:0.88rem">
                         Associe cada lançamento do extrato ao balancete final:
                     </p>
-                    <div style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+                    <div class="filter-bar">
+                        <select id="filterConcAno" onchange="renderConciliar()"></select>
+                        <select id="filterConcMes" onchange="renderConciliar()">
+                            <option value="">Todos os meses</option>
+                            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                            <option value="03">Março</option><option value="04">Abril</option>
+                            <option value="05">Maio</option><option value="06">Junho</option>
+                            <option value="07">Julho</option><option value="08">Agosto</option>
+                            <option value="09">Setembro</option><option value="10">Outubro</option>
+                            <option value="11">Novembro</option><option value="12">Dezembro</option>
+                        </select>
+                        <select id="filterConcTipo" onchange="renderConciliar()">
+                            <option value="">Todos os tipos</option>
+                            <option value="C">Crédito</option>
+                            <option value="D">Débito</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:0.8rem;display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
                         <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;cursor:pointer;color:var(--text-secondary)">
                             <input type="checkbox" id="selectAllConc" onchange="toggleSelectAllConc()" style="accent-color:var(--primary);width:16px;height:16px"> Selecionar todos
                         </label>
                         <button class="btn btn-danger btn-sm" onclick="deleteSelectedConc()" id="btnDeleteSelected" style="display:none">
                             <i class="ti ti-trash"></i> Excluir selecionados (<span id="countSelected">0</span>)
                         </button>
+                        <span id="concResumo" style="margin-left:auto;font-size:0.82rem;color:var(--text-secondary)"></span>
                     </div>
                     <div class="table-container">
                         <table><thead><tr>
@@ -3394,7 +3412,40 @@ function renderExtrato() {
 function renderConciliar() {
     const cats = APP.categorias || [];
     const tbC = document.getElementById('tbConciliar');
-    const pendentes = (APP.extrato||[]).filter(e => !e.conciliado);
+
+    // Populate year filter
+    const filterAnoEl = document.getElementById('filterConcAno');
+    if (filterAnoEl && filterAnoEl.options.length <= 1) {
+        const extAnos = [...new Set((APP.extrato||[]).map(e => { const p = parseExtDate(e.data); return p ? p.ano : null; }).filter(Boolean))].sort();
+        const curYear = String(new Date().getFullYear());
+        filterAnoEl.innerHTML = '<option value="">Todos os anos</option>' + extAnos.map(a => `<option value="${a}" ${a===curYear?'selected':''}>${a}</option>`).join('');
+    }
+
+    // Apply filters
+    const fAno = document.getElementById('filterConcAno')?.value || '';
+    const fMes = document.getElementById('filterConcMes')?.value || '';
+    const fTipo = document.getElementById('filterConcTipo')?.value || '';
+
+    let pendentes = (APP.extrato||[]).filter(e => !e.conciliado);
+
+    if (fAno || fMes) {
+        pendentes = pendentes.filter(e => {
+            const p = parseExtDate(e.data);
+            if (!p) return false;
+            if (fAno && p.ano !== fAno) return false;
+            if (fMes && p.mes !== fMes) return false;
+            return true;
+        });
+    }
+    if (fTipo) pendentes = pendentes.filter(e => e.tipo === fTipo);
+
+    // Resumo
+    const totalCred = pendentes.filter(e => e.tipo === 'C').reduce((s,e) => s + Math.abs(e.valor||0), 0);
+    const totalDeb = pendentes.filter(e => e.tipo === 'D').reduce((s,e) => s + Math.abs(e.valor||0), 0);
+    const resumoEl = document.getElementById('concResumo');
+    if (resumoEl) {
+        resumoEl.innerHTML = `<strong>${pendentes.length}</strong> pendentes | <span style="color:var(--accent)"><i class="ti ti-arrow-up"></i> ${fmtMoney(totalCred)}</span> | <span style="color:var(--accent-red)"><i class="ti ti-arrow-down"></i> ${fmtMoney(totalDeb)}</span>`;
+    }
 
     // Reset select all
     const selAll = document.getElementById('selectAllConc');
@@ -3404,7 +3455,7 @@ function renderConciliar() {
     document.getElementById('btnDeleteSelected').style.display = 'none';
 
     if (pendentes.length === 0) {
-        tbC.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Todos os lançamentos foram conciliados</p></td></tr>';
+        tbC.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhum lançamento pendente encontrado</p></td></tr>';
         return;
     }
     tbC.innerHTML = pendentes.map(e => `<tr>
