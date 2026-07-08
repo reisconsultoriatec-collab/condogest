@@ -763,6 +763,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="nav-item" data-page="boletos" onclick="navigateTo('boletos')">
                     <span class="nav-icon"><i class="ti ti-file-barcode"></i></span> Boletos / PIX
                 </div>
+                <div class="nav-item" data-page="receitasAvulsas" onclick="navigateTo('receitasAvulsas')">
+                    <span class="nav-icon"><i class="ti ti-cash-banknote"></i></span> Receitas Avulsas
+                </div>
                 <div class="nav-item" data-page="inadimplentes" onclick="navigateTo('inadimplentes')">
                     <span class="nav-icon"><i class="ti ti-alert-triangle"></i></span> Inadimplentes
                 </div>
@@ -1145,6 +1148,40 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                             <button class="btn btn-fill" onclick="imprimirBoleto()"><i class="ti ti-printer"></i> Imprimir / Salvar PDF</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ RECEITAS AVULSAS ============ -->
+        <section class="page-section" id="pg-receitasAvulsas">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-cash-banknote"></i> Receitas Avulsas</span>
+                    <button class="btn btn-fill btn-sm" onclick="openReceitaAvulsaModal()"><i class="ti ti-plus"></i> Nova Receita</button>
+                </div>
+                <p style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary)">
+                    Lance entradas de crédito avulsas: ajustes de saldo anterior, rendimentos, multas/juros, doações ou qualquer receita extra.
+                </p>
+                <div class="filter-bar">
+                    <select id="filterRAano" onchange="renderReceitasAvulsas()"></select>
+                    <select id="filterRAmes" onchange="renderReceitasAvulsas()">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                    <select id="filterRAcat" onchange="renderReceitasAvulsas()">
+                        <option value="">Todas categorias</option>
+                    </select>
+                </div>
+                <div id="raResumo" style="margin-bottom:0.8rem"></div>
+                <div class="table-container">
+                    <table><thead><tr>
+                        <th>Data</th><th>Categoria</th><th>Descrição</th><th>Valor</th><th>Mês Ref.</th><th>Ações</th>
+                    </tr></thead><tbody id="tbReceitasAvulsas"></tbody></table>
                 </div>
             </div>
         </section>
@@ -1637,6 +1674,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label class="access-item"><input type="checkbox" value="conciliacao"> Conciliação</label>
                     <label class="access-item"><input type="checkbox" value="pagamentos"> Pagamentos</label>
                     <label class="access-item"><input type="checkbox" value="boletos"> Boletos / PIX</label>
+                    <label class="access-item"><input type="checkbox" value="receitasAvulsas"> Receitas Avulsas</label>
                     <label class="access-item"><input type="checkbox" value="inadimplentes"> Inadimplentes</label>
                     <label class="access-item"><input type="checkbox" value="orcamento"> Orçamento</label>
                     <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
@@ -1679,6 +1717,57 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalGerarTaxa')">Fechar</button>
             <button class="btn btn-fill" onclick="imprimirTaxaGerada()"><i class="ti ti-printer"></i> Imprimir / Salvar PDF</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Receita Avulsa -->
+<div class="modal-overlay" id="modalReceitaAvulsa">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Receita Avulsa</h3>
+            <button class="modal-close" onclick="closeModal('modalReceitaAvulsa')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="raEditId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Categoria *</label>
+                    <select id="raCategoria">
+                        <option value="Ajuste Saldo Anterior">Ajuste Saldo Anterior</option>
+                        <option value="Rendimento Aplicação">Rendimento Aplicação</option>
+                        <option value="Multa/Juros Atraso">Multa/Juros Atraso</option>
+                        <option value="Aluguel Espaço Comum">Aluguel Espaço Comum</option>
+                        <option value="Ressarcimento">Ressarcimento</option>
+                        <option value="Doação">Doação</option>
+                        <option value="Receita Diversa">Receita Diversa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Valor (R$) *</label>
+                    <input type="number" step="0.01" id="raValor">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Descrição *</label>
+                    <input type="text" id="raDescricao" placeholder="Ex: Saldo remanescente exercício 2025...">
+                </div>
+                <div class="form-group">
+                    <label>Data do Lançamento *</label>
+                    <input type="date" id="raData">
+                </div>
+                <div class="form-group">
+                    <label>Mês de Referência</label>
+                    <input type="month" id="raMesRef">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Observações</label>
+                    <textarea id="raObs" rows="2" placeholder="Detalhes adicionais..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalReceitaAvulsa')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveReceitaAvulsa()"><i class="ti ti-device-floppy"></i> Salvar</button>
         </div>
     </div>
 </div>
@@ -1751,6 +1840,7 @@ const APP = {
     extrato: [],
     orcamento: [],
     taxasApto: [],
+    receitasAvulsas: [],
     usuarios: [],
     categorias: ['Água','Energia','Gás','Manutenção','Limpeza','Segurança','Administração','Seguros','Elevadores','Jardim','Outros'],
     charts: {},
@@ -1896,6 +1986,7 @@ function navigateTo(page) {
         conciliacao:'Conciliação Bancária', pagamentos:'Pagamentos de Taxas',
         inadimplentes:'Inadimplentes', orcamento:'Previsão Orçamentária',
         boletos:'Boletos / PIX',
+        receitasAvulsas:'Receitas Avulsas',
         relDespesas:'Relatório de Despesas', relReceitas:'Relatório de Receitas',
         relConciliacao:'Relatório de Conciliação', balancete:'Balancete',
         usuarios:'Gestão de Usuários', configuracoes:'Configurações'
@@ -1910,6 +2001,7 @@ function navigateTo(page) {
     else if (page === 'inadimplentes') renderInadimplentes();
     else if (page === 'orcamento') renderOrcamento();
     else if (page === 'boletos') { renderTaxasApto(); populateBoletoSelects(); }
+    else if (page === 'receitasAvulsas') renderReceitasAvulsas();
     else if (page === 'relDespesas') renderRelDespesas();
     else if (page === 'relReceitas') renderRelReceitas();
     else if (page === 'relConciliacao') renderRelConciliacao();
@@ -2491,6 +2583,11 @@ async function loadCondoData() {
         APP.taxasApto = []; taSnap.forEach(d => APP.taxasApto.push({ id: d.id, ...d.data() }));
         renderTaxasApto();
         populateBoletoSelects();
+
+        // Receitas Avulsas
+        const raSnap = await APP.db.collection('condominios').doc(cid).collection('receitas_avulsas').orderBy('data','desc').get();
+        APP.receitasAvulsas = []; raSnap.forEach(d => APP.receitasAvulsas.push({ id: d.id, ...d.data() }));
+        renderReceitasAvulsas();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
@@ -3561,7 +3658,7 @@ function populateYearFilters() {
     const years = [];
     for (let y = year - 3; y <= year + 1; y++) years.push(y);
 
-    ['filterPgAno','filterInadAno','filterOrcAno','relDespAno','relRecAno','balAno','filterExtAno'].forEach(id => {
+    ['filterPgAno','filterInadAno','filterOrcAno','relDespAno','relRecAno','balAno','filterExtAno','filterRAano'].forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         el.innerHTML = years.map(y => `<option value="${y}" ${y===year?'selected':''}>${y}</option>`).join('');
@@ -4230,6 +4327,123 @@ function imprimirBoleto() {
     setTimeout(() => w.print(), 300);
 }
 
+// ===== RECEITAS AVULSAS =====
+const RA_CATEGORIAS = ['Ajuste Saldo Anterior','Rendimento Aplicação','Multa/Juros Atraso','Aluguel Espaço Comum','Ressarcimento','Doação','Receita Diversa'];
+
+function renderReceitasAvulsas() {
+    const fAno = document.getElementById('filterRAano')?.value || '';
+    const fMes = document.getElementById('filterRAmes')?.value || '';
+    const fCat = document.getElementById('filterRAcat')?.value || '';
+
+    // Populate category filter
+    const catSel = document.getElementById('filterRAcat');
+    if (catSel && catSel.options.length <= 1) {
+        const cats = [...new Set((APP.receitasAvulsas||[]).map(r => r.categoria))].sort();
+        catSel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('');
+    }
+
+    let list = APP.receitasAvulsas || [];
+    if (fAno) list = list.filter(r => (r.data||'').startsWith(fAno) || (r.mesRef||'').startsWith(fAno));
+    if (fMes) list = list.filter(r => { const m = (r.data||'').split('-')[1]; return m === fMes; });
+    if (fCat) list = list.filter(r => r.categoria === fCat);
+
+    // Resumo
+    const total = list.reduce((s,r) => s + (r.valor||0), 0);
+    const resumoEl = document.getElementById('raResumo');
+    if (resumoEl) {
+        resumoEl.innerHTML = `<div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.82rem;color:var(--text-secondary)">
+            <span><strong>${list.length}</strong> lançamentos</span>
+            <span style="color:var(--accent)"><i class="ti ti-cash-banknote"></i> Total: <strong>${fmtMoney(total)}</strong></span>
+        </div>`;
+    }
+
+    const tb = document.getElementById('tbReceitasAvulsas');
+    if (list.length === 0) {
+        tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma receita avulsa cadastrada</p></td></tr>';
+        return;
+    }
+    tb.innerHTML = list.map(r => {
+        const mesRefDisplay = r.mesRef ? (() => { const p = r.mesRef.split('-'); return MESES[parseInt(p[1])]+'/'+ p[0]; })() : '-';
+        return `<tr>
+            <td>${fmtDate(r.data)}</td>
+            <td><span class="badge badge-green">${H(r.categoria)}</span></td>
+            <td>${H(r.descricao)}</td>
+            <td style="color:var(--accent);font-weight:600">${fmtMoney(r.valor)}</td>
+            <td>${mesRefDisplay}</td>
+            <td style="white-space:nowrap">
+                <button class="btn btn-outline btn-sm" onclick="editReceitaAvulsa('${r.id}')"><i class="ti ti-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteReceitaAvulsa('${r.id}')"><i class="ti ti-trash"></i></button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openReceitaAvulsaModal() {
+    document.getElementById('raEditId').value = '';
+    document.getElementById('raCategoria').value = 'Ajuste Saldo Anterior';
+    document.getElementById('raValor').value = '';
+    document.getElementById('raDescricao').value = '';
+    document.getElementById('raData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('raMesRef').value = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('raObs').value = '';
+    openModal('modalReceitaAvulsa');
+}
+
+function editReceitaAvulsa(id) {
+    const r = (APP.receitasAvulsas||[]).find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('raEditId').value = id;
+    document.getElementById('raCategoria').value = r.categoria || 'Receita Diversa';
+    document.getElementById('raValor').value = r.valor || '';
+    document.getElementById('raDescricao').value = r.descricao || '';
+    document.getElementById('raData').value = r.data || '';
+    document.getElementById('raMesRef').value = r.mesRef || '';
+    document.getElementById('raObs').value = r.obs || '';
+    openModal('modalReceitaAvulsa');
+}
+
+async function saveReceitaAvulsa() {
+    const categoria = document.getElementById('raCategoria').value;
+    const valor = parseFloat(document.getElementById('raValor').value);
+    const descricao = document.getElementById('raDescricao').value.trim();
+    const data = document.getElementById('raData').value;
+    const mesRef = document.getElementById('raMesRef').value;
+    const obs = document.getElementById('raObs').value.trim();
+
+    if (!descricao || isNaN(valor) || valor <= 0) { toast('Preencha descrição e valor', 'error'); return; }
+    if (!data) { toast('Informe a data do lançamento', 'error'); return; }
+
+    const docData = { categoria, valor, descricao, data, mesRef, obs };
+    const id = document.getElementById('raEditId').value;
+    const res = await fbSave('receitas_avulsas', id || null, docData);
+    if (res) {
+        closeModal('modalReceitaAvulsa');
+        toast('Receita avulsa salva!');
+        // Recarregar
+        const raSnap = await condoRef().collection('receitas_avulsas').orderBy('data','desc').get();
+        APP.receitasAvulsas = []; raSnap.forEach(d => APP.receitasAvulsas.push({ id: d.id, ...d.data() }));
+        renderReceitasAvulsas();
+    }
+}
+
+async function deleteReceitaAvulsa(id) {
+    if (!confirm('Excluir esta receita avulsa?')) return;
+    await fbDelete('receitas_avulsas', id);
+    APP.receitasAvulsas = APP.receitasAvulsas.filter(r => r.id !== id);
+    renderReceitasAvulsas();
+}
+
+// Helper: obter total de receitas avulsas filtradas por ano/mes
+function getReceitasAvulsas(ano, mes) {
+    return (APP.receitasAvulsas||[]).filter(r => {
+        const rAno = (r.data||'').split('-')[0];
+        const rMes = (r.data||'').split('-')[1];
+        if (String(rAno) !== String(ano)) return false;
+        if (mes && String(rMes) !== String(mes)) return false;
+        return true;
+    });
+}
+
 // ===== RELATÓRIOS =====
 // Helper: extrair despesas e receitas do extrato conciliado filtradas por periodo
 function getExtratoConciliado(ano, mes) {
@@ -4290,10 +4504,14 @@ function renderRelReceitas() {
     const totalPgtos = listPgtos.reduce((s,p) => s + (p.valor||0), 0);
     const { receitasExtrato } = getExtratoConciliado(ano, mes);
     const totalExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
-    const totalGeral = totalPgtos + totalExtrato;
+    // Receitas Avulsas
+    const listRA = getReceitasAvulsas(ano, mes);
+    const totalRA = listRA.reduce((s,r) => s + (r.valor||0), 0);
+    const totalGeral = totalPgtos + totalExtrato + totalRA;
     const byTipo = {};
     listPgtos.forEach(p => { byTipo[p.tipoTaxa] = (byTipo[p.tipoTaxa]||0) + (p.valor||0); });
     receitasExtrato.forEach(e => { byTipo[e.categoria] = (byTipo[e.categoria]||0) + e.valor; });
+    listRA.forEach(r => { byTipo[r.categoria] = (byTipo[r.categoria]||0) + (r.valor||0); });
     let html = `<h4 style="margin-bottom:1rem">Receitas - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h4>`;
     html += `<table><thead><tr><th>Tipo / Categoria</th><th>Total</th></tr></thead><tbody>`;
     Object.entries(byTipo).forEach(([tipo,val]) => { html += `<tr><td>${H(tipo)}</td><td><strong>${fmtMoney(val)}</strong></td></tr>`; });
@@ -4309,6 +4527,12 @@ function renderRelReceitas() {
         receitasExtrato.forEach(e => { html += `<tr><td>${H(e.data)}</td><td>${H(e.categoria)}</td><td>${H(e.historico)}</td><td>${fmtMoney(e.valor)}</td><td><span class="badge badge-blue">Extrato</span></td></tr>`; });
         html += `</tbody></table>`;
     }
+    if (listRA.length > 0) {
+        html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Receitas Avulsas</h4>`;
+        html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Descricao</th><th>Valor</th><th>Origem</th></tr></thead><tbody>`;
+        listRA.forEach(r => { html += `<tr><td>${fmtDate(r.data)}</td><td>${H(r.categoria)}</td><td>${H(r.descricao)}</td><td>${fmtMoney(r.valor)}</td><td><span class="badge badge-green">Avulsa</span></td></tr>`; });
+        html += `</tbody></table>`;
+    }
     document.getElementById('relRecContent').innerHTML = html;
 }
 
@@ -4320,7 +4544,10 @@ function renderBalancete() {
     const totalPgtos = pgtos.reduce((s,p) => s + (p.valor||0), 0);
     const { receitasExtrato, despesasExtrato } = getExtratoConciliado(ano, mes);
     const totalRecExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
-    const totalReceitas = totalPgtos + totalRecExtrato;
+    // Receitas Avulsas
+    const listRA = getReceitasAvulsas(ano, mes);
+    const totalRA = listRA.reduce((s,r) => s + (r.valor||0), 0);
+    const totalReceitas = totalPgtos + totalRecExtrato + totalRA;
     let contas = APP.contas.filter(c => (c.vencimento||'').startsWith(ano));
     if (mes) contas = contas.filter(c => (c.vencimento||'').startsWith(`${ano}-${mes}`));
     const totalContas = contas.reduce((s,c) => s + (c.valor||0), 0);
@@ -4348,6 +4575,10 @@ function renderBalancete() {
     const recExtByCat = {};
     receitasExtrato.forEach(e => { recExtByCat[e.categoria] = (recExtByCat[e.categoria]||0) + e.valor; });
     Object.entries(recExtByCat).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-blue">Extrato</span></td><td>${H(cat)}</td><td>-</td><td>${fmtMoney(val)}</td></tr>`; });
+    // Receitas Avulsas
+    const raByCat = {};
+    listRA.forEach(r => { raByCat[r.categoria] = (raByCat[r.categoria]||0) + (r.valor||0); });
+    Object.entries(raByCat).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-green">Avulsa</span></td><td>${H(cat)}</td><td>-</td><td>${fmtMoney(val)}</td></tr>`; });
     html += `<tr style="font-weight:700;background:rgba(16,185,129,0.05)"><td colspan="3">TOTAL RECEITAS</td><td style="color:var(--accent)">${fmtMoney(totalReceitas)}</td></tr></tbody></table>`;
     html += `<h4 style="margin:1.5rem 0 0.5rem;color:var(--accent-red)">DESPESAS</h4><table><thead><tr><th>Origem</th><th>Categoria</th><th>Total</th></tr></thead><tbody>`;
     const despByCat = {};
@@ -4592,7 +4823,10 @@ function renderDashboard() {
     const totalRecExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
     const totalDespExtrato = despesasExtrato.reduce((s,e) => s + e.valor, 0);
 
-    const totalReceitas = totalPgtosRec + totalRecExtrato;
+    // Receitas Avulsas
+    const totalRA = (APP.receitasAvulsas||[]).filter(r => (r.data||'').startsWith(String(curYear))).reduce((s,r) => s + (r.valor||0), 0);
+
+    const totalReceitas = totalPgtosRec + totalRecExtrato + totalRA;
     const totalDespesas = totalContasDesp + totalDespExtrato;
 
     // Count inadimplentes usando taxasApto
@@ -4661,6 +4895,12 @@ function renderCharts() {
         recByMonth[i] += ext.recByMonth[i];
         despByMonth[i] += ext.despByMonth[i];
     }
+
+    // Somar receitas avulsas por mes
+    (APP.receitasAvulsas||[]).filter(r => (r.data||'').startsWith(String(curYear))).forEach(r => {
+        const mi = parseInt((r.data||'').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) recByMonth[mi] += (r.valor||0);
+    });
 
     const ctx1 = document.getElementById('chartRecDesp')?.getContext('2d');
     if (ctx1) {
