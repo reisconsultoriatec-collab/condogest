@@ -1189,7 +1189,10 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ INADIMPLENTES ============ -->
         <section class="page-section" id="pg-inadimplentes">
             <div class="card">
-                <div class="card-title"><i class="ti ti-alert-triangle"></i> Painel de Inadimplentes</div>
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-alert-triangle"></i> Painel de Inadimplentes</span>
+                    <button class="btn btn-outline btn-sm" onclick="printInadimplentes()"><i class="ti ti-printer"></i> Imprimir</button>
+                </div>
                 <p style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary)">
                     Exibe apenas o número do apartamento e valores em aberto (sem nome do morador por privacidade).
                 </p>
@@ -1204,7 +1207,12 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
+                    <input type="text" id="filterInadApto" placeholder="Nº Apartamento" oninput="renderInadimplentes()" style="width:140px">
+                    <select id="filterInadTaxa" onchange="renderInadimplentes()">
+                        <option value="">Todos os tipos</option>
+                    </select>
                 </div>
+                <div id="inadResumo" style="margin-bottom:1rem"></div>
                 <div class="table-container">
                     <table><thead><tr>
                         <th>Apto</th><th>Ano</th><th>Mês</th><th>Tipo Taxa</th><th>Valor em Aberto</th><th>Associar</th>
@@ -1798,13 +1806,24 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label>Quantidade *</label>
                     <input type="number" id="taxaAptoQtd" value="1" min="1" max="10">
                 </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="taxaAptoTipo" onchange="toggleTaxaAptoMesRef()">
+                        <option value="recorrente">Recorrente (Mensal)</option>
+                        <option value="unica">Única (Valor fixo em aberto)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grpTaxaAptoMesRef" style="display:none">
+                    <label>Mês de Referência *</label>
+                    <input type="month" id="taxaAptoMesRef">
+                </div>
                 <div class="form-group" style="grid-column:1/-1">
                     <label>Observações</label>
-                    <input type="text" id="taxaAptoObs" placeholder="Ex: Vaga coberta G1, Vaga descoberta G2...">
+                    <input type="text" id="taxaAptoObs" placeholder="Ex: Vaga coberta G1, Débito residual 2022...">
                 </div>
             </div>
             <div style="margin-top:0.8rem;padding:0.8rem;background:var(--bg-main);border-radius:var(--radius-sm)">
-                <p style="font-size:0.8rem;color:var(--text-secondary)"><i class="ti ti-info-circle"></i> <strong>Dica:</strong> Para um apto que paga 2 vagas de garagem, crie uma entrada com Qtd = 2 ou duas entradas separadas (ex: "Vaga G1" e "Vaga G2") com valores diferentes se necessário.</p>
+                <p style="font-size:0.8rem;color:var(--text-secondary)"><i class="ti ti-info-circle"></i> <strong>Recorrente:</strong> cobra todo mês (ex: Taxa Condominial, Vaga Garagem).<br><strong>Única:</strong> cobra apenas no mês de referência (ex: Taxa Residual, Débito antigo). Aparece fixa no painel até ser paga.</p>
             </div>
         </div>
         <div class="modal-footer">
@@ -2365,20 +2384,20 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Se já é admin aprovado → entrar direto
+            // Se já é admin aprovado ? entrar direto
             if (APP.userProfile.perfil === 'admin' && APP.userProfile.aprovado === true) {
                 enterApp();
                 return;
             }
 
-            // Se não está aprovado → verificar se existe algum admin no sistema
+            // Se não está aprovado ? verificar se existe algum admin no sistema
             if (APP.userProfile.aprovado !== true) {
                 try {
                     const adminSnap = await APP.db.collection('user_profiles')
                         .where('perfil', '==', 'admin').limit(1).get();
 
                     if (adminSnap.empty) {
-                        // Nenhum admin existe → promover este usuário
+                        // Nenhum admin existe ? promover este usuário
                         await APP.db.collection('user_profiles').doc(uid).update({
                             perfil: 'admin', aprovado: true, status: 'ativo',
                             permissoes: [], promovidoEm: new Date().toISOString()
@@ -2398,11 +2417,11 @@ async function loadUserProfile(uid) {
                 return;
             }
 
-            // Está aprovado (não admin) → entrar
+            // Está aprovado (não admin) ? entrar
             enterApp();
 
         } else {
-            // Perfil não existe no Firestore → criar agora (primeiro login após cadastro)
+            // Perfil não existe no Firestore ? criar agora (primeiro login após cadastro)
             const pendingName = localStorage.getItem('condogest_pending_name') || APP.currentUser.email.split('@')[0];
             localStorage.removeItem('condogest_pending_name');
 
@@ -3291,7 +3310,7 @@ function autoDetectColumns(rows) {
         }
     }
 
-    console.log('Colunas detectadas → Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
+    console.log('Colunas detectadas ? Data:', colData, 'Hist:', colHistorico, 'Valor:', colValor, 'Tipo:', colTipo, 'Doc:', colDoc);
 
     // Converter linhas em itens estruturados
     const items = [];
@@ -3371,9 +3390,9 @@ function parseMoneyValue(v) {
 
 function normalizeDate(v) {
     let s = String(v).replace(/"/g, '').trim();
-    // 20260702 → 02/07/2026
+    // 20260702 ? 02/07/2026
     if (/^\d{8}$/.test(s)) return s.slice(6,8) + '/' + s.slice(4,6) + '/' + s.slice(0,4);
-    // 2026-07-02 → 02/07/2026
+    // 2026-07-02 ? 02/07/2026
     if (/^\d{4}-\d{2}-\d{2}/.test(s)) { const p = s.split(/[-T]/); return p[2]+'/'+p[1]+'/'+p[0]; }
     // 02/07/2026 já está ok
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
@@ -3828,66 +3847,203 @@ async function deletePagamento(id) {
 function renderInadimplentes() {
     const ano = document.getElementById('filterInadAno')?.value || new Date().getFullYear();
     const mes = document.getElementById('filterInadMes')?.value || '';
+    const filterApto = (document.getElementById('filterInadApto')?.value || '').trim().toLowerCase();
+    const filterTaxa = document.getElementById('filterInadTaxa')?.value || '';
 
-    // Usar taxasApto (taxas vinculadas por apartamento) em vez do catálogo geral
+    // Populate tipo taxa filter
+    const taxaSel = document.getElementById('filterInadTaxa');
+    if (taxaSel && taxaSel.options.length <= 1) {
+        const tipos = [...new Set((APP.taxasApto||[]).map(t => t.descricao))].sort();
+        taxaSel.innerHTML = '<option value="">Todos os tipos</option>' + tipos.map(t => `<option value="${H(t)}">${H(t)}</option>`).join('');
+    }
+
     const taxasApto = APP.taxasApto || [];
     const meses = mes ? [mes] : ['01','02','03','04','05','06','07','08','09','10','11','12'];
-
-    // Limitar aos meses até o mês atual (não cobrar meses futuros)
     const now = new Date();
     const anoAtual = now.getFullYear();
     const mesAtual = now.getMonth() + 1;
 
     const inadimplentes = [];
     taxasApto.forEach(ta => {
-        meses.forEach(ms => {
-            const mesNum = parseInt(ms);
-            // Não cobrar meses futuros
-            if (parseInt(ano) > anoAtual) return;
-            if (parseInt(ano) === anoAtual && mesNum > mesAtual) return;
+        // Filtro por apartamento
+        if (filterApto && !ta.apto.toLowerCase().includes(filterApto)) return;
+        // Filtro por tipo de taxa
+        if (filterTaxa && ta.descricao !== filterTaxa) return;
 
-            // Verificar cada unidade (quantidade) da taxa
-            const qtd = ta.quantidade || 1;
-            const valorUnit = ta.valor || 0;
+        const tipo = ta.tipo || 'recorrente';
+        const qtd = ta.quantidade || 1;
+        const valorUnit = ta.valor || 0;
+        const totalDevido = valorUnit * qtd;
 
-            // Buscar pagamentos deste apto + esta taxa + este mês
+        if (tipo === 'unica') {
+            // Taxa única: verificar apenas no mês de referência
+            const mesRefParts = (ta.mesRef||'').split('-'); // "2026-01"
+            const refAno = mesRefParts[0] || '';
+            const refMes = mesRefParts[1] || '';
+
+            // Só mostrar se o filtro de ano corresponde ao ano da referência
+            if (String(ano) !== refAno) return;
+            // Se filtrou mês específico e não é o mês da referência, pular
+            if (mes && mes !== refMes) return;
+
+            // Buscar pagamentos desta taxa única (em qualquer mês do ano, pois pode ter sido paga depois)
             const pgtos = APP.pagamentos.filter(p =>
-                p.ano == ano && p.mes === ms &&
                 p.apto === ta.apto && p.tipoTaxa === ta.descricao
             );
             const totalPago = pgtos.reduce((s,p) => s + (p.valor||0), 0);
-            const totalDevido = valorUnit * qtd;
 
             if (totalPago < totalDevido) {
                 inadimplentes.push({
-                    apto: ta.apto,
-                    ano,
-                    mes: ms,
-                    tipoTaxa: ta.descricao + (qtd > 1 ? ` (${qtd}x)` : ''),
-                    valorDevido: totalDevido,
-                    valorPago: totalPago,
+                    apto: ta.apto, ano, mes: refMes,
+                    tipoTaxa: ta.descricao + ' (Única)',
+                    tipoTaxaClean: ta.descricao,
+                    valorDevido: totalDevido, valorPago: totalPago,
                     valorAberto: totalDevido - totalPago
                 });
             }
-        });
+        } else {
+            // Taxa recorrente: verificar cada mês
+            meses.forEach(ms => {
+                const mesNum = parseInt(ms);
+                if (parseInt(ano) > anoAtual) return;
+                if (parseInt(ano) === anoAtual && mesNum > mesAtual) return;
+
+                const pgtos = APP.pagamentos.filter(p =>
+                    p.ano == ano && p.mes === ms &&
+                    p.apto === ta.apto && p.tipoTaxa === ta.descricao
+                );
+                const totalPago = pgtos.reduce((s,p) => s + (p.valor||0), 0);
+
+                if (totalPago < totalDevido) {
+                    inadimplentes.push({
+                        apto: ta.apto, ano, mes: ms,
+                        tipoTaxa: ta.descricao + (qtd > 1 ? ` (${qtd}x)` : ''),
+                        tipoTaxaClean: ta.descricao,
+                        valorDevido: totalDevido, valorPago: totalPago,
+                        valorAberto: totalDevido - totalPago
+                    });
+                }
+            });
+        }
     });
 
     // Ordenar por apto, depois mês
     inadimplentes.sort((a,b) => a.apto.localeCompare(b.apto) || a.mes.localeCompare(b.mes));
+
+    // Resumo
+    const totalAberto = inadimplentes.reduce((s,i) => s + i.valorAberto, 0);
+    const aptosUnicos = [...new Set(inadimplentes.map(i => i.apto))].length;
+    const maiorDevedor = inadimplentes.reduce((acc, i) => {
+        acc[i.apto] = (acc[i.apto]||0) + i.valorAberto;
+        return acc;
+    }, {});
+    const maiorAptoEntry = Object.entries(maiorDevedor).sort((a,b) => b[1]-a[1])[0];
+
+    const resumoEl = document.getElementById('inadResumo');
+    if (resumoEl) {
+        resumoEl.innerHTML = `
+        <div class="stats-row" style="margin-bottom:0">
+            <div class="stat-card"><div class="stat-icon red"><i class="ti ti-currency-real"></i></div><div class="stat-info"><h4>${fmtMoney(totalAberto)}</h4><span>Total em Aberto</span></div></div>
+            <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-home-exclamation"></i></div><div class="stat-info"><h4>${aptosUnicos}</h4><span>Aptos Inadimplentes</span></div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-file-alert"></i></div><div class="stat-info"><h4>${inadimplentes.length}</h4><span>Parcelas em Aberto</span></div></div>
+            ${maiorAptoEntry ? `<div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-octagon"></i></div><div class="stat-info"><h4>Apto ${H(maiorAptoEntry[0])}</h4><span>Maior devedor: ${fmtMoney(maiorAptoEntry[1])}</span></div></div>` : ''}
+        </div>`;
+    }
 
     const tb = document.getElementById('tbInadimplentes');
     if (inadimplentes.length === 0) {
         tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma inadimplência encontrada</p></td></tr>';
         return;
     }
-    tb.innerHTML = inadimplentes.map(i => `<tr>
-        <td><strong>${H(i.apto)}</strong></td>
-        <td>${H(i.ano)}</td>
-        <td>${MESES[parseInt(i.mes)]||i.mes}</td>
-        <td>${H(i.tipoTaxa)}</td>
-        <td style="color:var(--accent-red);font-weight:600">${fmtMoney(i.valorAberto)}</td>
-        <td><button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxa)}')"><i class="ti ti-link"></i> Associar</button></td>
-    </tr>`).join('');
+
+    // Agrupar por apartamento com subtotais
+    let html = '';
+    let aptoAtual = '';
+    let subtotal = 0;
+    let countApto = 0;
+
+    inadimplentes.forEach((i, idx) => {
+        if (i.apto !== aptoAtual && aptoAtual !== '') {
+            html += `<tr style="background:rgba(239,68,68,0.06);font-weight:600">
+                <td colspan="4" style="text-align:right;padding:0.5rem 0.8rem">Subtotal Apto ${H(aptoAtual)} (${countApto} parcelas):</td>
+                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}</td>
+                <td></td>
+            </tr>`;
+            subtotal = 0;
+            countApto = 0;
+        }
+
+        if (i.apto !== aptoAtual) {
+            html += `<tr style="background:var(--bg-sidebar);color:#fff">
+                <td colspan="6" style="padding:0.5rem 0.8rem;font-weight:700;font-size:0.88rem">
+                    <i class="ti ti-home-2"></i> Apartamento ${H(i.apto)}
+                </td>
+            </tr>`;
+            aptoAtual = i.apto;
+        }
+
+        subtotal += i.valorAberto;
+        countApto++;
+
+        html += `<tr>
+            <td><strong>${H(i.apto)}</strong></td>
+            <td>${H(i.ano)}</td>
+            <td>${MESES[parseInt(i.mes)]||i.mes}</td>
+            <td>${H(i.tipoTaxa)}</td>
+            <td style="color:var(--accent-red);font-weight:600">${fmtMoney(i.valorAberto)}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxaClean)}')"><i class="ti ti-link"></i> Associar</button></td>
+        </tr>`;
+
+        // Último item
+        if (idx === inadimplentes.length - 1) {
+            html += `<tr style="background:rgba(239,68,68,0.06);font-weight:600">
+                <td colspan="4" style="text-align:right;padding:0.5rem 0.8rem">Subtotal Apto ${H(aptoAtual)} (${countApto} parcelas):</td>
+                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}</td>
+                <td></td>
+            </tr>`;
+        }
+    });
+
+    // Total geral
+    html += `<tr style="background:var(--bg-sidebar);color:#fff;font-weight:700">
+        <td colspan="4" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem">TOTAL GERAL (${inadimplentes.length} parcelas / ${aptosUnicos} aptos):</td>
+        <td style="padding:0.7rem 0.8rem;font-size:1.05rem">${fmtMoney(totalAberto)}</td>
+        <td></td>
+    </tr>`;
+
+    tb.innerHTML = html;
+}
+
+function printInadimplentes() {
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const ano = document.getElementById('filterInadAno')?.value || new Date().getFullYear();
+    const mes = document.getElementById('filterInadMes')?.value || '';
+    const resumo = document.getElementById('inadResumo')?.innerHTML || '';
+    const tabela = document.getElementById('tbInadimplentes')?.parentElement?.outerHTML || '';
+
+    const w = window.open('', '_blank');
+    w.document.write(`<!DOCTYPE html><html><head><title>Inadimplentes - CondoGest</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+        <style>
+            body { font-family:'Inter',Arial,sans-serif; padding:30px; color:#1E293B; max-width:900px; margin:0 auto; }
+            table { border-collapse:collapse; width:100%; }
+            th { text-align:left; padding:6px 8px; font-size:0.75rem; text-transform:uppercase; color:#64748B; border-bottom:2px solid #e2e8f0; }
+            td { padding:6px 8px; border-bottom:1px solid #f1f5f9; font-size:0.85rem; }
+            .stat-card, .stats-row, .badge, .btn { display:none; }
+            @media print { body { padding:15px; } }
+        </style>
+    </head><body>
+        <div style="text-align:center;margin-bottom:1.5rem">
+            <h2 style="margin:0">${H(condo.nome||'Condominio')}</h2>
+            <p style="font-size:0.85rem;color:#64748B">${H(condo.endereco||'')}${condo.cnpj ? ' | CNPJ: '+H(condo.cnpj) : ''}</p>
+            <h3 style="margin-top:0.5rem">Relatório de Inadimplentes - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h3>
+            <p style="font-size:0.75rem;color:#94A3B8">Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+        </div>
+        ${tabela}
+    </body></html>`);
+    w.document.close();
+    setTimeout(() => w.print(), 300);
 }
 
 function associarInadimplente(apto, ano, mes, tipoTaxa) {
@@ -3996,7 +4152,6 @@ function renderTaxasApto() {
     let list = APP.taxasApto || [];
     if (filterApto) list = list.filter(t => t.apto === filterApto);
 
-    // Populate filter
     const filterSel = document.getElementById('filterTaxaApto');
     if (filterSel) {
         const aptos = [...new Set((APP.taxasApto||[]).map(t => t.apto))].sort();
@@ -4013,21 +4168,20 @@ function renderTaxasApto() {
         return;
     }
 
-    // Agrupar por apto
     const byApto = {};
-    list.forEach(t => {
-        if (!byApto[t.apto]) byApto[t.apto] = [];
-        byApto[t.apto].push(t);
-    });
+    list.forEach(t => { if (!byApto[t.apto]) byApto[t.apto] = []; byApto[t.apto].push(t); });
 
     let html = '';
     Object.entries(byApto).sort((a,b) => a[0].localeCompare(b[0])).forEach(([apto, taxas]) => {
         const totalApto = taxas.reduce((s,t) => s + (t.valor||0) * (t.quantidade||1), 0);
         taxas.forEach((t, idx) => {
             const sub = (t.valor||0) * (t.quantidade||1);
+            const tipoLabel = t.tipo === 'unica'
+                ? `<span class="badge badge-amber">Única${t.mesRef ? ' - '+t.mesRef.split('-').reverse().join('/') : ''}</span>`
+                : '<span class="badge badge-blue">Mensal</span>';
             html += `<tr>
                 ${idx === 0 ? `<td rowspan="${taxas.length}" style="vertical-align:middle;font-weight:700;font-size:1rem">${H(apto)}</td>` : ''}
-                <td>${H(t.descricao)} ${t.obs ? '<span style="color:var(--text-light);font-size:0.78rem">('+H(t.obs)+')</span>' : ''}</td>
+                <td>${H(t.descricao)} ${t.obs ? '<span style="color:var(--text-light);font-size:0.78rem">('+H(t.obs)+')</span>' : ''} ${tipoLabel}</td>
                 <td>${fmtMoney(t.valor)}</td>
                 <td style="text-align:center">${t.quantidade||1}</td>
                 <td><strong>${fmtMoney(sub)}</strong></td>
@@ -4043,14 +4197,21 @@ function renderTaxasApto() {
     tb.innerHTML = html;
 }
 
+function toggleTaxaAptoMesRef() {
+    const tipo = document.getElementById('taxaAptoTipo').value;
+    document.getElementById('grpTaxaAptoMesRef').style.display = tipo === 'unica' ? 'block' : 'none';
+}
+
 function openTaxaAptoModal() {
     document.getElementById('taxaAptoEditId').value = '';
     document.getElementById('taxaAptoDescricao').value = '';
     document.getElementById('taxaAptoValor').value = '';
     document.getElementById('taxaAptoQtd').value = '1';
+    document.getElementById('taxaAptoTipo').value = 'recorrente';
+    document.getElementById('taxaAptoMesRef').value = '';
     document.getElementById('taxaAptoObs').value = '';
+    toggleTaxaAptoMesRef();
 
-    // Populate apto select
     const sel = document.getElementById('taxaAptoApto');
     sel.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
 
@@ -4064,7 +4225,10 @@ function editTaxaApto(id) {
     document.getElementById('taxaAptoDescricao').value = t.descricao || '';
     document.getElementById('taxaAptoValor').value = t.valor || '';
     document.getElementById('taxaAptoQtd').value = t.quantidade || 1;
+    document.getElementById('taxaAptoTipo').value = t.tipo || 'recorrente';
+    document.getElementById('taxaAptoMesRef').value = t.mesRef || '';
     document.getElementById('taxaAptoObs').value = t.obs || '';
+    toggleTaxaAptoMesRef();
 
     const sel = document.getElementById('taxaAptoApto');
     sel.innerHTML = APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
@@ -4078,11 +4242,14 @@ async function saveTaxaApto() {
     const descricao = document.getElementById('taxaAptoDescricao').value.trim();
     const valor = parseFloat(document.getElementById('taxaAptoValor').value);
     const quantidade = parseInt(document.getElementById('taxaAptoQtd').value) || 1;
+    const tipo = document.getElementById('taxaAptoTipo').value;
+    const mesRef = document.getElementById('taxaAptoMesRef').value;
     const obs = document.getElementById('taxaAptoObs').value.trim();
 
     if (!apto || !descricao || isNaN(valor)) { toast('Preencha apartamento, descrição e valor', 'error'); return; }
+    if (tipo === 'unica' && !mesRef) { toast('Para taxa única, informe o mês de referência', 'error'); return; }
 
-    const data = { apto, descricao, valor, quantidade, obs };
+    const data = { apto, descricao, valor, quantidade, tipo, mesRef: tipo === 'unica' ? mesRef : '', obs };
     const id = document.getElementById('taxaAptoEditId').value;
     const res = await fbSave('taxas_apartamento', id || null, data);
     if (res) {
@@ -4606,7 +4773,7 @@ function renderCategorias() {
     el.innerHTML = APP.categorias.map((c,i) => `
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
             <span style="flex:1">${H(c)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">?</button>
         </div>
     `).join('');
     populateContaCategorias();
