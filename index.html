@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CondoGest - Gestão de Condomínios</title>
+
+<!-- ===== PWA ===== -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1A2744">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CondoGest">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
@@ -5192,5 +5204,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
+<!-- ===== Registro do Service Worker (PWA) ===== -->
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/CondoGest/sw.js', { scope: '/CondoGest/' })
+            .then((reg) => {
+                console.log('[PWA] Service Worker registrado com sucesso. Scope:', reg.scope);
+                // Verificar atualizações a cada 1 hora
+                setInterval(() => reg.update(), 60 * 60 * 1000);
+                // Notificar quando uma nova versão estiver disponível
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                console.log('[PWA] Nova versão disponível. Recarregue para atualizar.');
+                            }
+                        });
+                    }
+                });
+            })
+            .catch((err) => console.warn('[PWA] Falha no registro do Service Worker:', err));
+    });
+}
+</script>
 </body>
 </html>
+
