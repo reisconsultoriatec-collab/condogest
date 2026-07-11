@@ -615,6 +615,114 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 }
 .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
 .empty-state p { font-size: 0.9rem; }
+
+/* ===== COMUNICADOS ===== */
+.comunicado-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.8rem; background: var(--bg-card); transition: var(--transition); }
+.comunicado-card:hover { box-shadow: var(--shadow-md); }
+.comunicado-card .comunicado-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 8px; }
+.comunicado-card .comunicado-title { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+.comunicado-card .comunicado-date { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; }
+.comunicado-card .comunicado-body { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
+.comunicado-card .comunicado-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+.comunicado-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.comunicado-badge.urgente { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+.comunicado-badge.informativo { background: rgba(37,99,235,0.12); color: var(--primary); }
+.comunicado-badge.manutencao { background: rgba(245,158,11,0.12); color: var(--secondary); }
+
+/* ===== RESERVAS ===== */
+.reserva-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; margin-top: 0.8rem; }
+.reserva-cal-header { text-align: center; font-size: 0.72rem; font-weight: 600; color: var(--text-light); padding: 6px 2px; }
+.reserva-cal-day { min-height: 48px; border: 1px solid var(--border); border-radius: 4px; padding: 3px; font-size: 0.7rem; cursor: pointer; transition: var(--transition); }
+.reserva-cal-day:hover { background: rgba(37,99,235,0.06); }
+.reserva-cal-day.today { border-color: var(--primary); }
+.reserva-cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.reserva-cal-day .day-num { font-weight: 600; font-size: 0.72rem; color: var(--text-primary); }
+.reserva-cal-day .reserva-dot { display: block; font-size: 0.58rem; padding: 1px 3px; border-radius: 3px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: rgba(37,99,235,0.12); color: var(--primary); }
+.reserva-list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 0.4rem; background: var(--bg-card); }
+.reserva-list-item .reserva-info { flex: 1; }
+.reserva-list-item .reserva-area { font-weight: 600; font-size: 0.9rem; }
+.reserva-list-item .reserva-detail { font-size: 0.78rem; color: var(--text-secondary); }
+.reserva-status { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.reserva-status.aprovada { background: rgba(16,185,129,0.12); color: var(--accent); }
+.reserva-status.pendente { background: rgba(245,158,11,0.12); color: var(--secondary); }
+.reserva-status.cancelada { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+.areas-config { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 0.8rem; }
+.area-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; font-size: 0.78rem; background: rgba(37,99,235,0.08); color: var(--primary); border: 1px solid rgba(37,99,235,0.2); }
+.area-tag .remove-area { cursor: pointer; opacity: 0.6; font-size: 0.9rem; }
+.area-tag .remove-area:hover { opacity: 1; }
+
+/* ===== OCORRÊNCIAS / CHAMADOS ===== */
+.chamado-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.8rem; background: var(--bg-card); transition: var(--transition); }
+.chamado-card:hover { box-shadow: var(--shadow-md); }
+.chamado-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 0.4rem; }
+.chamado-title { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+.chamado-id { font-size: 0.7rem; color: var(--text-light); font-family: monospace; }
+.chamado-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.5rem; }
+.chamado-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.75rem; color: var(--text-light); }
+.chamado-meta i { font-size: 0.85rem; }
+.chamado-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+.badge-status { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.badge-status.aberto { background: rgba(37,99,235,0.12); color: var(--primary); }
+.badge-status.em_andamento { background: rgba(245,158,11,0.12); color: var(--secondary); }
+.badge-status.concluido { background: rgba(16,185,129,0.12); color: var(--accent); }
+.badge-status.cancelado { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+.badge-prio { font-size: 0.68rem; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+.badge-prio.baixa { background: rgba(16,185,129,0.1); color: var(--accent); }
+.badge-prio.media { background: rgba(245,158,11,0.1); color: var(--secondary); }
+.badge-prio.alta { background: rgba(249,115,22,0.12); color: var(--accent-orange); }
+.badge-prio.urgente { background: rgba(239,68,68,0.12); color: var(--accent-red); }
+
+/* ===== ASSEMBLEIAS ===== */
+.assembleia-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.8rem; background: var(--bg-card); transition: var(--transition); }
+.assembleia-card:hover { box-shadow: var(--shadow-md); }
+.assembleia-tipo { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.assembleia-tipo.ordinaria { background: rgba(37,99,235,0.12); color: var(--primary); }
+.assembleia-tipo.extraordinaria { background: rgba(245,158,11,0.12); color: var(--secondary); }
+.deliberacao-item { padding: 0.5rem 0.7rem; border-left: 3px solid var(--border); margin-bottom: 0.4rem; font-size: 0.85rem; }
+.deliberacao-item.aprovado { border-left-color: var(--accent); }
+.deliberacao-item.reprovado { border-left-color: var(--accent-red); }
+.deliberacao-item.adiado { border-left-color: var(--secondary); }
+
+/* ===== FORNECEDORES ===== */
+.fornecedor-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.8rem; background: var(--bg-card); transition: var(--transition); }
+.fornecedor-card:hover { box-shadow: var(--shadow-md); }
+.fornecedor-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.fornecedor-nome { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+.fornecedor-area { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; font-weight: 500; background: rgba(37,99,235,0.1); color: var(--primary); }
+.fornecedor-info { font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.6; }
+.contrato-item { padding: 0.5rem 0.7rem; border-left: 3px solid var(--primary); margin-top: 0.4rem; font-size: 0.82rem; background: rgba(37,99,235,0.03); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.contrato-item.vencido { border-left-color: var(--accent-red); background: rgba(239,68,68,0.04); }
+.contrato-item.vencendo { border-left-color: var(--secondary); background: rgba(245,158,11,0.04); }
+
+/* ===== BACKUP ===== */
+.backup-options { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1rem; }
+.backup-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 1.5rem 2rem; border: 2px dashed var(--border); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition); background: var(--bg-card); min-width: 180px; text-align: center; }
+.backup-btn:hover { border-color: var(--primary); background: rgba(37,99,235,0.04); }
+.backup-btn i { font-size: 2rem; color: var(--primary); }
+.backup-btn .backup-label { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+.backup-btn .backup-desc { font-size: 0.75rem; color: var(--text-secondary); }
+
+/* ===== DASHBOARD EXTRA CARDS ===== */
+.dash-extra-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; margin-bottom: 0.5rem; }
+.dash-alert-card { padding: 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); font-size: 0.82rem; }
+.dash-alert-card .alert-title { font-weight: 600; font-size: 0.78rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 5px; }
+.dash-alert-card .alert-list { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.6; }
+
+/* ===== PWA UPDATE BANNER ===== */
+.pwa-update-banner { position: fixed; bottom: 0; left: 0; right: 0; background: var(--gradient-primary); color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 10000; transform: translateY(100%); transition: transform 0.4s ease; font-size: 0.88rem; }
+.pwa-update-banner.show { transform: translateY(0); }
+.pwa-update-banner button { background: var(--secondary); color: #1A2744; border: none; padding: 6px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+.pwa-update-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 0.78rem; text-decoration: underline; }
+
+/* ===== PDF HEADER (print) ===== */
+.pdf-header { display: none; }
+@media print {
+    .sidebar, .top-header, .pwa-update-banner, .filter-bar button:not(.print-keep), .btn:not(.print-keep) { display: none !important; }
+    .main-content { margin-left: 0 !important; padding: 10px !important; }
+    .pdf-header { display: flex !important; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 2px solid #1A2744; margin-bottom: 16px; }
+    .pdf-header .pdf-logo { font-size: 1.2rem; font-weight: 700; color: #1A2744; }
+    .pdf-header .pdf-info { text-align: right; font-size: 0.75rem; color: #555; }
+}
 </style>
 </head>
 <body>
@@ -751,6 +859,30 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="nav-item" data-page="moradores" onclick="navigateTo('moradores')">
                     <span class="nav-icon"><i class="ti ti-home-2"></i></span> Moradores
                 </div>
+                <div class="nav-item" data-page="fornecedores" onclick="navigateTo('fornecedores')">
+                    <span class="nav-icon"><i class="ti ti-building-store"></i></span> Fornecedores
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section" data-section="operacional">
+            <div class="nav-section-label" onclick="toggleSection('operacional')">
+                <span><i class="ti ti-building-community"></i> Operacional</span>
+                <i class="ti ti-chevron-down nav-section-arrow"></i>
+            </div>
+            <div class="nav-section-items">
+                <div class="nav-item" data-page="comunicados" onclick="navigateTo('comunicados')">
+                    <span class="nav-icon"><i class="ti ti-speakerphone"></i></span> Comunicados
+                </div>
+                <div class="nav-item" data-page="reservas" onclick="navigateTo('reservas')">
+                    <span class="nav-icon"><i class="ti ti-calendar-event"></i></span> Reserva de Áreas
+                </div>
+                <div class="nav-item" data-page="ocorrencias" onclick="navigateTo('ocorrencias')">
+                    <span class="nav-icon"><i class="ti ti-alert-circle"></i></span> Ocorrências
+                </div>
+                <div class="nav-item" data-page="assembleias" onclick="navigateTo('assembleias')">
+                    <span class="nav-icon"><i class="ti ti-clipboard-text"></i></span> Assembleias
+                </div>
             </div>
         </div>
 
@@ -820,6 +952,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="nav-item" data-page="configuracoes" onclick="navigateTo('configuracoes')">
                     <span class="nav-icon"><i class="ti ti-settings"></i></span> Configurações
                 </div>
+                <div class="nav-item" data-page="backup" onclick="navigateTo('backup')">
+                    <span class="nav-icon"><i class="ti ti-database-export"></i></span> Backup / Exportar
+                </div>
             </div>
         </div>
     </nav>
@@ -853,6 +988,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- ============ DASHBOARD ============ -->
         <section class="page-section active" id="pg-dashboard">
             <div class="stats-row" id="dashStats"></div>
+            <div class="stats-row" id="dashStatsExtra" style="margin-top:0.5rem"></div>
+            <div class="dash-extra-row" id="dashAlerts"></div>
             <div class="charts-grid">
                 <div class="card">
                     <div class="card-title"><i class="ti ti-chart-bar"></i> Receitas vs Despesas (Mensal)</div>
@@ -1266,7 +1403,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-relDespesas','Relatório de Despesas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
                 </div>
                 <div id="relDespContent"></div>
             </div>
@@ -1287,7 +1425,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-relReceitas','Relatório de Receitas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
                 </div>
                 <div id="relRecContent"></div>
             </div>
@@ -1298,7 +1437,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="card">
                 <div class="card-title"><i class="ti ti-report-search"></i> Relatório de Conciliação Bancária</div>
                 <div class="filter-bar">
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relConciliacao')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('relConciliacao')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-relConciliacao','Relatório de Conciliação')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
                 </div>
                 <div id="relConcContent"></div>
             </div>
@@ -1319,9 +1459,121 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')"><i class="ti ti-printer"></i> Imprimir / PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-balancete','Balancete - Prestação de Contas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
                 </div>
                 <div id="balContent"></div>
+            </div>
+        </section>
+
+        <!-- ============ COMUNICADOS ============ -->
+        <section class="page-section" id="pg-comunicados">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-speakerphone"></i> Comunicados</span>
+                    <button class="btn btn-fill btn-sm" onclick="openComunicadoModal()"><i class="ti ti-plus"></i> Novo Comunicado</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="comunicadoFiltroTipo" onchange="renderComunicados()" style="max-width:180px">
+                        <option value="">Todos os tipos</option>
+                        <option value="informativo">Informativo</option>
+                        <option value="urgente">Urgente</option>
+                        <option value="manutencao">Manutenção</option>
+                    </select>
+                    <input type="text" placeholder="Buscar comunicado..." id="searchComunicado" oninput="renderComunicados()" style="max-width:250px">
+                </div>
+                <div id="comunicadosList"></div>
+            </div>
+        </section>
+
+        <!-- ============ RESERVAS DE ÁREAS COMUNS ============ -->
+        <section class="page-section" id="pg-reservas">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-calendar-event"></i> Reserva de Áreas Comuns</span>
+                    <button class="btn btn-fill btn-sm" onclick="openReservaModal()"><i class="ti ti-plus"></i> Nova Reserva</button>
+                </div>
+                <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+                    <select id="reservaFiltroArea" onchange="renderReservas()" style="max-width:200px">
+                        <option value="">Todas as áreas</option>
+                    </select>
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <button class="btn btn-outline btn-sm" onclick="changeReservaMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+                        <span id="reservaMesLabel" style="font-weight:600;min-width:140px;text-align:center"></span>
+                        <button class="btn btn-outline btn-sm" onclick="changeReservaMonth(1)"><i class="ti ti-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="reservaCalendar" class="reserva-calendar"></div>
+                <div style="margin-top:1rem">
+                    <div style="font-weight:600;margin-bottom:0.5rem;font-size:0.9rem"><i class="ti ti-list"></i> Próximas Reservas</div>
+                    <div id="reservaList"></div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:1rem">
+                <div class="card-title"><i class="ti ti-settings"></i> Áreas Cadastradas</div>
+                <div class="areas-config" id="areasConfig"></div>
+                <div style="display:flex;gap:6px;align-items:center">
+                    <input type="text" id="novaAreaInput" placeholder="Nome da nova área..." style="max-width:250px">
+                    <button class="btn btn-outline btn-sm" onclick="addAreaComum()"><i class="ti ti-plus"></i> Adicionar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ OCORRÊNCIAS ============ -->
+        <section class="page-section" id="pg-ocorrencias">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-alert-circle"></i> Ocorrências e Chamados</span>
+                    <button class="btn btn-fill btn-sm" onclick="openOcorrenciaModal()"><i class="ti ti-plus"></i> Novo Chamado</button>
+                </div>
+                <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+                    <select id="ocorFiltroStatus" onchange="renderOcorrencias()" style="max-width:160px">
+                        <option value="">Todos os status</option>
+                        <option value="aberto">Aberto</option>
+                        <option value="em_andamento">Em Andamento</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                    <select id="ocorFiltroPrio" onchange="renderOcorrencias()" style="max-width:140px">
+                        <option value="">Todas prioridades</option>
+                        <option value="baixa">Baixa</option>
+                        <option value="media">Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                    <select id="ocorFiltroCat" onchange="renderOcorrencias()" style="max-width:160px">
+                        <option value="">Todas categorias</option>
+                        <option value="Hidráulica">Hidráulica</option>
+                        <option value="Elétrica">Elétrica</option>
+                        <option value="Elevador">Elevador</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Estrutural">Estrutural</option>
+                        <option value="Jardim">Jardim</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                    <input type="text" placeholder="Buscar..." id="searchOcorrencia" oninput="renderOcorrencias()" style="max-width:200px">
+                </div>
+                <div id="ocorrenciasList"></div>
+            </div>
+        </section>
+
+        <!-- ============ ASSEMBLEIAS ============ -->
+        <section class="page-section" id="pg-assembleias">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-clipboard-text"></i> Assembleias e Atas</span>
+                    <button class="btn btn-fill btn-sm" onclick="openAssembleiaModal()"><i class="ti ti-plus"></i> Nova Assembleia</button>
+                </div>
+                <div class="filter-bar">
+                    <select id="assembleiaFiltroAno" onchange="renderAssembleias()" style="max-width:120px"></select>
+                    <select id="assembleiaFiltroTipo" onchange="renderAssembleias()" style="max-width:180px">
+                        <option value="">Todos os tipos</option>
+                        <option value="ordinaria">Ordinária</option>
+                        <option value="extraordinaria">Extraordinária</option>
+                    </select>
+                </div>
+                <div id="assembleiasList"></div>
             </div>
         </section>
 
@@ -1337,6 +1589,43 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <th>Nome</th><th>Email</th><th>Perfil</th><th>Apto</th><th>Status</th><th>Aprovação</th><th>Ações</th>
                     </tr></thead><tbody id="tbUsuarios"></tbody></table>
                 </div>
+            </div>
+        </section>
+
+        <!-- ============ FORNECEDORES ============ -->
+        <section class="page-section" id="pg-fornecedores">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-building-store"></i> Fornecedores e Contratos</span>
+                    <button class="btn btn-fill btn-sm" onclick="openFornecedorModal()"><i class="ti ti-plus"></i> Novo Fornecedor</button>
+                </div>
+                <div class="filter-bar">
+                    <input type="text" placeholder="Buscar fornecedor..." id="searchFornecedor" oninput="renderFornecedores()" style="max-width:250px">
+                </div>
+                <div id="fornecedoresList"></div>
+            </div>
+        </section>
+
+        <!-- ============ BACKUP ============ -->
+        <section class="page-section" id="pg-backup">
+            <div class="card">
+                <div class="card-title"><i class="ti ti-database-export"></i> Backup e Exportação de Dados</div>
+                <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:0.5rem">
+                    Exporte todos os dados do condomínio selecionado para backup, auditoria ou migração. Nenhum dado é alterado ou removido.
+                </p>
+                <div class="backup-options">
+                    <div class="backup-btn" onclick="exportBackupExcel()">
+                        <i class="ti ti-file-spreadsheet"></i>
+                        <span class="backup-label">Exportar Excel</span>
+                        <span class="backup-desc">Cada coleção em uma aba separada</span>
+                    </div>
+                    <div class="backup-btn" onclick="exportBackupJSON()">
+                        <i class="ti ti-braces"></i>
+                        <span class="backup-label">Exportar JSON</span>
+                        <span class="backup-desc">Formato técnico para migração</span>
+                    </div>
+                </div>
+                <div id="backupLog" style="margin-top:1rem;font-size:0.82rem;color:var(--text-secondary)"></div>
             </div>
         </section>
 
@@ -1666,6 +1955,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="admin">Administrador</option>
                         <option value="sindico">Síndico</option>
                         <option value="usuario">Usuário</option>
+                        <option value="morador">Morador</option>
                         <option value="visualizador">Visualizador</option>
                     </select>
                 </div>
@@ -1697,6 +1987,12 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label class="access-item"><input type="checkbox" value="receitasAvulsas"> Receitas Avulsas</label>
                     <label class="access-item"><input type="checkbox" value="inadimplentes"> Inadimplentes</label>
                     <label class="access-item"><input type="checkbox" value="orcamento"> Orçamento</label>
+                    <label class="access-item"><input type="checkbox" value="comunicados"> Comunicados</label>
+                    <label class="access-item"><input type="checkbox" value="reservas"> Reservas</label>
+                    <label class="access-item"><input type="checkbox" value="ocorrencias"> Ocorrências</label>
+                    <label class="access-item"><input type="checkbox" value="assembleias"> Assembleias</label>
+                    <label class="access-item"><input type="checkbox" value="fornecedores"> Fornecedores</label>
+                    <label class="access-item"><input type="checkbox" value="backup"> Backup</label>
                     <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
                     <label class="access-item"><input type="checkbox" value="relReceitas"> Rel. Receitas</label>
                     <label class="access-item"><input type="checkbox" value="relConciliacao"> Rel. Conciliação</label>
@@ -1845,6 +2141,314 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     </div>
 </div>
 
+<!-- Modal Comunicado -->
+<div class="modal-overlay" id="modalComunicado">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Comunicado</h3>
+            <button class="modal-close" onclick="closeModal('modalComunicado')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="comunicadoEditId">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Assunto *</label>
+                    <input type="text" id="comunicadoAssunto" placeholder="Ex: Manutenção do elevador">
+                </div>
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="comunicadoTipo">
+                        <option value="informativo">Informativo</option>
+                        <option value="urgente">Urgente</option>
+                        <option value="manutencao">Manutenção</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="comunicadoData">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Mensagem *</label>
+                    <textarea id="comunicadoMensagem" rows="6" placeholder="Escreva o conteúdo do comunicado..."></textarea>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Autor</label>
+                    <input type="text" id="comunicadoAutor" placeholder="Ex: Administração / Síndico">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalComunicado')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveComunicado()"><i class="ti ti-device-floppy"></i> Publicar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reserva -->
+<div class="modal-overlay" id="modalReserva">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Reserva de Área Comum</h3>
+            <button class="modal-close" onclick="closeModal('modalReserva')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="reservaEditId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Área *</label>
+                    <select id="reservaArea"></select>
+                </div>
+                <div class="form-group">
+                    <label>Solicitante (Apto) *</label>
+                    <select id="reservaSolicitante"></select>
+                </div>
+                <div class="form-group">
+                    <label>Data *</label>
+                    <input type="date" id="reservaData">
+                </div>
+                <div class="form-group">
+                    <label>Horário</label>
+                    <div style="display:flex;gap:6px;align-items:center">
+                        <input type="time" id="reservaHoraInicio" value="08:00">
+                        <span>até</span>
+                        <input type="time" id="reservaHoraFim" value="22:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="reservaStatus">
+                        <option value="aprovada">Aprovada</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Observações</label>
+                    <textarea id="reservaObs" rows="3" placeholder="Observações sobre a reserva..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalReserva')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveReserva()"><i class="ti ti-device-floppy"></i> Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Fornecedor -->
+<div class="modal-overlay" id="modalFornecedor">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Fornecedor</h3>
+            <button class="modal-close" onclick="closeModal('modalFornecedor')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="fornEditId">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Razão Social / Nome *</label>
+                    <input type="text" id="fornNome" placeholder="Ex: Elevadores Brasil Ltda">
+                </div>
+                <div class="form-group">
+                    <label>CNPJ / CPF</label>
+                    <input type="text" id="fornCnpj" oninput="maskCNPJ(this)">
+                </div>
+                <div class="form-group">
+                    <label>Área de Atuação</label>
+                    <select id="fornArea">
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Elevadores">Elevadores</option>
+                        <option value="Jardim">Jardim</option>
+                        <option value="Elétrica">Elétrica</option>
+                        <option value="Hidráulica">Hidráulica</option>
+                        <option value="Seguros">Seguros</option>
+                        <option value="Contabilidade">Contabilidade</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" id="fornTelefone" oninput="maskPhone(this)">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="fornEmail">
+                </div>
+                <div class="form-group">
+                    <label>Contato (pessoa)</label>
+                    <input type="text" id="fornContato" placeholder="Nome do responsável">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Observações</label>
+                    <textarea id="fornObs" rows="2"></textarea>
+                </div>
+            </div>
+            <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">
+            <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.5rem"><i class="ti ti-file-certificate"></i> Contrato</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Serviço contratado</label>
+                    <input type="text" id="fornContratoServico" placeholder="Ex: Manutenção de elevadores">
+                </div>
+                <div class="form-group">
+                    <label>Valor Mensal</label>
+                    <input type="number" id="fornContratoValor" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>Início Vigência</label>
+                    <input type="date" id="fornContratoInicio">
+                </div>
+                <div class="form-group">
+                    <label>Fim Vigência</label>
+                    <input type="date" id="fornContratoFim">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalFornecedor')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveFornecedor()"><i class="ti ti-device-floppy"></i> Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ocorrência -->
+<div class="modal-overlay" id="modalOcorrencia">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Ocorrência / Chamado</h3>
+            <button class="modal-close" onclick="closeModal('modalOcorrencia')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="ocorEditId">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Título *</label>
+                    <input type="text" id="ocorTitulo" placeholder="Ex: Vazamento no 3º andar">
+                </div>
+                <div class="form-group">
+                    <label>Categoria *</label>
+                    <select id="ocorCategoria">
+                        <option value="Hidráulica">Hidráulica</option>
+                        <option value="Elétrica">Elétrica</option>
+                        <option value="Elevador">Elevador</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Segurança">Segurança</option>
+                        <option value="Estrutural">Estrutural</option>
+                        <option value="Jardim">Jardim</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade *</label>
+                    <select id="ocorPrioridade">
+                        <option value="baixa">Baixa</option>
+                        <option value="media" selected>Média</option>
+                        <option value="alta">Alta</option>
+                        <option value="urgente">Urgente</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Solicitante (Apto)</label>
+                    <select id="ocorSolicitante"></select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="ocorStatus">
+                        <option value="aberto">Aberto</option>
+                        <option value="em_andamento">Em Andamento</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data de Abertura</label>
+                    <input type="date" id="ocorData">
+                </div>
+                <div class="form-group">
+                    <label>Previsão de Conclusão</label>
+                    <input type="date" id="ocorPrevisao">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Descrição *</label>
+                    <textarea id="ocorDescricao" rows="4" placeholder="Descreva o problema em detalhes..."></textarea>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Observações / Histórico de Atendimento</label>
+                    <textarea id="ocorHistorico" rows="3" placeholder="Anotações sobre o atendimento..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalOcorrencia')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveOcorrencia()"><i class="ti ti-device-floppy"></i> Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Assembleia -->
+<div class="modal-overlay" id="modalAssembleia">
+    <div class="modal-box" style="max-width:700px">
+        <div class="modal-header">
+            <h3>Assembleia</h3>
+            <button class="modal-close" onclick="closeModal('modalAssembleia')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="assEditId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tipo *</label>
+                    <select id="assTipo">
+                        <option value="ordinaria">Ordinária (AGO)</option>
+                        <option value="extraordinaria">Extraordinária (AGE)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data *</label>
+                    <input type="date" id="assData">
+                </div>
+                <div class="form-group">
+                    <label>Horário</label>
+                    <input type="time" id="assHorario" value="19:00">
+                </div>
+                <div class="form-group">
+                    <label>Local</label>
+                    <input type="text" id="assLocal" placeholder="Ex: Salão de festas">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Pauta</label>
+                    <textarea id="assPauta" rows="3" placeholder="Itens da pauta (um por linha)..."></textarea>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Unidades Presentes (quórum)</label>
+                    <input type="text" id="assQuorum" placeholder="Ex: 101, 102, 201, 202, 301...">
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Deliberações (uma por linha: assunto | resultado)</label>
+                    <textarea id="assDeliberacoes" rows="4" placeholder="Aprovação do orçamento 2026 | aprovado&#10;Troca da portaria | adiado&#10;Instalação de câmeras | aprovado"></textarea>
+                </div>
+                <div class="form-group" style="grid-column:1/-1">
+                    <label>Ata (texto completo)</label>
+                    <textarea id="assAta" rows="6" placeholder="Texto da ata da assembleia..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalAssembleia')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveAssembleia()"><i class="ti ti-device-floppy"></i> Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- PWA UPDATE BANNER -->
+<div class="pwa-update-banner" id="pwaUpdateBanner">
+    <i class="ti ti-refresh"></i>
+    <span>Nova versão do CondoGest disponível!</span>
+    <button onclick="applyPWAUpdate()">Atualizar agora</button>
+    <button class="dismiss" onclick="dismissPWAUpdate()">Depois</button>
+</div>
+
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1872,6 +2476,13 @@ const APP = {
     orcamento: [],
     taxasApto: [],
     receitasAvulsas: [],
+    comunicados: [],
+    reservas: [],
+    ocorrencias: [],
+    assembleias: [],
+    fornecedores: [],
+    areasComuns: ['Salão de Festas','Churrasqueira','Quadra','Academia','Piscina'],
+    reservaMonth: new Date(),
     usuarios: [],
     categorias: ['Água','Energia','Gás','Manutenção','Limpeza','Segurança','Administração','Seguros','Elevadores','Jardim','Outros'],
     charts: {},
@@ -2018,6 +2629,9 @@ function navigateTo(page) {
         inadimplentes:'Inadimplentes', orcamento:'Previsão Orçamentária',
         boletos:'Boletos / PIX',
         receitasAvulsas:'Receitas Avulsas',
+        comunicados:'Comunicados', reservas:'Reserva de Áreas Comuns',
+        ocorrencias:'Ocorrências e Chamados', assembleias:'Assembleias e Atas',
+        fornecedores:'Fornecedores e Contratos', backup:'Backup / Exportar',
         relDespesas:'Relatório de Despesas', relReceitas:'Relatório de Receitas',
         relConciliacao:'Relatório de Conciliação', balancete:'Balancete',
         usuarios:'Gestão de Usuários', configuracoes:'Configurações'
@@ -2033,6 +2647,11 @@ function navigateTo(page) {
     else if (page === 'orcamento') renderOrcamento();
     else if (page === 'boletos') { renderTaxasApto(); populateBoletoSelects(); }
     else if (page === 'receitasAvulsas') renderReceitasAvulsas();
+    else if (page === 'comunicados') renderComunicados();
+    else if (page === 'reservas') renderReservas();
+    else if (page === 'ocorrencias') renderOcorrencias();
+    else if (page === 'assembleias') { renderAssembleias(); populateAssembleiaAnoFilter(); }
+    else if (page === 'fornecedores') renderFornecedores();
     else if (page === 'relDespesas') renderRelDespesas();
     else if (page === 'relReceitas') renderRelReceitas();
     else if (page === 'relConciliacao') renderRelConciliacao();
@@ -2190,7 +2809,7 @@ function enterApp() {
     if (APP.userProfile) {
         const nome = APP.userProfile.nome || APP.currentUser.email;
         const inicial = nome.charAt(0).toUpperCase();
-        const perfilLabels = { admin:'Administrador', sindico:'Síndico', usuario:'Usuário', visualizador:'Visualizador' };
+        const perfilLabels = { admin:'Administrador', sindico:'Síndico', usuario:'Usuário', morador:'Morador', visualizador:'Visualizador' };
         document.getElementById('footerUser').textContent = nome;
         document.getElementById('footerRole').textContent = perfilLabels[APP.userProfile.perfil] || APP.userProfile.perfil;
         document.getElementById('footerAvatar').textContent = inicial;
@@ -2235,11 +2854,29 @@ function applyMenuPermissions() {
     const isAdmin = perfil === 'admin';
     const isSindico = perfil === 'sindico';
     const isGestor = isAdmin || isSindico;
+    const isMorador = perfil === 'morador';
 
     // Admin e Síndico veem tudo
     if (isGestor) {
         document.querySelectorAll('.nav-item').forEach(item => item.style.display = '');
         document.querySelectorAll('.nav-section').forEach(sec => sec.style.display = '');
+        return;
+    }
+
+    // Portal do Morador: acesso limitado
+    if (isMorador) {
+        const moradorPages = ['dashboard','comunicados','reservas','ocorrencias','boletos'];
+        document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+            const page = item.getAttribute('data-page');
+            item.style.display = moradorPages.includes(page) ? '' : 'none';
+        });
+        // Ocultar seções sem itens visíveis
+        document.querySelectorAll('.nav-section').forEach(section => {
+            const items = section.querySelectorAll('.nav-item[data-page]');
+            let hasVisible = false;
+            items.forEach(item => { if (item.style.display !== 'none') hasVisible = true; });
+            section.style.display = hasVisible ? '' : 'none';
+        });
         return;
     }
 
@@ -2619,6 +3256,49 @@ async function loadCondoData() {
         const raSnap = await APP.db.collection('condominios').doc(cid).collection('receitas_avulsas').orderBy('data','desc').get();
         APP.receitasAvulsas = []; raSnap.forEach(d => APP.receitasAvulsas.push({ id: d.id, ...d.data() }));
         renderReceitasAvulsas();
+
+        // Comunicados
+        try {
+            const comSnap = await APP.db.collection('condominios').doc(cid).collection('comunicados').orderBy('data','desc').get();
+            APP.comunicados = []; comSnap.forEach(d => APP.comunicados.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Comunicados: coleção ainda não existe ou sem permissão:', e.message); APP.comunicados = []; }
+        renderComunicados();
+
+        // Reservas
+        try {
+            const resSnap = await APP.db.collection('condominios').doc(cid).collection('reservas').orderBy('data').get();
+            APP.reservas = []; resSnap.forEach(d => APP.reservas.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Reservas: coleção ainda não existe ou sem permissão:', e.message); APP.reservas = []; }
+
+        // Areas Comuns (settings)
+        try {
+            const areasDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('areas_comuns').get();
+            if (areasDoc.exists && areasDoc.data().list) {
+                APP.areasComuns = areasDoc.data().list;
+            }
+        } catch(e) { console.warn('Áreas comuns: settings ainda não existe:', e.message); }
+        renderReservas();
+
+        // Ocorrências
+        try {
+            const ocSnap = await APP.db.collection('condominios').doc(cid).collection('ocorrencias').orderBy('dataAbertura','desc').get();
+            APP.ocorrencias = []; ocSnap.forEach(d => APP.ocorrencias.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Ocorrências:', e.message); APP.ocorrencias = []; }
+        renderOcorrencias();
+
+        // Assembleias
+        try {
+            const assSnap = await APP.db.collection('condominios').doc(cid).collection('assembleias').orderBy('data','desc').get();
+            APP.assembleias = []; assSnap.forEach(d => APP.assembleias.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Assembleias:', e.message); APP.assembleias = []; }
+        renderAssembleias();
+
+        // Fornecedores
+        try {
+            const fornSnap = await APP.db.collection('condominios').doc(cid).collection('fornecedores').orderBy('nome').get();
+            APP.fornecedores = []; fornSnap.forEach(d => APP.fornecedores.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Fornecedores:', e.message); APP.fornecedores = []; }
+        renderFornecedores();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
@@ -5027,6 +5707,88 @@ function renderDashboard() {
         <div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div><div class="stat-info"><h4>${inadCount}</h4><span>Inadimplentes</span></div></div>
     `;
 
+    // === Dashboard Extra KPIs (Onda 2) ===
+    const chamadosAbertos = (APP.ocorrencias||[]).filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
+    const hoje = new Date().toISOString().split('T')[0];
+    const meAtual = hoje.slice(0,7);
+    const reservasMes = (APP.reservas||[]).filter(r => (r.data||'').startsWith(meAtual) && r.status !== 'cancelada').length;
+    const comunicadosRecentes = (APP.comunicados||[]).filter(c => {
+        if (!c.data) return false;
+        const diff = (new Date() - new Date(c.data+'T00:00:00')) / (1000*60*60*24);
+        return diff <= 30;
+    }).length;
+    const saldo = totalReceitas - totalDespesas;
+    const saldoColor = saldo >= 0 ? 'green' : 'red';
+    const saldoIcon = saldo >= 0 ? 'ti-arrow-up-circle' : 'ti-arrow-down-circle';
+
+    const dashExtra = document.getElementById('dashStatsExtra');
+    if (dashExtra) {
+        dashExtra.innerHTML = `
+            <div class="stat-card"><div class="stat-icon ${saldoColor}"><i class="ti ${saldoIcon}"></i></div><div class="stat-info"><h4>${fmtMoney(Math.abs(saldo))}</h4><span>Saldo ${saldo>=0?'Positivo':'Negativo'}</span></div></div>
+            <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-tool"></i></div><div class="stat-info"><h4>${chamadosAbertos}</h4><span>Chamados Abertos</span></div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-calendar-event"></i></div><div class="stat-info"><h4>${reservasMes}</h4><span>Reservas (mês)</span></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="ti ti-speakerphone"></i></div><div class="stat-info"><h4>${comunicadosRecentes}</h4><span>Comunicados (30d)</span></div></div>
+        `;
+    }
+
+    // === Alertas do Dashboard ===
+    const dashAlerts = document.getElementById('dashAlerts');
+    if (dashAlerts) {
+        let alertsHtml = '';
+        // Contas a vencer em 7 dias
+        const em7dias = new Date(); em7dias.setDate(em7dias.getDate() + 7);
+        const contasVencer = (APP.contas||[]).filter(c => {
+            if (!c.vencimento || c.pago) return false;
+            return c.vencimento >= hoje && c.vencimento <= em7dias.toISOString().split('T')[0];
+        });
+        if (contasVencer.length) {
+            alertsHtml += `<div class="dash-alert-card">
+                <div class="alert-title" style="color:var(--accent-orange)"><i class="ti ti-clock-exclamation"></i> Contas a vencer (7 dias)</div>
+                <div class="alert-list">${contasVencer.slice(0,5).map(c => `${H(c.descricao||c.categoria||'Conta')} — ${H(c.vencimento)} — ${fmtMoney(c.valor||0)}`).join('<br>')}</div>
+            </div>`;
+        }
+        // Chamados urgentes
+        const urgentes = (APP.ocorrencias||[]).filter(o => o.prioridade === 'urgente' && (o.status === 'aberto' || o.status === 'em_andamento'));
+        if (urgentes.length) {
+            alertsHtml += `<div class="dash-alert-card">
+                <div class="alert-title" style="color:var(--accent-red)"><i class="ti ti-urgent"></i> Chamados Urgentes</div>
+                <div class="alert-list">${urgentes.slice(0,5).map(o => `#${o.id.slice(-6).toUpperCase()} — ${H(o.titulo)}`).join('<br>')}</div>
+            </div>`;
+        }
+        // Próximas assembleias
+        const proxAss = (APP.assembleias||[]).filter(a => a.data >= hoje).sort((a,b) => a.data.localeCompare(b.data));
+        if (proxAss.length) {
+            alertsHtml += `<div class="dash-alert-card">
+                <div class="alert-title" style="color:var(--primary)"><i class="ti ti-clipboard-text"></i> Próxima Assembleia</div>
+                <div class="alert-list">${proxAss.slice(0,2).map(a => `${H(a.data)} ${a.horario?'às '+H(a.horario):''} — ${a.tipo==='extraordinaria'?'AGE':'AGO'}`).join('<br>')}</div>
+            </div>`;
+        }
+        // Comunicados urgentes recentes
+        const comUrg = (APP.comunicados||[]).filter(c => c.tipo === 'urgente').slice(0,3);
+        if (comUrg.length) {
+            alertsHtml += `<div class="dash-alert-card">
+                <div class="alert-title" style="color:var(--accent-red)"><i class="ti ti-bell-ringing"></i> Comunicados Urgentes</div>
+                <div class="alert-list">${comUrg.map(c => `${H(c.data||'')} — ${H(c.assunto)}`).join('<br>')}</div>
+            </div>`;
+        }
+        // Contratos vencendo em 30 dias
+        const em30d = new Date(); em30d.setDate(em30d.getDate() + 30);
+        const em30dStr = em30d.toISOString().split('T')[0];
+        const contratosVencendo = (APP.fornecedores||[]).filter(f => f.contratoFim && f.contratoFim >= hoje && f.contratoFim <= em30dStr);
+        const contratosVencidos = (APP.fornecedores||[]).filter(f => f.contratoFim && f.contratoFim < hoje);
+        if (contratosVencendo.length || contratosVencidos.length) {
+            const items = [];
+            contratosVencidos.forEach(f => items.push(`<span style="color:var(--accent-red)">VENCIDO</span> ${H(f.nome)} — ${H(f.contratoFim)}`));
+            contratosVencendo.forEach(f => items.push(`<span style="color:var(--secondary)">Vencendo</span> ${H(f.nome)} — ${H(f.contratoFim)}`));
+            alertsHtml += `<div class="dash-alert-card">
+                <div class="alert-title" style="color:var(--secondary)"><i class="ti ti-file-alert"></i> Contratos</div>
+                <div class="alert-list">${items.slice(0,5).join('<br>')}</div>
+            </div>`;
+        }
+        if (!alertsHtml) alertsHtml = '';
+        dashAlerts.innerHTML = alertsHtml;
+    }
+
     renderCharts();
 }
 
@@ -5176,6 +5938,777 @@ function renderCharts() {
     }
 }
 
+// ===== COMUNICADOS =====
+function renderComunicados() {
+    const container = document.getElementById('comunicadosList');
+    if (!container) return;
+    const filtroTipo = document.getElementById('comunicadoFiltroTipo')?.value || '';
+    const busca = (document.getElementById('searchComunicado')?.value || '').toLowerCase();
+    let lista = APP.comunicados || [];
+    if (filtroTipo) lista = lista.filter(c => c.tipo === filtroTipo);
+    if (busca) lista = lista.filter(c => (c.assunto||'').toLowerCase().includes(busca) || (c.mensagem||'').toLowerCase().includes(busca));
+    if (!lista.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-speakerphone"></i></div><p>Nenhum comunicado encontrado.</p></div>';
+        return;
+    }
+    container.innerHTML = lista.map(c => {
+        const tipoLabel = {informativo:'Informativo',urgente:'Urgente',manutencao:'Manutenção'}[c.tipo] || c.tipo;
+        const tipoIcon = {informativo:'ti-info-circle',urgente:'ti-alert-triangle',manutencao:'ti-tool'}[c.tipo] || 'ti-info-circle';
+        return `<div class="comunicado-card">
+            <div class="comunicado-header">
+                <div class="comunicado-title">${H(c.assunto)}</div>
+                <div class="comunicado-date">${H(c.data || '')}</div>
+            </div>
+            <div class="comunicado-body">${H(c.mensagem || '')}</div>
+            <div class="comunicado-footer">
+                <div><span class="comunicado-badge ${c.tipo}"><i class="ti ${tipoIcon}"></i> ${tipoLabel}</span>
+                ${c.autor ? ' <span style="font-size:0.75rem;color:var(--text-light);margin-left:8px">por ${H(c.autor)}</span>' : ''}</div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="editComunicado('${c.id}')"><i class="ti ti-edit"></i></button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteComunicado('${c.id}')"><i class="ti ti-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openComunicadoModal(id) {
+    document.getElementById('comunicadoEditId').value = '';
+    document.getElementById('comunicadoAssunto').value = '';
+    document.getElementById('comunicadoTipo').value = 'informativo';
+    document.getElementById('comunicadoData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('comunicadoMensagem').value = '';
+    document.getElementById('comunicadoAutor').value = APP.userProfile?.nome || '';
+    openModal('modalComunicado');
+}
+
+function editComunicado(id) {
+    const c = APP.comunicados.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('comunicadoEditId').value = id;
+    document.getElementById('comunicadoAssunto').value = c.assunto || '';
+    document.getElementById('comunicadoTipo').value = c.tipo || 'informativo';
+    document.getElementById('comunicadoData').value = c.data || '';
+    document.getElementById('comunicadoMensagem').value = c.mensagem || '';
+    document.getElementById('comunicadoAutor').value = c.autor || '';
+    openModal('modalComunicado');
+}
+
+async function saveComunicado() {
+    const assunto = document.getElementById('comunicadoAssunto').value.trim();
+    const mensagem = document.getElementById('comunicadoMensagem').value.trim();
+    if (!assunto || !mensagem) { toast('Preencha assunto e mensagem.','error'); return; }
+    const data = {
+        assunto,
+        tipo: document.getElementById('comunicadoTipo').value,
+        data: document.getElementById('comunicadoData').value || new Date().toISOString().split('T')[0],
+        mensagem,
+        autor: document.getElementById('comunicadoAutor').value.trim(),
+        criadoEm: new Date().toISOString()
+    };
+    const id = document.getElementById('comunicadoEditId').value;
+    await fbSave('comunicados', id || null, data);
+    closeModal('modalComunicado');
+    // Reload
+    const cid = APP.currentCondoId;
+    const snap = await APP.db.collection('condominios').doc(cid).collection('comunicados').orderBy('data','desc').get();
+    APP.comunicados = []; snap.forEach(d => APP.comunicados.push({ id: d.id, ...d.data() }));
+    renderComunicados();
+    toast(id ? 'Comunicado atualizado!' : 'Comunicado publicado!');
+}
+
+async function deleteComunicado(id) {
+    if (!confirm('Excluir este comunicado?')) return;
+    await fbDelete('comunicados', id);
+    APP.comunicados = APP.comunicados.filter(c => c.id !== id);
+    renderComunicados();
+    toast('Comunicado excluído.');
+}
+
+// ===== RESERVAS DE ÁREAS COMUNS =====
+// MESES já definido globalmente (índice 0 vazio): MESES[1]='Janeiro',...
+const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function renderReservas() {
+    renderReservaCalendar();
+    renderReservaList();
+    renderAreasConfig();
+    populateReservaAreaFilter();
+    populateReservaSelects();
+}
+
+function changeReservaMonth(delta) {
+    APP.reservaMonth.setMonth(APP.reservaMonth.getMonth() + delta);
+    renderReservaCalendar();
+    renderReservaList();
+}
+
+function renderReservaCalendar() {
+    const container = document.getElementById('reservaCalendar');
+    const label = document.getElementById('reservaMesLabel');
+    if (!container || !label) return;
+    const d = APP.reservaMonth;
+    const ano = d.getFullYear();
+    const mes = d.getMonth();
+    label.textContent = `${MESES[mes + 1]} ${ano}`;
+    const firstDay = new Date(ano, mes, 1).getDay();
+    const daysInMonth = new Date(ano, mes + 1, 0).getDate();
+    const today = new Date();
+    const filtroArea = document.getElementById('reservaFiltroArea')?.value || '';
+    let reservasMes = (APP.reservas || []).filter(r => {
+        if (!r.data) return false;
+        const rd = new Date(r.data + 'T00:00:00');
+        return rd.getFullYear() === ano && rd.getMonth() === mes && r.status !== 'cancelada';
+    });
+    if (filtroArea) reservasMes = reservasMes.filter(r => r.area === filtroArea);
+
+    let html = DIAS_SEMANA.map(d => `<div class="reserva-cal-header">${d}</div>`).join('');
+    for (let i = 0; i < firstDay; i++) html += '<div class="reserva-cal-day empty"></div>';
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const isToday = today.getFullYear() === ano && today.getMonth() === mes && today.getDate() === day;
+        const dayReservas = reservasMes.filter(r => r.data === dateStr);
+        const dots = dayReservas.map(r => `<span class="reserva-dot">${H(r.area||'')}</span>`).join('');
+        html += `<div class="reserva-cal-day${isToday?' today':''}" onclick="openReservaModal('${dateStr}')">
+            <div class="day-num">${day}</div>${dots}</div>`;
+    }
+    container.innerHTML = html;
+}
+
+function renderReservaList() {
+    const container = document.getElementById('reservaList');
+    if (!container) return;
+    const hoje = new Date().toISOString().split('T')[0];
+    const filtroArea = document.getElementById('reservaFiltroArea')?.value || '';
+    let proximas = (APP.reservas || []).filter(r => r.data >= hoje);
+    if (filtroArea) proximas = proximas.filter(r => r.area === filtroArea);
+    proximas.sort((a,b) => (a.data||'').localeCompare(b.data||''));
+    if (!proximas.length) {
+        container.innerHTML = '<div class="empty-state" style="padding:1rem"><p>Nenhuma reserva futura.</p></div>';
+        return;
+    }
+    container.innerHTML = proximas.slice(0, 20).map(r => {
+        const statusClass = r.status || 'pendente';
+        const statusLabel = {aprovada:'Aprovada',pendente:'Pendente',cancelada:'Cancelada'}[statusClass] || statusClass;
+        const morador = APP.moradores.find(m => m.apto === r.solicitante);
+        const nomeM = morador ? `${morador.apto} - ${morador.nome}` : (r.solicitante || '');
+        return `<div class="reserva-list-item">
+            <div class="reserva-info">
+                <div class="reserva-area">${H(r.area||'')}</div>
+                <div class="reserva-detail"><i class="ti ti-calendar"></i> ${H(r.data||'')} ${r.horaInicio?'| '+H(r.horaInicio)+' - '+H(r.horaFim||''):''} | <i class="ti ti-user"></i> ${H(nomeM)}</div>
+                ${r.obs ? '<div class="reserva-detail" style="margin-top:2px"><i class="ti ti-note"></i> '+H(r.obs)+'</div>' : ''}
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+                <span class="reserva-status ${statusClass}">${statusLabel}</span>
+                <button class="btn btn-outline btn-sm" onclick="editReserva('${r.id}')"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteReserva('${r.id}')"><i class="ti ti-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderAreasConfig() {
+    const container = document.getElementById('areasConfig');
+    if (!container) return;
+    container.innerHTML = APP.areasComuns.map((a, i) =>
+        `<span class="area-tag">${H(a)} <span class="remove-area" onclick="removeAreaComum(${i})">&times;</span></span>`
+    ).join('');
+}
+
+function populateReservaAreaFilter() {
+    const sel = document.getElementById('reservaFiltroArea');
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Todas as áreas</option>' +
+        APP.areasComuns.map(a => `<option value="${H(a)}">${H(a)}</option>`).join('');
+    sel.value = current;
+}
+
+function populateReservaSelects() {
+    const selArea = document.getElementById('reservaArea');
+    const selSol = document.getElementById('reservaSolicitante');
+    if (selArea) selArea.innerHTML = APP.areasComuns.map(a => `<option value="${H(a)}">${H(a)}</option>`).join('');
+    if (selSol) {
+        selSol.innerHTML = '<option value="">Selecione...</option>' +
+            APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)}${m.bloco?' - Bl.'+H(m.bloco):''} - ${H(m.nome)}</option>`).join('');
+    }
+}
+
+async function addAreaComum() {
+    const input = document.getElementById('novaAreaInput');
+    const nome = input.value.trim();
+    if (!nome) { toast('Informe o nome da área.','error'); return; }
+    if (APP.areasComuns.includes(nome)) { toast('Área já cadastrada.','error'); return; }
+    APP.areasComuns.push(nome);
+    await condoRef().collection('settings').doc('areas_comuns').set({ list: APP.areasComuns });
+    input.value = '';
+    renderAreasConfig();
+    populateReservaAreaFilter();
+    populateReservaSelects();
+    toast('Área adicionada!');
+}
+
+async function removeAreaComum(index) {
+    if (!confirm('Remover esta área?')) return;
+    APP.areasComuns.splice(index, 1);
+    await condoRef().collection('settings').doc('areas_comuns').set({ list: APP.areasComuns });
+    renderAreasConfig();
+    populateReservaAreaFilter();
+    populateReservaSelects();
+    toast('Área removida.');
+}
+
+function openReservaModal(dateStr) {
+    document.getElementById('reservaEditId').value = '';
+    document.getElementById('reservaData').value = dateStr || new Date().toISOString().split('T')[0];
+    document.getElementById('reservaHoraInicio').value = '08:00';
+    document.getElementById('reservaHoraFim').value = '22:00';
+    document.getElementById('reservaStatus').value = 'aprovada';
+    document.getElementById('reservaObs').value = '';
+    populateReservaSelects();
+    openModal('modalReserva');
+}
+
+function editReserva(id) {
+    const r = APP.reservas.find(x => x.id === id);
+    if (!r) return;
+    populateReservaSelects();
+    document.getElementById('reservaEditId').value = id;
+    document.getElementById('reservaArea').value = r.area || '';
+    document.getElementById('reservaSolicitante').value = r.solicitante || '';
+    document.getElementById('reservaData').value = r.data || '';
+    document.getElementById('reservaHoraInicio').value = r.horaInicio || '08:00';
+    document.getElementById('reservaHoraFim').value = r.horaFim || '22:00';
+    document.getElementById('reservaStatus').value = r.status || 'aprovada';
+    document.getElementById('reservaObs').value = r.obs || '';
+    openModal('modalReserva');
+}
+
+async function saveReserva() {
+    const area = document.getElementById('reservaArea').value;
+    const solicitante = document.getElementById('reservaSolicitante').value;
+    const data = document.getElementById('reservaData').value;
+    if (!area || !solicitante || !data) { toast('Preencha área, solicitante e data.','error'); return; }
+    const editId = document.getElementById('reservaEditId').value;
+    // Verificar conflito de reserva
+    const conflito = APP.reservas.find(r => r.data === data && r.area === area && r.status !== 'cancelada' && r.id !== editId);
+    if (conflito) {
+        if (!confirm(`Já existe uma reserva para ${area} nesta data (Apto ${conflito.solicitante}). Deseja continuar?`)) return;
+    }
+    const reservaData = {
+        area,
+        solicitante,
+        data,
+        horaInicio: document.getElementById('reservaHoraInicio').value,
+        horaFim: document.getElementById('reservaHoraFim').value,
+        status: document.getElementById('reservaStatus').value,
+        obs: document.getElementById('reservaObs').value.trim(),
+        criadoEm: new Date().toISOString()
+    };
+    await fbSave('reservas', editId || null, reservaData);
+    closeModal('modalReserva');
+    const cid = APP.currentCondoId;
+    const snap = await APP.db.collection('condominios').doc(cid).collection('reservas').orderBy('data').get();
+    APP.reservas = []; snap.forEach(d => APP.reservas.push({ id: d.id, ...d.data() }));
+    renderReservas();
+    toast(editId ? 'Reserva atualizada!' : 'Reserva criada!');
+}
+
+async function deleteReserva(id) {
+    if (!confirm('Excluir esta reserva?')) return;
+    await fbDelete('reservas', id);
+    APP.reservas = APP.reservas.filter(r => r.id !== id);
+    renderReservas();
+    toast('Reserva excluída.');
+}
+
+// ===== EXPORTAÇÃO PDF (via impressão aprimorada) =====
+function exportPDF(sectionId, title) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    // Inject PDF header
+    const condoNome = APP.condominios.find(c => c.id === APP.currentCondoId)?.nome || 'CondoGest';
+    const now = new Date();
+    const dataStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    let pdfHeader = section.querySelector('.pdf-header');
+    if (!pdfHeader) {
+        pdfHeader = document.createElement('div');
+        pdfHeader.className = 'pdf-header';
+        section.querySelector('.card')?.prepend(pdfHeader);
+    }
+    pdfHeader.innerHTML = `<div class="pdf-logo"><i class="ti ti-building-community"></i> ${H(condoNome)}</div>
+        <div class="pdf-info">${H(title)}<br>${dataStr}</div>`;
+    // Print
+    document.querySelectorAll('.page-section').forEach(s => { s.classList.remove('active'); s.classList.remove('print-active'); });
+    section.classList.add('print-active');
+    window.print();
+    // Restore
+    section.classList.remove('print-active');
+    const currentPage = document.querySelector('.nav-item.active')?.getAttribute('data-page') || 'dashboard';
+    document.getElementById('pg-' + currentPage)?.classList.add('active');
+}
+
+// ===== PWA UPDATE BANNER =====
+let _newSW = null;
+function showPWAUpdateBanner(newWorker) {
+    _newSW = newWorker;
+    document.getElementById('pwaUpdateBanner')?.classList.add('show');
+}
+function applyPWAUpdate() {
+    if (_newSW) _newSW.postMessage({ type: 'SKIP_WAITING' });
+    document.getElementById('pwaUpdateBanner')?.classList.remove('show');
+    window.location.reload();
+}
+function dismissPWAUpdate() {
+    document.getElementById('pwaUpdateBanner')?.classList.remove('show');
+}
+
+// ===== FORNECEDORES E CONTRATOS =====
+function renderFornecedores() {
+    const container = document.getElementById('fornecedoresList');
+    if (!container) return;
+    const busca = (document.getElementById('searchFornecedor')?.value || '').toLowerCase();
+    let lista = APP.fornecedores || [];
+    if (busca) lista = lista.filter(f => (f.nome||'').toLowerCase().includes(busca) || (f.area||'').toLowerCase().includes(busca) || (f.cnpj||'').includes(busca));
+    if (!lista.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-building-store"></i></div><p>Nenhum fornecedor cadastrado.</p></div>';
+        return;
+    }
+    const hoje = new Date().toISOString().split('T')[0];
+    const em30 = new Date(); em30.setDate(em30.getDate() + 30);
+    const em30Str = em30.toISOString().split('T')[0];
+    container.innerHTML = lista.map(f => {
+        let contratoHtml = '';
+        if (f.contratoServico) {
+            const vencido = f.contratoFim && f.contratoFim < hoje;
+            const vencendo = f.contratoFim && !vencido && f.contratoFim <= em30Str;
+            const cls = vencido ? 'vencido' : vencendo ? 'vencendo' : '';
+            const statusTxt = vencido ? ' <span style="color:var(--accent-red);font-weight:600">VENCIDO</span>' : vencendo ? ' <span style="color:var(--secondary);font-weight:600">VENCENDO</span>' : '';
+            contratoHtml = `<div class="contrato-item ${cls}">
+                <strong>${H(f.contratoServico)}</strong>${statusTxt}<br>
+                ${f.contratoValor ? 'Valor: '+fmtMoney(f.contratoValor)+'/mês' : ''}
+                ${f.contratoInicio ? ' | Início: '+H(f.contratoInicio) : ''}
+                ${f.contratoFim ? ' | Fim: '+H(f.contratoFim) : ''}
+            </div>`;
+        }
+        return `<div class="fornecedor-card">
+            <div class="fornecedor-header">
+                <div>
+                    <span class="fornecedor-nome">${H(f.nome)}</span>
+                    <span class="fornecedor-area">${H(f.area||'')}</span>
+                </div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="editFornecedor('${f.id}')"><i class="ti ti-edit"></i></button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteFornecedor('${f.id}')"><i class="ti ti-trash"></i></button>
+                </div>
+            </div>
+            <div class="fornecedor-info">
+                ${f.cnpj ? '<i class="ti ti-id"></i> '+H(f.cnpj)+' | ' : ''}
+                ${f.telefone ? '<i class="ti ti-phone"></i> '+H(f.telefone)+' | ' : ''}
+                ${f.email ? '<i class="ti ti-mail"></i> '+H(f.email) : ''}
+                ${f.contato ? ' | <i class="ti ti-user"></i> '+H(f.contato) : ''}
+            </div>
+            ${f.obs ? '<div style="font-size:0.8rem;color:var(--text-light);margin-top:0.3rem">'+H(f.obs)+'</div>' : ''}
+            ${contratoHtml}
+        </div>`;
+    }).join('');
+}
+
+function openFornecedorModal() {
+    document.getElementById('fornEditId').value = '';
+    document.getElementById('fornNome').value = '';
+    document.getElementById('fornCnpj').value = '';
+    document.getElementById('fornArea').value = 'Manutenção';
+    document.getElementById('fornTelefone').value = '';
+    document.getElementById('fornEmail').value = '';
+    document.getElementById('fornContato').value = '';
+    document.getElementById('fornObs').value = '';
+    document.getElementById('fornContratoServico').value = '';
+    document.getElementById('fornContratoValor').value = '';
+    document.getElementById('fornContratoInicio').value = '';
+    document.getElementById('fornContratoFim').value = '';
+    openModal('modalFornecedor');
+}
+
+function editFornecedor(id) {
+    const f = APP.fornecedores.find(x => x.id === id);
+    if (!f) return;
+    document.getElementById('fornEditId').value = id;
+    document.getElementById('fornNome').value = f.nome || '';
+    document.getElementById('fornCnpj').value = f.cnpj || '';
+    document.getElementById('fornArea').value = f.area || 'Manutenção';
+    document.getElementById('fornTelefone').value = f.telefone || '';
+    document.getElementById('fornEmail').value = f.email || '';
+    document.getElementById('fornContato').value = f.contato || '';
+    document.getElementById('fornObs').value = f.obs || '';
+    document.getElementById('fornContratoServico').value = f.contratoServico || '';
+    document.getElementById('fornContratoValor').value = f.contratoValor || '';
+    document.getElementById('fornContratoInicio').value = f.contratoInicio || '';
+    document.getElementById('fornContratoFim').value = f.contratoFim || '';
+    openModal('modalFornecedor');
+}
+
+async function saveFornecedor() {
+    const nome = document.getElementById('fornNome').value.trim();
+    if (!nome) { toast('Informe o nome do fornecedor.','error'); return; }
+    const editId = document.getElementById('fornEditId').value;
+    const data = {
+        nome,
+        cnpj: document.getElementById('fornCnpj').value.trim(),
+        area: document.getElementById('fornArea').value,
+        telefone: document.getElementById('fornTelefone').value.trim(),
+        email: document.getElementById('fornEmail').value.trim(),
+        contato: document.getElementById('fornContato').value.trim(),
+        obs: document.getElementById('fornObs').value.trim(),
+        contratoServico: document.getElementById('fornContratoServico').value.trim(),
+        contratoValor: parseFloat(document.getElementById('fornContratoValor').value) || 0,
+        contratoInicio: document.getElementById('fornContratoInicio').value,
+        contratoFim: document.getElementById('fornContratoFim').value,
+        atualizadoEm: new Date().toISOString()
+    };
+    if (!editId) data.criadoEm = new Date().toISOString();
+    await fbSave('fornecedores', editId || null, data);
+    closeModal('modalFornecedor');
+    const cid = APP.currentCondoId;
+    const snap = await APP.db.collection('condominios').doc(cid).collection('fornecedores').orderBy('nome').get();
+    APP.fornecedores = []; snap.forEach(d => APP.fornecedores.push({ id: d.id, ...d.data() }));
+    renderFornecedores();
+    toast(editId ? 'Fornecedor atualizado!' : 'Fornecedor cadastrado!');
+}
+
+async function deleteFornecedor(id) {
+    if (!confirm('Excluir este fornecedor?')) return;
+    await fbDelete('fornecedores', id);
+    APP.fornecedores = APP.fornecedores.filter(f => f.id !== id);
+    renderFornecedores();
+    toast('Fornecedor excluído.');
+}
+
+// ===== BACKUP E EXPORTAÇÃO =====
+function exportBackupExcel() {
+    if (!APP.currentCondoId) { toast('Selecione um condomínio.','error'); return; }
+    const condoNome = APP.condominios.find(c => c.id === APP.currentCondoId)?.nome || 'CondoGest';
+    const wb = XLSX.utils.book_new();
+    const collections = [
+        { name: 'Moradores', data: APP.moradores },
+        { name: 'Responsaveis', data: APP.responsaveis },
+        { name: 'Taxas', data: APP.taxas },
+        { name: 'Contas', data: APP.contas },
+        { name: 'Pagamentos', data: APP.pagamentos },
+        { name: 'Extrato', data: APP.extrato },
+        { name: 'Orcamento', data: APP.orcamento },
+        { name: 'TaxasApto', data: APP.taxasApto },
+        { name: 'ReceitasAvulsas', data: APP.receitasAvulsas },
+        { name: 'Comunicados', data: APP.comunicados },
+        { name: 'Reservas', data: APP.reservas },
+        { name: 'Ocorrencias', data: APP.ocorrencias },
+        { name: 'Assembleias', data: APP.assembleias },
+        { name: 'Fornecedores', data: APP.fornecedores }
+    ];
+    let totalRegs = 0;
+    collections.forEach(col => {
+        const rows = (col.data || []).map(item => {
+            const row = { ...item };
+            delete row.id;
+            return row;
+        });
+        totalRegs += rows.length;
+        const ws = XLSX.utils.json_to_sheet(rows.length ? rows : [{ info: 'Sem dados' }]);
+        XLSX.utils.book_append_sheet(wb, ws, col.name.substring(0, 31));
+    });
+    const filename = `Backup_${condoNome.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    auditLog('BACKUP_EXCEL', { condominio: condoNome, registros: totalRegs });
+    const log = document.getElementById('backupLog');
+    if (log) log.innerHTML = `<i class="ti ti-check" style="color:var(--accent)"></i> Backup Excel exportado: <strong>${filename}</strong> (${totalRegs} registros em ${collections.length} abas) — ${new Date().toLocaleString('pt-BR')}`;
+    toast('Backup Excel exportado!');
+}
+
+function exportBackupJSON() {
+    if (!APP.currentCondoId) { toast('Selecione um condomínio.','error'); return; }
+    const condoNome = APP.condominios.find(c => c.id === APP.currentCondoId)?.nome || 'CondoGest';
+    const backup = {
+        exportadoEm: new Date().toISOString(),
+        condominio: condoNome,
+        condominioId: APP.currentCondoId,
+        dados: {
+            moradores: APP.moradores || [],
+            responsaveis: APP.responsaveis || [],
+            taxas: APP.taxas || [],
+            contas: APP.contas || [],
+            pagamentos: APP.pagamentos || [],
+            extrato: APP.extrato || [],
+            orcamento: APP.orcamento || [],
+            taxasApto: APP.taxasApto || [],
+            receitasAvulsas: APP.receitasAvulsas || [],
+            comunicados: APP.comunicados || [],
+            reservas: APP.reservas || [],
+            ocorrencias: APP.ocorrencias || [],
+            assembleias: APP.assembleias || [],
+            fornecedores: APP.fornecedores || [],
+            categorias: APP.categorias || [],
+            areasComuns: APP.areasComuns || []
+        }
+    };
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const filename = `Backup_${condoNome.replace(/[^a-zA-Z0-9]/g,'_')}_${new Date().toISOString().split('T')[0]}.json`;
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    const totalRegs = Object.values(backup.dados).reduce((s, arr) => s + (Array.isArray(arr) ? arr.length : 0), 0);
+    auditLog('BACKUP_JSON', { condominio: condoNome, registros: totalRegs });
+    const log = document.getElementById('backupLog');
+    if (log) log.innerHTML = `<i class="ti ti-check" style="color:var(--accent)"></i> Backup JSON exportado: <strong>${filename}</strong> (${totalRegs} registros) — ${new Date().toLocaleString('pt-BR')}`;
+    toast('Backup JSON exportado!');
+}
+
+// ===== OCORRÊNCIAS E CHAMADOS =====
+function renderOcorrencias() {
+    const container = document.getElementById('ocorrenciasList');
+    if (!container) return;
+    const filtroStatus = document.getElementById('ocorFiltroStatus')?.value || '';
+    const filtroPrio = document.getElementById('ocorFiltroPrio')?.value || '';
+    const filtroCat = document.getElementById('ocorFiltroCat')?.value || '';
+    const busca = (document.getElementById('searchOcorrencia')?.value || '').toLowerCase();
+    let lista = APP.ocorrencias || [];
+    if (filtroStatus) lista = lista.filter(o => o.status === filtroStatus);
+    if (filtroPrio) lista = lista.filter(o => o.prioridade === filtroPrio);
+    if (filtroCat) lista = lista.filter(o => o.categoria === filtroCat);
+    if (busca) lista = lista.filter(o => (o.titulo||'').toLowerCase().includes(busca) || (o.descricao||'').toLowerCase().includes(busca));
+    if (!lista.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-alert-circle"></i></div><p>Nenhuma ocorrência encontrada.</p></div>';
+        return;
+    }
+    const statusLabels = {aberto:'Aberto',em_andamento:'Em Andamento',concluido:'Concluído',cancelado:'Cancelado'};
+    const prioLabels = {baixa:'Baixa',media:'Média',alta:'Alta',urgente:'Urgente'};
+    container.innerHTML = lista.map(o => {
+        const morador = APP.moradores.find(m => m.apto === o.solicitante);
+        const nomeM = morador ? `Apto ${morador.apto} - ${morador.nome}` : (o.solicitante ? `Apto ${o.solicitante}` : 'N/I');
+        return `<div class="chamado-card">
+            <div class="chamado-header">
+                <div><span class="chamado-title">${H(o.titulo)}</span>
+                <span class="chamado-id">#${o.id.slice(-6).toUpperCase()}</span></div>
+                <div style="display:flex;gap:4px">
+                    <span class="badge-status ${o.status||'aberto'}">${statusLabels[o.status]||o.status}</span>
+                    <span class="badge-prio ${o.prioridade||'media'}">${prioLabels[o.prioridade]||o.prioridade}</span>
+                </div>
+            </div>
+            <div class="chamado-body">${H((o.descricao||'').substring(0,200))}${(o.descricao||'').length>200?'...':''}</div>
+            <div class="chamado-meta">
+                <span><i class="ti ti-category"></i> ${H(o.categoria||'')}</span>
+                <span><i class="ti ti-user"></i> ${H(nomeM)}</span>
+                <span><i class="ti ti-calendar"></i> ${H(o.dataAbertura||'')}</span>
+                ${o.previsao ? '<span><i class="ti ti-clock"></i> Prev: '+H(o.previsao)+'</span>' : ''}
+            </div>
+            ${o.historico ? '<div style="margin-top:0.4rem;font-size:0.78rem;color:var(--text-light);white-space:pre-line"><i class="ti ti-notes"></i> '+H(o.historico)+'</div>' : ''}
+            <div class="chamado-footer">
+                <div></div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="editOcorrencia('${o.id}')"><i class="ti ti-edit"></i></button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteOcorrencia('${o.id}')"><i class="ti ti-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openOcorrenciaModal() {
+    document.getElementById('ocorEditId').value = '';
+    document.getElementById('ocorTitulo').value = '';
+    document.getElementById('ocorCategoria').value = 'Outros';
+    document.getElementById('ocorPrioridade').value = 'media';
+    document.getElementById('ocorStatus').value = 'aberto';
+    document.getElementById('ocorData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('ocorPrevisao').value = '';
+    document.getElementById('ocorDescricao').value = '';
+    document.getElementById('ocorHistorico').value = '';
+    const selSol = document.getElementById('ocorSolicitante');
+    selSol.innerHTML = '<option value="">Selecione...</option>' +
+        APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)}${m.bloco?' - Bl.'+H(m.bloco):''} - ${H(m.nome)}</option>`).join('');
+    openModal('modalOcorrencia');
+}
+
+function editOcorrencia(id) {
+    const o = APP.ocorrencias.find(x => x.id === id);
+    if (!o) return;
+    openOcorrenciaModal();
+    document.getElementById('ocorEditId').value = id;
+    document.getElementById('ocorTitulo').value = o.titulo || '';
+    document.getElementById('ocorCategoria').value = o.categoria || 'Outros';
+    document.getElementById('ocorPrioridade').value = o.prioridade || 'media';
+    document.getElementById('ocorStatus').value = o.status || 'aberto';
+    document.getElementById('ocorData').value = o.dataAbertura || '';
+    document.getElementById('ocorPrevisao').value = o.previsao || '';
+    document.getElementById('ocorDescricao').value = o.descricao || '';
+    document.getElementById('ocorHistorico').value = o.historico || '';
+    document.getElementById('ocorSolicitante').value = o.solicitante || '';
+}
+
+async function saveOcorrencia() {
+    const titulo = document.getElementById('ocorTitulo').value.trim();
+    const descricao = document.getElementById('ocorDescricao').value.trim();
+    if (!titulo || !descricao) { toast('Preencha título e descrição.','error'); return; }
+    const editId = document.getElementById('ocorEditId').value;
+    const oldStatus = editId ? (APP.ocorrencias.find(o=>o.id===editId)?.status||'') : '';
+    const newStatus = document.getElementById('ocorStatus').value;
+    let historico = document.getElementById('ocorHistorico').value.trim();
+    if (editId && oldStatus !== newStatus) {
+        const ts = new Date().toLocaleString('pt-BR');
+        historico += (historico ? '\n' : '') + `[${ts}] Status: ${oldStatus} → ${newStatus}`;
+    }
+    const data = {
+        titulo,
+        categoria: document.getElementById('ocorCategoria').value,
+        prioridade: document.getElementById('ocorPrioridade').value,
+        status: newStatus,
+        solicitante: document.getElementById('ocorSolicitante').value,
+        dataAbertura: document.getElementById('ocorData').value || new Date().toISOString().split('T')[0],
+        previsao: document.getElementById('ocorPrevisao').value,
+        descricao,
+        historico,
+        atualizadoEm: new Date().toISOString()
+    };
+    if (!editId) data.criadoEm = new Date().toISOString();
+    await fbSave('ocorrencias', editId || null, data);
+    closeModal('modalOcorrencia');
+    const cid = APP.currentCondoId;
+    const snap = await APP.db.collection('condominios').doc(cid).collection('ocorrencias').orderBy('dataAbertura','desc').get();
+    APP.ocorrencias = []; snap.forEach(d => APP.ocorrencias.push({ id: d.id, ...d.data() }));
+    renderOcorrencias();
+    toast(editId ? 'Chamado atualizado!' : 'Chamado aberto!');
+}
+
+async function deleteOcorrencia(id) {
+    if (!confirm('Excluir esta ocorrência?')) return;
+    await fbDelete('ocorrencias', id);
+    APP.ocorrencias = APP.ocorrencias.filter(o => o.id !== id);
+    renderOcorrencias();
+    toast('Ocorrência excluída.');
+}
+
+// ===== ASSEMBLEIAS E ATAS =====
+function renderAssembleias() {
+    const container = document.getElementById('assembleiasList');
+    if (!container) return;
+    const filtroTipo = document.getElementById('assembleiaFiltroTipo')?.value || '';
+    const filtroAno = document.getElementById('assembleiaFiltroAno')?.value || '';
+    let lista = APP.assembleias || [];
+    if (filtroTipo) lista = lista.filter(a => a.tipo === filtroTipo);
+    if (filtroAno) lista = lista.filter(a => (a.data||'').startsWith(filtroAno));
+    if (!lista.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-clipboard-text"></i></div><p>Nenhuma assembleia registrada.</p></div>';
+        return;
+    }
+    container.innerHTML = lista.map(a => {
+        const tipoLabel = a.tipo === 'extraordinaria' ? 'Extraordinária (AGE)' : 'Ordinária (AGO)';
+        const tipoClass = a.tipo || 'ordinaria';
+        const quorumArr = (a.quorum||'').split(',').map(s=>s.trim()).filter(Boolean);
+        const totalUnidades = APP.moradores.length || 1;
+        const pctQuorum = Math.round((quorumArr.length / totalUnidades) * 100);
+        let delibHtml = '';
+        if (a.deliberacoes) {
+            const linhas = a.deliberacoes.split('\n').filter(Boolean);
+            delibHtml = '<div style="margin-top:0.5rem">' + linhas.map(l => {
+                const parts = l.split('|').map(s=>s.trim());
+                const assunto = parts[0] || l;
+                const resultado = (parts[1]||'').toLowerCase();
+                const resClass = resultado.includes('aprov') ? 'aprovado' : resultado.includes('reprov') ? 'reprovado' : 'adiado';
+                return `<div class="deliberacao-item ${resClass}"><strong>${H(assunto)}</strong> ${parts[1] ? '— <em>'+H(parts[1])+'</em>' : ''}</div>`;
+            }).join('') + '</div>';
+        }
+        return `<div class="assembleia-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem">
+                <div>
+                    <span class="assembleia-tipo ${tipoClass}">${tipoLabel}</span>
+                    <span style="font-size:0.82rem;color:var(--text-light);margin-left:8px"><i class="ti ti-calendar"></i> ${H(a.data||'')} ${a.horario?'às '+H(a.horario):''}</span>
+                    ${a.local ? '<span style="font-size:0.82rem;color:var(--text-light);margin-left:8px"><i class="ti ti-map-pin"></i> '+H(a.local)+'</span>' : ''}
+                </div>
+                <div style="display:flex;gap:6px">
+                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-assembleias','Ata de Assembleia')"><i class="ti ti-file-type-pdf"></i></button>
+                    <button class="btn btn-outline btn-sm" onclick="editAssembleia('${a.id}')"><i class="ti ti-edit"></i></button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteAssembleia('${a.id}')"><i class="ti ti-trash"></i></button>
+                </div>
+            </div>
+            ${a.pauta ? '<div style="font-size:0.85rem;margin-bottom:0.4rem"><strong>Pauta:</strong><div style="white-space:pre-line;color:var(--text-secondary)">'+H(a.pauta)+'</div></div>' : ''}
+            <div style="font-size:0.82rem;color:var(--text-secondary)"><i class="ti ti-users"></i> Quórum: <strong>${quorumArr.length}</strong> unidades (${pctQuorum}%) ${quorumArr.length ? '— Aptos: '+H(quorumArr.join(', ')) : ''}</div>
+            ${delibHtml}
+            ${a.ata ? '<details style="margin-top:0.5rem"><summary style="font-size:0.82rem;cursor:pointer;color:var(--primary);font-weight:500"><i class="ti ti-file-text"></i> Ver Ata Completa</summary><div style="font-size:0.85rem;color:var(--text-secondary);white-space:pre-line;margin-top:0.4rem;padding:0.5rem;border:1px solid var(--border);border-radius:var(--radius-sm)">'+H(a.ata)+'</div></details>' : ''}
+        </div>`;
+    }).join('');
+}
+
+function populateAssembleiaAnoFilter() {
+    const sel = document.getElementById('assembleiaFiltroAno');
+    if (!sel) return;
+    const anos = [...new Set((APP.assembleias||[]).map(a => (a.data||'').slice(0,4)).filter(Boolean))].sort().reverse();
+    if (!anos.length) anos.push(String(new Date().getFullYear()));
+    sel.innerHTML = '<option value="">Todos os anos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+}
+
+function openAssembleiaModal() {
+    document.getElementById('assEditId').value = '';
+    document.getElementById('assTipo').value = 'ordinaria';
+    document.getElementById('assData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('assHorario').value = '19:00';
+    document.getElementById('assLocal').value = '';
+    document.getElementById('assPauta').value = '';
+    document.getElementById('assQuorum').value = '';
+    document.getElementById('assDeliberacoes').value = '';
+    document.getElementById('assAta').value = '';
+    openModal('modalAssembleia');
+}
+
+function editAssembleia(id) {
+    const a = APP.assembleias.find(x => x.id === id);
+    if (!a) return;
+    document.getElementById('assEditId').value = id;
+    document.getElementById('assTipo').value = a.tipo || 'ordinaria';
+    document.getElementById('assData').value = a.data || '';
+    document.getElementById('assHorario').value = a.horario || '19:00';
+    document.getElementById('assLocal').value = a.local || '';
+    document.getElementById('assPauta').value = a.pauta || '';
+    document.getElementById('assQuorum').value = a.quorum || '';
+    document.getElementById('assDeliberacoes').value = a.deliberacoes || '';
+    document.getElementById('assAta').value = a.ata || '';
+    openModal('modalAssembleia');
+}
+
+async function saveAssembleia() {
+    const data = document.getElementById('assData').value;
+    if (!data) { toast('Informe a data da assembleia.','error'); return; }
+    const editId = document.getElementById('assEditId').value;
+    const assembleiaData = {
+        tipo: document.getElementById('assTipo').value,
+        data,
+        horario: document.getElementById('assHorario').value,
+        local: document.getElementById('assLocal').value.trim(),
+        pauta: document.getElementById('assPauta').value.trim(),
+        quorum: document.getElementById('assQuorum').value.trim(),
+        deliberacoes: document.getElementById('assDeliberacoes').value.trim(),
+        ata: document.getElementById('assAta').value.trim(),
+        atualizadoEm: new Date().toISOString()
+    };
+    if (!editId) assembleiaData.criadoEm = new Date().toISOString();
+    await fbSave('assembleias', editId || null, assembleiaData);
+    closeModal('modalAssembleia');
+    const cid = APP.currentCondoId;
+    const snap = await APP.db.collection('condominios').doc(cid).collection('assembleias').orderBy('data','desc').get();
+    APP.assembleias = []; snap.forEach(d => APP.assembleias.push({ id: d.id, ...d.data() }));
+    renderAssembleias();
+    populateAssembleiaAnoFilter();
+    toast(editId ? 'Assembleia atualizada!' : 'Assembleia registrada!');
+}
+
+async function deleteAssembleia(id) {
+    if (!confirm('Excluir esta assembleia e sua ata?')) return;
+    await fbDelete('assembleias', id);
+    APP.assembleias = APP.assembleias.filter(a => a.id !== id);
+    renderAssembleias();
+    toast('Assembleia excluída.');
+}
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
     // Theme
@@ -5203,33 +6736,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') doRegister();
     });
 });
-</script>
 
-<!-- ===== Registro do Service Worker (PWA) ===== -->
-<script>
+// ===== PWA: Service Worker Registration =====
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/CondoGest/sw.js', { scope: '/CondoGest/' })
             .then((reg) => {
-                console.log('[PWA] Service Worker registrado com sucesso. Scope:', reg.scope);
-                // Verificar atualizações a cada 1 hora
+                console.log('[PWA] Service Worker registrado:', reg.scope);
                 setInterval(() => reg.update(), 60 * 60 * 1000);
-                // Notificar quando uma nova versão estiver disponível
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     if (newWorker) {
                         newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                                console.log('[PWA] Nova versão disponível. Recarregue para atualizar.');
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showPWAUpdateBanner(newWorker);
                             }
                         });
                     }
                 });
             })
-            .catch((err) => console.warn('[PWA] Falha no registro do Service Worker:', err));
+            .catch((err) => console.warn('[PWA] Falha no registro do SW:', err));
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) { refreshing = true; window.location.reload(); }
+        });
     });
 }
 </script>
 </body>
 </html>
-
