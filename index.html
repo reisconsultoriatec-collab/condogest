@@ -22,7 +22,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
 
 <!-- Firebase Compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -3635,8 +3635,9 @@ async function loadCondoData() {
 
         // Hidrômetros
         try {
-            const hidSnap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').orderBy('mesRef','desc').get();
+            const hidSnap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').get();
             APP.hidrometros = []; hidSnap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+            APP.hidrometros.sort((a,b) => (b.mesRef||'').localeCompare(a.mesRef||''));
         } catch(e) { console.warn('Hidrômetros:', e.message); APP.hidrometros = []; }
 
         // Hidrômetro Settings (modo + rateio)
@@ -7349,14 +7350,19 @@ async function saveHidrometro() {
 
     if (!editId) data.criadoEm = new Date().toISOString();
 
-    await fbSave('hidrometros', editId || null, data);
+    const savedId = await fbSave('hidrometros', editId || null, data);
+    if (!savedId) {
+        toast('Erro ao salvar. Verifique as regras do Firestore (subcoleção: hidrometros).', 'error');
+        return;
+    }
     closeModal('modalHidrometro');
 
     // Reload
     const cid = APP.currentCondoId;
     try {
-        const snap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').orderBy('mesRef','desc').get();
+        const snap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').get();
         APP.hidrometros = []; snap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+        APP.hidrometros.sort((a,b) => (b.mesRef||'').localeCompare(a.mesRef||''));
     } catch(e) { console.warn('Reload hidrômetros:', e); }
     renderHidrometros();
     renderHidroChart();
@@ -7426,19 +7432,23 @@ async function runHidroOCR(imageData) {
     textEl.textContent = 'Inicializando OCR...';
 
     try {
-        const worker = await Tesseract.createWorker('eng', 1, {
+        const worker = await Tesseract.createWorker({
             logger: m => {
                 if (m.status === 'recognizing text') {
                     const pct = Math.round((m.progress || 0) * 100);
                     fillBar.style.width = pct + '%';
                     textEl.textContent = `Lendo imagem... ${pct}%`;
+                } else if (m.status) {
+                    textEl.textContent = m.status === 'loading language traineddata' ? 'Carregando idioma...' :
+                                         m.status === 'initializing api' ? 'Inicializando...' : m.status;
                 }
             }
         });
 
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
         await worker.setParameters({
-            tessedit_char_whitelist: '0123456789.,',
-            tessedit_pageseg_mode: '7'
+            tessedit_char_whitelist: '0123456789.,'
         });
 
         const { data } = await worker.recognize(imageData);
@@ -7446,13 +7456,16 @@ async function runHidroOCR(imageData) {
 
         // Extract numbers from OCR result
         const raw = data.text.trim();
+        console.log('[OCR] Texto bruto detectado:', raw);
         const numbers = raw.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
-        const match = numbers.match(/\d+\.?\d*/);
+        // Pegar a sequência numérica mais longa (provavelmente o mostrador)
+        const allMatches = numbers.match(/\d[\d.]*/g) || [];
+        const match = allMatches.sort((a,b) => b.length - a.length)[0];
 
         fillBar.style.width = '100%';
 
         if (match) {
-            const ocrValue = parseFloat(match[0]);
+            const ocrValue = parseFloat(match);
             document.getElementById('hidroOcrValor').textContent = ocrValue.toFixed(3) + ' m³';
             resultDiv.style.display = 'block';
             resultDiv.dataset.value = ocrValue;
@@ -7464,9 +7477,9 @@ async function runHidroOCR(imageData) {
         setTimeout(() => { progressDiv.style.display = 'none'; }, 2000);
 
     } catch(err) {
-        console.error('OCR Error:', err);
-        textEl.textContent = 'Erro no OCR. Digite a leitura manualmente.';
-        setTimeout(() => { progressDiv.style.display = 'none'; }, 2500);
+        console.error('[OCR] Erro:', err);
+        textEl.textContent = 'Erro no OCR: ' + (err.message || err) + '. Digite manualmente.';
+        setTimeout(() => { progressDiv.style.display = 'none'; }, 4000);
     }
 }
 
@@ -7808,26 +7821,33 @@ async function runHidroColOCR(imageData) {
     textEl.textContent = 'Inicializando OCR...';
 
     try {
-        const worker = await Tesseract.createWorker('eng', 1, {
+        const worker = await Tesseract.createWorker({
             logger: m => {
                 if (m.status === 'recognizing text') {
                     const pct = Math.round((m.progress || 0) * 100);
                     fillBar.style.width = pct + '%';
                     textEl.textContent = `Lendo imagem... ${pct}%`;
+                } else if (m.status) {
+                    textEl.textContent = m.status === 'loading language traineddata' ? 'Carregando idioma...' :
+                                         m.status === 'initializing api' ? 'Inicializando...' : m.status;
                 }
             }
         });
-        await worker.setParameters({ tessedit_char_whitelist: '0123456789.,', tessedit_pageseg_mode: '7' });
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        await worker.setParameters({ tessedit_char_whitelist: '0123456789.,' });
         const { data } = await worker.recognize(imageData);
         await worker.terminate();
 
         const raw = data.text.trim();
+        console.log('[OCR Coletivo] Texto bruto:', raw);
         const numbers = raw.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
-        const match = numbers.match(/\d+\.?\d*/);
+        const allMatches = numbers.match(/\d[\d.]*/g) || [];
+        const match = allMatches.sort((a,b) => b.length - a.length)[0];
         fillBar.style.width = '100%';
 
         if (match) {
-            const ocrValue = parseFloat(match[0]);
+            const ocrValue = parseFloat(match);
             document.getElementById('hidroColOcrValor').textContent = ocrValue.toFixed(3) + ' m³';
             resultDiv.style.display = 'block';
             resultDiv.dataset.value = ocrValue;
@@ -7837,9 +7857,9 @@ async function runHidroColOCR(imageData) {
         }
         setTimeout(() => { progressDiv.style.display = 'none'; }, 2000);
     } catch(err) {
-        console.error('OCR Coletivo Error:', err);
-        textEl.textContent = 'Erro no OCR. Digite manualmente.';
-        setTimeout(() => { progressDiv.style.display = 'none'; }, 2500);
+        console.error('[OCR Coletivo] Erro:', err);
+        textEl.textContent = 'Erro no OCR: ' + (err.message || err) + '. Digite manualmente.';
+        setTimeout(() => { progressDiv.style.display = 'none'; }, 4000);
     }
 }
 
@@ -7860,6 +7880,7 @@ async function saveHidrometroColetivo() {
     if (!dataLeitura) { toast('Informe a data.', 'error'); return; }
     if (!mesRef) { toast('Informe o mês de referência.', 'error'); return; }
     if (isNaN(leitura)) { toast('Informe a leitura atual.', 'error'); return; }
+    if (!APP.currentCondoId) { toast('Selecione um condomínio.', 'error'); return; }
 
     const editId = document.getElementById('hidroColEditId').value;
     const leituraAnterior = parseFloat(document.getElementById('hidroColLeituraAnterior').value);
@@ -7881,7 +7902,15 @@ async function saveHidrometroColetivo() {
     };
     if (!editId) dataGeral.criadoEm = new Date().toISOString();
 
+    console.log('[Hidro] Salvando leitura coletiva:', { mesRef, leitura, consumo });
     const geralId = await fbSave('hidrometros', editId || null, dataGeral);
+
+    if (!geralId) {
+        console.error('[Hidro] Falha ao salvar leitura geral');
+        toast('Erro ao salvar. Verifique as regras do Firestore (subcoleção: hidrometros).', 'error');
+        return;
+    }
+    console.log('[Hidro] Leitura geral salva com ID:', geralId);
 
     // Se houve consumo, gerar rateio como registros individuais
     if (consumo != null && consumo > 0 && !editId) {
@@ -7908,16 +7937,21 @@ async function saveHidrometroColetivo() {
 
     closeModal('modalHidrometroColetivo');
 
-    // Reload
+    // Reload — usar get() sem orderBy como fallback se o índice não existir
     const cid = APP.currentCondoId;
     try {
-        const snap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').orderBy('mesRef','desc').get();
-        APP.hidrometros = []; snap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
-    } catch(e) { console.warn('Reload hidrômetros:', e); }
+        const snap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').get();
+        APP.hidrometros = [];
+        snap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+        APP.hidrometros.sort((a,b) => (b.mesRef||'').localeCompare(a.mesRef||''));
+    } catch(e) {
+        console.error('[Hidro] Erro ao recarregar:', e);
+        toast('Dados salvos mas erro ao recarregar lista.', 'warning');
+    }
 
     renderHidrometrosColetivo();
     renderHidroChart();
-    toast(editId ? 'Leitura atualizada!' : 'Leitura registrada e rateio gerado!');
+    toast(editId ? 'Leitura atualizada!' : 'Leitura registrada' + (consumo > 0 ? ' e rateio gerado!' : '!'));
 }
 
 function renderHidrometrosColetivo() {
