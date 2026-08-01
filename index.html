@@ -22,6 +22,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 
 <!-- Firebase Compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -708,6 +709,43 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 .dash-alert-card .alert-title { font-weight: 600; font-size: 0.78rem; margin-bottom: 0.4rem; display: flex; align-items: center; gap: 5px; }
 .dash-alert-card .alert-list { color: var(--text-secondary); font-size: 0.78rem; line-height: 1.6; }
 
+/* ===== HIDRÔMETROS ===== */
+.hidro-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 0.8rem; background: var(--bg-card); transition: var(--transition); }
+.hidro-card:hover { box-shadow: var(--shadow-md); }
+.hidro-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 0.5rem; }
+.hidro-unidade { font-weight: 700; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+.hidro-data { font-size: 0.75rem; color: var(--text-light); white-space: nowrap; }
+.hidro-body { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+.hidro-foto-thumb { width: 90px; height: 90px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--border); cursor: pointer; transition: var(--transition); background: var(--bg-main); }
+.hidro-foto-thumb:hover { transform: scale(1.05); box-shadow: var(--shadow-md); }
+.hidro-valores { flex: 1; min-width: 200px; }
+.hidro-leitura { font-size: 1.6rem; font-weight: 800; font-family: var(--font-display); color: var(--primary); }
+.hidro-leitura small { font-size: 0.75rem; font-weight: 400; color: var(--text-secondary); }
+.hidro-consumo { display: flex; align-items: center; gap: 6px; margin-top: 0.3rem; font-size: 0.88rem; }
+.hidro-consumo .consumo-valor { font-weight: 700; }
+.hidro-consumo .consumo-up { color: var(--accent-red); }
+.hidro-consumo .consumo-down { color: var(--accent); }
+.hidro-consumo .consumo-equal { color: var(--text-light); }
+.hidro-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; color: var(--text-light); margin-top: 0.4rem; }
+.hidro-footer { display: flex; justify-content: flex-end; gap: 6px; margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+.hidro-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.2rem; }
+.hidro-summary-card { background: var(--bg-card); border-radius: var(--radius-md); padding: 1rem; border: 1px solid var(--border); text-align: center; }
+.hidro-summary-card .summary-value { font-size: 1.4rem; font-weight: 800; font-family: var(--font-display); }
+.hidro-summary-card .summary-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+.hidro-ocr-area { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; cursor: pointer; transition: var(--transition); margin-bottom: 1rem; position: relative; }
+.hidro-ocr-area:hover { border-color: var(--primary); background: rgba(37,99,235,0.03); }
+.hidro-ocr-area.dragover { border-color: var(--primary); background: rgba(37,99,235,0.06); }
+.hidro-ocr-preview { max-width: 100%; max-height: 250px; border-radius: var(--radius-sm); margin-top: 0.8rem; }
+.hidro-ocr-progress { margin-top: 0.8rem; display: none; }
+.hidro-ocr-progress .progress-bar { width: 100%; height: 8px; background: var(--bg-main); border-radius: 4px; overflow: hidden; }
+.hidro-ocr-progress .progress-fill { height: 100%; background: var(--gradient-accent); border-radius: 4px; transition: width 0.3s ease; width: 0%; }
+.hidro-ocr-progress .progress-text { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; text-align: center; }
+
+/* FOTO MODAL LIGHTBOX */
+.hidro-lightbox { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10001; align-items: center; justify-content: center; cursor: pointer; }
+.hidro-lightbox.show { display: flex; }
+.hidro-lightbox img { max-width: 92vw; max-height: 90vh; border-radius: var(--radius-md); box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+
 /* ===== PWA UPDATE BANNER ===== */
 .pwa-update-banner { position: fixed; bottom: 0; left: 0; right: 0; background: var(--gradient-primary); color: #fff; padding: 12px 20px; display: flex; align-items: center; justify-content: center; gap: 12px; z-index: 10000; transform: translateY(100%); transition: transform 0.4s ease; font-size: 0.88rem; }
 .pwa-update-banner.show { transform: translateY(0); }
@@ -882,6 +920,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
                 <div class="nav-item" data-page="assembleias" onclick="navigateTo('assembleias')">
                     <span class="nav-icon"><i class="ti ti-clipboard-text"></i></span> Assembleias
+                </div>
+                <div class="nav-item" data-page="hidrometros" onclick="navigateTo('hidrometros')">
+                    <span class="nav-icon"><i class="ti ti-droplet"></i></span> Leitura Hidrômetros
                 </div>
             </div>
         </div>
@@ -1577,6 +1618,42 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             </div>
         </section>
 
+        <!-- ============ LEITURA DE HIDRÔMETROS ============ -->
+        <section class="page-section" id="pg-hidrometros">
+            <div class="hidro-summary-grid" id="hidroSummary"></div>
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-droplet"></i> Leitura de Hidrômetros</span>
+                    <button class="btn btn-fill btn-sm" onclick="openHidrometroModal()"><i class="ti ti-plus"></i> Nova Leitura</button>
+                </div>
+                <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+                    <select id="hidroFiltroUnidade" onchange="renderHidrometros()" style="max-width:200px">
+                        <option value="">Todas as unidades</option>
+                    </select>
+                    <select id="hidroFiltroAno" onchange="renderHidrometros()" style="max-width:120px"></select>
+                    <select id="hidroFiltroMes" onchange="renderHidrometros()" style="max-width:140px">
+                        <option value="">Todos os meses</option>
+                        <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+                        <option value="03">Março</option><option value="04">Abril</option>
+                        <option value="05">Maio</option><option value="06">Junho</option>
+                        <option value="07">Julho</option><option value="08">Agosto</option>
+                        <option value="09">Setembro</option><option value="10">Outubro</option>
+                        <option value="11">Novembro</option><option value="12">Dezembro</option>
+                    </select>
+                </div>
+                <div id="hidrometrosList"></div>
+            </div>
+            <div class="card" style="margin-top:1rem">
+                <div class="card-title"><i class="ti ti-chart-line"></i> Comparativo de Consumo</div>
+                <div class="filter-bar">
+                    <select id="hidroChartUnidade" onchange="renderHidroChart()" style="max-width:200px">
+                        <option value="">Selecione a unidade</option>
+                    </select>
+                </div>
+                <div class="chart-container"><canvas id="chartHidrometro"></canvas></div>
+            </div>
+        </section>
+
         <!-- ============ USUÁRIOS ============ -->
         <section class="page-section" id="pg-usuarios">
             <div class="card">
@@ -1991,6 +2068,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label class="access-item"><input type="checkbox" value="reservas"> Reservas</label>
                     <label class="access-item"><input type="checkbox" value="ocorrencias"> Ocorrências</label>
                     <label class="access-item"><input type="checkbox" value="assembleias"> Assembleias</label>
+                    <label class="access-item"><input type="checkbox" value="hidrometros"> Hidrômetros</label>
                     <label class="access-item"><input type="checkbox" value="fornecedores"> Fornecedores</label>
                     <label class="access-item"><input type="checkbox" value="backup"> Backup</label>
                     <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
@@ -2441,6 +2519,95 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     </div>
 </div>
 
+<!-- Modal Leitura de Hidrômetro -->
+<div class="modal-overlay" id="modalHidrometro">
+    <div class="modal-box" style="max-width:650px">
+        <div class="modal-header">
+            <h3><i class="ti ti-droplet" style="color:var(--primary)"></i> Registrar Leitura</h3>
+            <button class="modal-close" onclick="closeModal('modalHidrometro')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="hidroEditId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Unidade / Apartamento *</label>
+                    <select id="hidroUnidade"></select>
+                </div>
+                <div class="form-group">
+                    <label>Data da Leitura *</label>
+                    <input type="date" id="hidroData">
+                </div>
+                <div class="form-group">
+                    <label>Mês de Referência *</label>
+                    <input type="month" id="hidroMesRef">
+                </div>
+                <div class="form-group">
+                    <label>Nº do Hidrômetro</label>
+                    <input type="text" id="hidroNumero" placeholder="Ex: HD-001234">
+                </div>
+            </div>
+
+            <!-- CAPTURA DE FOTO -->
+            <div style="margin-top:1rem">
+                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">
+                    <i class="ti ti-camera"></i> Foto do Hidrômetro (opcional — OCR automático)
+                </label>
+                <div class="hidro-ocr-area" id="hidroOcrArea" onclick="document.getElementById('hidroFotoInput').click()"
+                     ondragover="event.preventDefault();this.classList.add('dragover')"
+                     ondragleave="this.classList.remove('dragover')"
+                     ondrop="handleHidroDrop(event)">
+                    <i class="ti ti-camera-plus" style="font-size:2rem;color:var(--text-light)"></i>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.5rem">
+                        Toque para tirar foto ou arraste uma imagem aqui
+                    </p>
+                    <p style="font-size:0.72rem;color:var(--text-light)">O sistema tentará ler os números automaticamente</p>
+                    <img id="hidroFotoPreview" class="hidro-ocr-preview" style="display:none">
+                    <input type="file" id="hidroFotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleHidroFoto(this)">
+                </div>
+                <div class="hidro-ocr-progress" id="hidroOcrProgress">
+                    <div class="progress-bar"><div class="progress-fill" id="hidroOcrFill"></div></div>
+                    <div class="progress-text" id="hidroOcrText">Processando imagem...</div>
+                </div>
+                <div id="hidroOcrResult" style="display:none;margin-top:0.5rem;padding:0.7rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm)">
+                    <span style="font-size:0.82rem;color:var(--accent);font-weight:600"><i class="ti ti-check"></i> Leitura detectada pelo OCR:</span>
+                    <span id="hidroOcrValor" style="font-weight:700;font-size:1.1rem;margin-left:6px"></span>
+                    <button class="btn btn-outline btn-sm" style="margin-left:8px;font-size:0.72rem" onclick="applyOcrReading()">Usar este valor</button>
+                </div>
+            </div>
+
+            <!-- LEITURA MANUAL -->
+            <div class="form-grid" style="margin-top:1rem">
+                <div class="form-group">
+                    <label>Leitura Atual (m³) *</label>
+                    <input type="number" step="0.001" id="hidroLeitura" placeholder="Ex: 1234.567">
+                </div>
+                <div class="form-group">
+                    <label>Leitura Anterior (m³)</label>
+                    <input type="number" step="0.001" id="hidroLeituraAnterior" placeholder="Preenchido automaticamente" readonly style="background:var(--bg-main);color:var(--text-light)">
+                </div>
+                <div class="form-group">
+                    <label>Consumo (m³)</label>
+                    <input type="text" id="hidroConsumo" readonly style="background:var(--bg-main);font-weight:700;color:var(--primary)">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top:0.5rem">
+                <label>Observações</label>
+                <textarea id="hidroObs" rows="2" placeholder="Ex: Vazamento identificado, hidrômetro trocado..."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalHidrometro')">Cancelar</button>
+            <button class="btn btn-fill" onclick="saveHidrometro()"><i class="ti ti-device-floppy"></i> Salvar Leitura</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox para foto do hidrômetro -->
+<div class="hidro-lightbox" id="hidroLightbox" onclick="this.classList.remove('show')">
+    <img id="hidroLightboxImg" src="">
+</div>
+
 <!-- PWA UPDATE BANNER -->
 <div class="pwa-update-banner" id="pwaUpdateBanner">
     <i class="ti ti-refresh"></i>
@@ -2480,6 +2647,7 @@ const APP = {
     reservas: [],
     ocorrencias: [],
     assembleias: [],
+    hidrometros: [],
     fornecedores: [],
     areasComuns: ['Salão de Festas','Churrasqueira','Quadra','Academia','Piscina'],
     reservaMonth: new Date(),
@@ -2631,6 +2799,7 @@ function navigateTo(page) {
         receitasAvulsas:'Receitas Avulsas',
         comunicados:'Comunicados', reservas:'Reserva de Áreas Comuns',
         ocorrencias:'Ocorrências e Chamados', assembleias:'Assembleias e Atas',
+        hidrometros:'Leitura de Hidrômetros',
         fornecedores:'Fornecedores e Contratos', backup:'Backup / Exportar',
         relDespesas:'Relatório de Despesas', relReceitas:'Relatório de Receitas',
         relConciliacao:'Relatório de Conciliação', balancete:'Balancete',
@@ -2651,6 +2820,7 @@ function navigateTo(page) {
     else if (page === 'reservas') renderReservas();
     else if (page === 'ocorrencias') renderOcorrencias();
     else if (page === 'assembleias') { renderAssembleias(); populateAssembleiaAnoFilter(); }
+    else if (page === 'hidrometros') { renderHidrometros(); renderHidroChart(); }
     else if (page === 'fornecedores') renderFornecedores();
     else if (page === 'relDespesas') renderRelDespesas();
     else if (page === 'relReceitas') renderRelReceitas();
@@ -2865,7 +3035,7 @@ function applyMenuPermissions() {
 
     // Portal do Morador: acesso limitado
     if (isMorador) {
-        const moradorPages = ['dashboard','comunicados','reservas','ocorrencias','boletos'];
+        const moradorPages = ['dashboard','comunicados','reservas','ocorrencias','boletos','hidrometros'];
         document.querySelectorAll('.nav-item[data-page]').forEach(item => {
             const page = item.getAttribute('data-page');
             item.style.display = moradorPages.includes(page) ? '' : 'none';
@@ -3292,6 +3462,13 @@ async function loadCondoData() {
             APP.assembleias = []; assSnap.forEach(d => APP.assembleias.push({ id: d.id, ...d.data() }));
         } catch(e) { console.warn('Assembleias:', e.message); APP.assembleias = []; }
         renderAssembleias();
+
+        // Hidrômetros
+        try {
+            const hidSnap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').orderBy('mesRef','desc').get();
+            APP.hidrometros = []; hidSnap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+        } catch(e) { console.warn('Hidrômetros:', e.message); APP.hidrometros = []; }
+        renderHidrometros();
 
         // Fornecedores
         try {
@@ -6403,6 +6580,7 @@ function exportBackupExcel() {
         { name: 'Reservas', data: APP.reservas },
         { name: 'Ocorrencias', data: APP.ocorrencias },
         { name: 'Assembleias', data: APP.assembleias },
+        { name: 'Hidrometros', data: APP.hidrometros },
         { name: 'Fornecedores', data: APP.fornecedores }
     ];
     let totalRegs = 0;
@@ -6410,6 +6588,7 @@ function exportBackupExcel() {
         const rows = (col.data || []).map(item => {
             const row = { ...item };
             delete row.id;
+            delete row.fotoBase64; // Não exportar fotos em Excel
             return row;
         });
         totalRegs += rows.length;
@@ -6445,6 +6624,7 @@ function exportBackupJSON() {
             reservas: APP.reservas || [],
             ocorrencias: APP.ocorrencias || [],
             assembleias: APP.assembleias || [],
+            hidrometros: (APP.hidrometros || []).map(h => { const r = {...h}; delete r.fotoBase64; return r; }),
             fornecedores: APP.fornecedores || [],
             categorias: APP.categorias || [],
             areasComuns: APP.areasComuns || []
@@ -6707,6 +6887,505 @@ async function deleteAssembleia(id) {
     APP.assembleias = APP.assembleias.filter(a => a.id !== id);
     renderAssembleias();
     toast('Assembleia excluída.');
+}
+
+// ===== LEITURA DE HIDRÔMETROS =====
+let _hidroFotoBase64 = null;
+
+function renderHidrometros() {
+    const container = document.getElementById('hidrometrosList');
+    if (!container) return;
+    const filtroUnidade = document.getElementById('hidroFiltroUnidade')?.value || '';
+    const filtroAno = document.getElementById('hidroFiltroAno')?.value || '';
+    const filtroMes = document.getElementById('hidroFiltroMes')?.value || '';
+
+    // Populate unidade filter
+    const selUnidade = document.getElementById('hidroFiltroUnidade');
+    if (selUnidade) {
+        const unidades = [...new Set((APP.hidrometros||[]).map(h => h.unidade).filter(Boolean))].sort();
+        const curVal = selUnidade.value;
+        selUnidade.innerHTML = '<option value="">Todas as unidades</option>' + unidades.map(u => `<option value="${H(u)}">${H(u)}</option>`).join('');
+        selUnidade.value = curVal;
+    }
+
+    // Populate ano filter
+    const selAno = document.getElementById('hidroFiltroAno');
+    if (selAno) {
+        const anos = [...new Set((APP.hidrometros||[]).map(h => (h.mesRef||'').slice(0,4)).filter(Boolean))].sort().reverse();
+        if (!anos.length) anos.push(String(new Date().getFullYear()));
+        const curVal = selAno.value;
+        selAno.innerHTML = '<option value="">Todos os anos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+        selAno.value = curVal;
+    }
+
+    // Populate chart unidade select
+    const chartSel = document.getElementById('hidroChartUnidade');
+    if (chartSel) {
+        const unidades = [...new Set((APP.hidrometros||[]).map(h => h.unidade).filter(Boolean))].sort();
+        const curVal = chartSel.value;
+        chartSel.innerHTML = '<option value="">Selecione a unidade</option>' + unidades.map(u => `<option value="${H(u)}">${H(u)}</option>`).join('');
+        chartSel.value = curVal;
+    }
+
+    let lista = APP.hidrometros || [];
+    if (filtroUnidade) lista = lista.filter(h => h.unidade === filtroUnidade);
+    if (filtroAno) lista = lista.filter(h => (h.mesRef||'').startsWith(filtroAno));
+    if (filtroMes) lista = lista.filter(h => (h.mesRef||'').slice(5,7) === filtroMes);
+
+    // Summary cards
+    renderHidroSummary(lista);
+
+    if (!lista.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-droplet-off" style="font-size:3rem"></i></div><p>Nenhuma leitura registrada.</p></div>';
+        return;
+    }
+
+    container.innerHTML = lista.map(h => {
+        const consumo = h.consumo != null ? parseFloat(h.consumo) : null;
+        const consumoAnterior = getConsumoAnterior(h);
+        let variacaoHtml = '';
+        if (consumo != null && consumoAnterior != null && consumoAnterior > 0) {
+            const pct = ((consumo - consumoAnterior) / consumoAnterior * 100).toFixed(1);
+            const cls = pct > 0 ? 'consumo-up' : pct < 0 ? 'consumo-down' : 'consumo-equal';
+            const icon = pct > 0 ? 'ti-trending-up' : pct < 0 ? 'ti-trending-down' : 'ti-minus';
+            variacaoHtml = `<span class="${cls}"><i class="ti ${icon}"></i> ${pct > 0 ? '+' : ''}${pct}%</span>`;
+        }
+
+        const fotoHtml = h.fotoBase64
+            ? `<img class="hidro-foto-thumb" src="${h.fotoBase64}" alt="Foto hidrômetro" onclick="openHidroLightbox('${h.id}')">`
+            : `<div class="hidro-foto-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-light)"><i class="ti ti-camera-off" style="font-size:1.5rem"></i></div>`;
+
+        const mesLabel = h.mesRef ? MESES[parseInt(h.mesRef.slice(5,7))] + '/' + h.mesRef.slice(0,4) : '-';
+
+        return `<div class="hidro-card">
+            <div class="hidro-header">
+                <div class="hidro-unidade"><i class="ti ti-home-2"></i> ${H(h.unidade||'-')}</div>
+                <div class="hidro-data"><i class="ti ti-calendar"></i> ${fmtDate(h.dataLeitura||'')} · Ref: ${H(mesLabel)}</div>
+            </div>
+            <div class="hidro-body">
+                ${fotoHtml}
+                <div class="hidro-valores">
+                    <div class="hidro-leitura">${parseFloat(h.leitura||0).toFixed(3)} <small>m³</small></div>
+                    <div class="hidro-consumo">
+                        ${consumo != null ? `<span>Consumo: <span class="consumo-valor">${consumo.toFixed(3)} m³</span></span>` : '<span style="color:var(--text-light)">Primeira leitura</span>'}
+                        ${variacaoHtml}
+                    </div>
+                    <div class="hidro-meta">
+                        ${h.numeroHidrometro ? `<span><i class="ti ti-hash"></i> ${H(h.numeroHidrometro)}</span>` : ''}
+                        ${h.leituraAnterior != null ? `<span><i class="ti ti-arrow-back-up"></i> Anterior: ${parseFloat(h.leituraAnterior).toFixed(3)} m³</span>` : ''}
+                        ${h.obs ? `<span><i class="ti ti-note"></i> ${H(h.obs)}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="hidro-footer">
+                <button class="btn btn-outline btn-sm" onclick="editHidrometro('${h.id}')"><i class="ti ti-edit"></i></button>
+                <button class="btn btn-outline btn-sm" style="color:var(--accent-red)" onclick="deleteHidrometro('${h.id}')"><i class="ti ti-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderHidroSummary(lista) {
+    const container = document.getElementById('hidroSummary');
+    if (!container) return;
+    if (!lista || !lista.length) { container.innerHTML = ''; return; }
+
+    const totalLeituras = lista.length;
+    const unidades = new Set(lista.map(h => h.unidade));
+    const consumos = lista.filter(h => h.consumo != null).map(h => parseFloat(h.consumo));
+    const totalConsumo = consumos.reduce((a,b) => a+b, 0);
+    const mediaConsumo = consumos.length ? totalConsumo / consumos.length : 0;
+
+    // Alerta: consumos acima de 50% da média
+    const alertas = consumos.filter(c => c > mediaConsumo * 1.5).length;
+
+    container.innerHTML = `
+        <div class="hidro-summary-card">
+            <div class="summary-value" style="color:var(--primary)">${totalLeituras}</div>
+            <div class="summary-label">Leituras Registradas</div>
+        </div>
+        <div class="hidro-summary-card">
+            <div class="summary-value" style="color:var(--secondary)">${unidades.size}</div>
+            <div class="summary-label">Unidades Monitoradas</div>
+        </div>
+        <div class="hidro-summary-card">
+            <div class="summary-value" style="color:var(--accent)">${totalConsumo.toFixed(1)}</div>
+            <div class="summary-label">Consumo Total (m³)</div>
+        </div>
+        <div class="hidro-summary-card">
+            <div class="summary-value" style="color:${alertas > 0 ? 'var(--accent-red)' : 'var(--text-light)'}">${alertas}</div>
+            <div class="summary-label">Alertas de Consumo Alto</div>
+        </div>
+    `;
+}
+
+function getConsumoAnterior(h) {
+    if (!h.unidade || !h.mesRef) return null;
+    const mesmoApto = (APP.hidrometros||[])
+        .filter(x => x.unidade === h.unidade && x.mesRef && x.mesRef < h.mesRef && x.consumo != null)
+        .sort((a,b) => b.mesRef.localeCompare(a.mesRef));
+    return mesmoApto.length ? parseFloat(mesmoApto[0].consumo) : null;
+}
+
+function getUltimaLeitura(unidade, beforeMesRef) {
+    const anteriores = (APP.hidrometros||[])
+        .filter(h => h.unidade === unidade && h.mesRef && (!beforeMesRef || h.mesRef < beforeMesRef))
+        .sort((a,b) => b.mesRef.localeCompare(a.mesRef));
+    return anteriores.length ? anteriores[0] : null;
+}
+
+function openHidrometroModal() {
+    document.getElementById('hidroEditId').value = '';
+    document.getElementById('hidroData').value = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    document.getElementById('hidroMesRef').value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+    document.getElementById('hidroNumero').value = '';
+    document.getElementById('hidroLeitura').value = '';
+    document.getElementById('hidroLeituraAnterior').value = '';
+    document.getElementById('hidroConsumo').value = '';
+    document.getElementById('hidroObs').value = '';
+    _hidroFotoBase64 = null;
+
+    // Reset OCR area
+    document.getElementById('hidroFotoPreview').style.display = 'none';
+    document.getElementById('hidroOcrProgress').style.display = 'none';
+    document.getElementById('hidroOcrResult').style.display = 'none';
+    document.getElementById('hidroFotoInput').value = '';
+
+    // Populate unidade select
+    const sel = document.getElementById('hidroUnidade');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    const aptos = (APP.moradores||[]).map(m => m.apto).filter(Boolean).sort();
+    const unique = [...new Set(aptos)];
+    unique.forEach(a => { sel.innerHTML += `<option value="${H(a)}">${H(a)}</option>`; });
+
+    // Auto-fill leitura anterior on unidade change
+    sel.onchange = () => autoFillLeituraAnterior();
+    document.getElementById('hidroMesRef').addEventListener('change', autoFillLeituraAnterior);
+    document.getElementById('hidroLeitura').addEventListener('input', calcConsumo);
+
+    openModal('modalHidrometro');
+}
+
+function autoFillLeituraAnterior() {
+    const unidade = document.getElementById('hidroUnidade').value;
+    const mesRef = document.getElementById('hidroMesRef').value;
+    const editId = document.getElementById('hidroEditId').value;
+
+    if (unidade && mesRef) {
+        const anterior = getUltimaLeitura(unidade, mesRef);
+        if (anterior && anterior.id !== editId) {
+            document.getElementById('hidroLeituraAnterior').value = parseFloat(anterior.leitura).toFixed(3);
+        } else {
+            document.getElementById('hidroLeituraAnterior').value = '';
+        }
+        // Auto-fill hidrômetro number
+        const numInput = document.getElementById('hidroNumero');
+        if (!numInput.value && anterior && anterior.numeroHidrometro) {
+            numInput.value = anterior.numeroHidrometro;
+        }
+    }
+    calcConsumo();
+}
+
+function calcConsumo() {
+    const atual = parseFloat(document.getElementById('hidroLeitura').value);
+    const anterior = parseFloat(document.getElementById('hidroLeituraAnterior').value);
+    const consumoInput = document.getElementById('hidroConsumo');
+
+    if (!isNaN(atual) && !isNaN(anterior) && atual >= anterior) {
+        consumoInput.value = (atual - anterior).toFixed(3) + ' m³';
+    } else if (!isNaN(atual) && isNaN(anterior)) {
+        consumoInput.value = 'Primeira leitura';
+    } else if (!isNaN(atual) && !isNaN(anterior) && atual < anterior) {
+        consumoInput.value = 'Atenção: leitura menor que anterior!';
+        consumoInput.style.color = 'var(--accent-red)';
+        return;
+    } else {
+        consumoInput.value = '';
+    }
+    consumoInput.style.color = 'var(--primary)';
+}
+
+function editHidrometro(id) {
+    const h = (APP.hidrometros||[]).find(x => x.id === id);
+    if (!h) return;
+
+    openHidrometroModal();
+    document.getElementById('hidroEditId').value = id;
+    document.getElementById('hidroUnidade').value = h.unidade || '';
+    document.getElementById('hidroData').value = h.dataLeitura || '';
+    document.getElementById('hidroMesRef').value = h.mesRef || '';
+    document.getElementById('hidroNumero').value = h.numeroHidrometro || '';
+    document.getElementById('hidroLeitura').value = h.leitura || '';
+    document.getElementById('hidroLeituraAnterior').value = h.leituraAnterior != null ? parseFloat(h.leituraAnterior).toFixed(3) : '';
+    document.getElementById('hidroObs').value = h.obs || '';
+
+    if (h.fotoBase64) {
+        _hidroFotoBase64 = h.fotoBase64;
+        const preview = document.getElementById('hidroFotoPreview');
+        preview.src = h.fotoBase64;
+        preview.style.display = 'block';
+    }
+
+    calcConsumo();
+}
+
+async function saveHidrometro() {
+    const unidade = document.getElementById('hidroUnidade').value;
+    const dataLeitura = document.getElementById('hidroData').value;
+    const mesRef = document.getElementById('hidroMesRef').value;
+    const leitura = parseFloat(document.getElementById('hidroLeitura').value);
+
+    if (!unidade) { toast('Selecione a unidade.', 'error'); return; }
+    if (!dataLeitura) { toast('Informe a data da leitura.', 'error'); return; }
+    if (!mesRef) { toast('Informe o mês de referência.', 'error'); return; }
+    if (isNaN(leitura)) { toast('Informe a leitura atual.', 'error'); return; }
+
+    const editId = document.getElementById('hidroEditId').value;
+    const leituraAnterior = parseFloat(document.getElementById('hidroLeituraAnterior').value);
+    const consumo = !isNaN(leituraAnterior) && leitura >= leituraAnterior ? leitura - leituraAnterior : null;
+
+    const data = {
+        unidade,
+        dataLeitura,
+        mesRef,
+        leitura,
+        leituraAnterior: !isNaN(leituraAnterior) ? leituraAnterior : null,
+        consumo,
+        numeroHidrometro: document.getElementById('hidroNumero').value.trim(),
+        obs: document.getElementById('hidroObs').value.trim(),
+        fotoBase64: _hidroFotoBase64 || null,
+        atualizadoEm: new Date().toISOString()
+    };
+
+    if (!editId) data.criadoEm = new Date().toISOString();
+
+    await fbSave('hidrometros', editId || null, data);
+    closeModal('modalHidrometro');
+
+    // Reload
+    const cid = APP.currentCondoId;
+    try {
+        const snap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').orderBy('mesRef','desc').get();
+        APP.hidrometros = []; snap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+    } catch(e) { console.warn('Reload hidrômetros:', e); }
+    renderHidrometros();
+    renderHidroChart();
+    toast(editId ? 'Leitura atualizada!' : 'Leitura registrada!');
+}
+
+async function deleteHidrometro(id) {
+    if (!confirm('Excluir esta leitura de hidrômetro?')) return;
+    await fbDelete('hidrometros', id);
+    APP.hidrometros = (APP.hidrometros||[]).filter(h => h.id !== id);
+    renderHidrometros();
+    renderHidroChart();
+    toast('Leitura excluída.');
+}
+
+// ===== FOTO & OCR =====
+function handleHidroFoto(input) {
+    if (!input.files || !input.files[0]) return;
+    processHidroFile(input.files[0]);
+}
+
+function handleHidroDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) processHidroFile(file);
+}
+
+function processHidroFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const base64 = e.target.result;
+
+        // Compress image for storage (max 800px width)
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_W = 800;
+            let w = img.width, h = img.height;
+            if (w > MAX_W) { h = h * MAX_W / w; w = MAX_W; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const compressed = canvas.toDataURL('image/jpeg', 0.7);
+
+            _hidroFotoBase64 = compressed;
+            const preview = document.getElementById('hidroFotoPreview');
+            preview.src = compressed;
+            preview.style.display = 'block';
+
+            // Run OCR
+            runHidroOCR(compressed);
+        };
+        img.src = base64;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function runHidroOCR(imageData) {
+    const progressDiv = document.getElementById('hidroOcrProgress');
+    const fillBar = document.getElementById('hidroOcrFill');
+    const textEl = document.getElementById('hidroOcrText');
+    const resultDiv = document.getElementById('hidroOcrResult');
+
+    progressDiv.style.display = 'block';
+    resultDiv.style.display = 'none';
+    fillBar.style.width = '0%';
+    textEl.textContent = 'Inicializando OCR...';
+
+    try {
+        const worker = await Tesseract.createWorker('eng', 1, {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    const pct = Math.round((m.progress || 0) * 100);
+                    fillBar.style.width = pct + '%';
+                    textEl.textContent = `Lendo imagem... ${pct}%`;
+                }
+            }
+        });
+
+        await worker.setParameters({
+            tessedit_char_whitelist: '0123456789.,',
+            tessedit_pageseg_mode: '7'
+        });
+
+        const { data } = await worker.recognize(imageData);
+        await worker.terminate();
+
+        // Extract numbers from OCR result
+        const raw = data.text.trim();
+        const numbers = raw.replace(/[^0-9.,]/g, '').replace(/,/g, '.');
+        const match = numbers.match(/\d+\.?\d*/);
+
+        fillBar.style.width = '100%';
+
+        if (match) {
+            const ocrValue = parseFloat(match[0]);
+            document.getElementById('hidroOcrValor').textContent = ocrValue.toFixed(3) + ' m³';
+            resultDiv.style.display = 'block';
+            resultDiv.dataset.value = ocrValue;
+            textEl.textContent = 'Leitura detectada!';
+        } else {
+            textEl.textContent = 'Não foi possível ler os números. Digite a leitura manualmente.';
+        }
+
+        setTimeout(() => { progressDiv.style.display = 'none'; }, 2000);
+
+    } catch(err) {
+        console.error('OCR Error:', err);
+        textEl.textContent = 'Erro no OCR. Digite a leitura manualmente.';
+        setTimeout(() => { progressDiv.style.display = 'none'; }, 2500);
+    }
+}
+
+function applyOcrReading() {
+    const resultDiv = document.getElementById('hidroOcrResult');
+    const val = parseFloat(resultDiv.dataset.value);
+    if (!isNaN(val)) {
+        document.getElementById('hidroLeitura').value = val.toFixed(3);
+        calcConsumo();
+        toast('Valor do OCR aplicado!');
+    }
+}
+
+function openHidroLightbox(id) {
+    const h = (APP.hidrometros||[]).find(x => x.id === id);
+    if (!h || !h.fotoBase64) return;
+    document.getElementById('hidroLightboxImg').src = h.fotoBase64;
+    document.getElementById('hidroLightbox').classList.add('show');
+}
+
+// ===== GRÁFICO COMPARATIVO =====
+function renderHidroChart() {
+    const canvas = document.getElementById('chartHidrometro');
+    if (!canvas) return;
+    const unidade = document.getElementById('hidroChartUnidade')?.value;
+
+    // Destroy previous
+    if (APP.charts.hidrometro) { APP.charts.hidrometro.destroy(); APP.charts.hidrometro = null; }
+
+    if (!unidade) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
+
+    const dados = (APP.hidrometros||[])
+        .filter(h => h.unidade === unidade && h.mesRef)
+        .sort((a,b) => a.mesRef.localeCompare(b.mesRef));
+
+    if (!dados.length) return;
+
+    const labels = dados.map(h => {
+        const m = parseInt(h.mesRef.slice(5,7));
+        return MESES[m] + '/' + h.mesRef.slice(2,4);
+    });
+    const leituras = dados.map(h => parseFloat(h.leitura||0));
+    const consumos = dados.map(h => h.consumo != null ? parseFloat(h.consumo) : 0);
+
+    APP.charts.hidrometro = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Consumo (m³)',
+                    data: consumos,
+                    backgroundColor: consumos.map((c, i) => {
+                        if (i === 0) return 'rgba(37,99,235,0.7)';
+                        const prev = consumos[i-1];
+                        if (prev > 0 && c > prev * 1.5) return 'rgba(239,68,68,0.7)'; // alerta
+                        return 'rgba(37,99,235,0.7)';
+                    }),
+                    borderRadius: 6,
+                    order: 1
+                },
+                {
+                    label: 'Leitura Acumulada (m³)',
+                    data: leituras,
+                    type: 'line',
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    pointBackgroundColor: '#F59E0B',
+                    pointRadius: 4,
+                    tension: 0.3,
+                    fill: true,
+                    yAxisID: 'y1',
+                    order: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { font: { family: 'Inter', size: 11 } } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)} m³`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    title: { display: true, text: 'Consumo (m³)', font: { family: 'Inter' } },
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y1: {
+                    position: 'right',
+                    title: { display: true, text: 'Leitura (m³)', font: { family: 'Inter' } },
+                    grid: { drawOnChartArea: false }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
 }
 
 // ===== INIT =====
