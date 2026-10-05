@@ -9064,4 +9064,180 @@ function updateRateioConfig() {
         igual: '<i class="ti ti-info-circle"></i> <strong>Divisão Igual:</strong> O consumo total é dividido igualmente entre todas as unidades cadastradas.',
         fracao: '<i class="ti ti-info-circle"></i> <strong>Fração Ideal:</strong> Cada unidade recebe o percentual de acordo com sua fração ideal registrada no condomínio.',
         moradores: '<i class="ti ti-info-circle"></i> <strong>Por Moradores:</strong> O consumo é dividido proporcionalmente ao número de moradores em cada unidade.',
-        personalizado: '<i class="ti ti-info-circle"></i> <strong>Personalizado:</strong> Defina manualm
+        personalizado: '<i class="ti ti-info-circle"></i> <strong>Personalizado:</strong> Defina manualmente o percentual de cada unidade.'
+    };
+    desc.innerHTML = descricoes[criterio] || '';
+
+    // Mostrar grid de configuração para fração e personalizado
+    if (criterio === 'fracao' || criterio === 'personalizado') {
+        configGrid.style.display = 'block';
+        document.getElementById('rateioColLabel').textContent = criterio === 'fracao' ? 'Fração Ideal (%)' : 'Percentual (%)';
+        populateRateioConfigTable(criterio);
+    } else if (criterio === 'moradores') {
+        configGrid.style.display = 'block';
+        document.getElementById('rateioColLabel').textContent = 'Nº Moradores';
+        populateRateioConfigTableMoradores();
+    } else {
+        configGrid.style.display = 'none';
+    }
+}
+
+function populateRateioConfigTable(criterio) {
+    const tb = document.getElementById('tbRateioConfig');
+    const aptos = [...new Set((APP.moradores||[]).map(m => m.apto).filter(Boolean))].sort();
+    const config = APP.hidroRateioConfig?.unidades || {};
+    const defaultPct = (100 / aptos.length).toFixed(2);
+
+    tb.innerHTML = aptos.map(a => `<tr>
+        <td><strong>${H(a)}</strong></td>
+        <td><input type="number" step="0.01" min="0" max="100" class="rateio-pct-input" data-apto="${H(a)}" value="${config[a] || defaultPct}" style="width:100px;padding:0.4rem;border:1.5px solid var(--border);border-radius:var(--radius-sm)" oninput="updateRateioTotal()"></td>
+    </tr>`).join('');
+
+    updateRateioTotal();
+}
+
+function populateRateioConfigTableMoradores() {
+    const tb = document.getElementById('tbRateioConfig');
+    const aptos = [...new Set((APP.moradores||[]).map(m => m.apto).filter(Boolean))].sort();
+    const contagem = {};
+    (APP.moradores||[]).forEach(m => { if (m.apto) contagem[m.apto] = (contagem[m.apto]||0) + 1; });
+    const total = (APP.moradores||[]).length || 1;
+
+    tb.innerHTML = aptos.map(a => {
+        const n = contagem[a] || 1;
+        const pct = ((n / total) * 100).toFixed(1);
+        return `<tr>
+            <td><strong>${H(a)}</strong></td>
+            <td>${n} morador${n>1?'es':''} <span style="color:var(--text-light);font-size:0.78rem">(${pct}%)</span></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('rateioTotalRow').innerHTML = `Total: ${total} morador${total>1?'es':''} em ${aptos.length} unidades`;
+}
+
+function updateRateioTotal() {
+    const inputs = document.querySelectorAll('.rateio-pct-input');
+    let total = 0;
+    inputs.forEach(i => { total += parseFloat(i.value) || 0; });
+    const totalRow = document.getElementById('rateioTotalRow');
+    const color = Math.abs(total - 100) < 0.1 ? 'var(--accent)' : 'var(--accent-red)';
+    totalRow.innerHTML = `Total: <span style="color:${color};font-weight:700">${total.toFixed(2)}%</span> ${Math.abs(total - 100) >= 0.1 ? ' — <span style="color:var(--accent-red)">deve ser 100%</span>' : ' ✓'}`;
+}
+
+async function saveRateioConfig() {
+    const criterio = document.getElementById('rateioCriterio').value;
+    const unidades = {};
+
+    if (criterio === 'fracao' || criterio === 'personalizado') {
+        const inputs = document.querySelectorAll('.rateio-pct-input');
+        let total = 0;
+        inputs.forEach(i => {
+            const val = parseFloat(i.value) || 0;
+            unidades[i.dataset.apto] = val;
+            total += val;
+        });
+        if (Math.abs(total - 100) >= 0.5) {
+            toast('O total dos percentuais deve ser 100%. Atual: ' + total.toFixed(2) + '%', 'error');
+            return;
+        }
+    }
+
+    APP.hidroRateioConfig = { criterio, unidades };
+
+    if (APP.firebaseReady && APP.currentCondoId) {
+        try {
+            await APP.db.collection('condominios').doc(APP.currentCondoId).collection('settings').doc('hidrometro_config')
+                .set({ modo: APP.hidroModo, rateio: APP.hidroRateioConfig }, { merge: true });
+            toast('Configuração de rateio salva!');
+        } catch(e) {
+            toast('Erro ao salvar: ' + e.message, 'error');
+        }
+    }
+
+    closeModal('modalRateioConfig');
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+    // Theme
+    const savedTheme = localStorage.getItem('condogest_theme');
+    if (savedTheme) setTheme(savedTheme);
+
+    // Restaurar estado dos menus colapsáveis
+    restoreMenuState();
+
+    // Inicializar Firebase com config hardcoded
+    initFirebase(FIREBASE_CONFIG);
+
+    // Preencher campos de configuração na UI
+    loadFirebaseConfig();
+
+    // Year for payment modal
+    document.getElementById('pgtoAno').value = new Date().getFullYear();
+    document.getElementById('orcAno').value = new Date().getFullYear();
+
+    // Enter key on login
+    document.getElementById('loginPass').addEventListener('keypress', e => {
+        if (e.key === 'Enter') doLogin();
+    });
+    document.getElementById('regPassConfirm').addEventListener('keypress', e => {
+        if (e.key === 'Enter') doRegister();
+    });
+});
+
+// ===== MODO CELULAR: rótulos das tabelas =====
+// Copia o título de cada coluna (thead) para data-label das células, usado pelo CSS de cartões.
+function mcRotularTabelas(raiz) {
+    (raiz || document).querySelectorAll('.app-container table').forEach(table => {
+        if (table.classList.contains('no-cards')) return;
+        const ths = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+        if (!ths.length) return;
+        table.classList.add('mc');
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const tds = [...tr.children];
+            if (tds.some(td => td.colSpan > 1)) { tr.classList.add('mc-span'); return; }
+            tds.forEach((td, i) => td.setAttribute('data-label', ths[i] || ''));
+        });
+    });
+}
+(function() {
+    let agendado = false;
+    const obs = new MutationObserver(() => {
+        if (agendado) return;
+        agendado = true;
+        requestAnimationFrame(() => { agendado = false; mcRotularTabelas(); });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const app = document.getElementById('appContainer');
+        if (app) { obs.observe(app, { childList: true, subtree: true }); mcRotularTabelas(); }
+    });
+})();
+
+// ===== PWA: Service Worker Registration =====
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then((reg) => {
+                console.log('[PWA] Service Worker registrado:', reg.scope);
+                setInterval(() => reg.update(), 60 * 60 * 1000);
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showPWAUpdateBanner(newWorker);
+                            }
+                        });
+                    }
+                });
+            })
+            .catch((err) => console.warn('[PWA] Falha no registro do SW:', err));
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) { refreshing = true; window.location.reload(); }
+        });
+    });
+}
+</script>
+</body>
+</html>
