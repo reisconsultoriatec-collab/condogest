@@ -151,6 +151,51 @@ a { text-decoration: none; color: inherit; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,39,68,0.4); }
 .login-error { color: var(--accent-red); font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
 
+/* LOGIN: layout igual ao OdontoWorld */
+.login-overlay {
+    background: linear-gradient(135deg, #1A237E 0%, #1565C0 50%, #0288D1 100%) !important;
+}
+#loginScreen { gap: 0; overflow-y: auto; padding: 1.5rem 0; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; }
+#loginScreen .login-box {
+    background: #fff; border-radius: 22px; padding: 3rem 2.25rem 2.25rem;
+    max-width: 400px; box-shadow: 0 25px 60px rgba(10,25,80,0.35);
+}
+#loginScreen .login-box h1 { font-style: normal !important; font-size: 1.75rem; font-weight: 700; color: #1A237E; margin-bottom: 0.2rem; letter-spacing: -0.2px; }
+#loginScreen .login-box > p.sub { color: #64748B; font-size: 0.95rem; margin-bottom: 2rem; }
+#loginScreen .login-tabs { border-bottom: 2px solid #E2E8F0; margin: 0 0 1.5rem; }
+#loginScreen .login-tab { font-family: inherit; font-size: 0.98rem; color: #64748B; padding: 0.75rem; }
+#loginScreen .login-tab.active { color: #1565C0; border-bottom-color: #1565C0; font-weight: 600; }
+#loginScreen .input-group { margin-bottom: 1.1rem; }
+#loginScreen .input-group label { font-size: 0.8rem; font-weight: 600; color: #475569; letter-spacing: 0.4px; margin-bottom: 7px; }
+#loginScreen .input-group input {
+    background: #fff; border: 1.5px solid #D9E0EA; border-radius: 10px;
+    padding: 0.8rem 0.9rem; font-family: inherit; font-size: 0.95rem; color: #1E293B;
+}
+#loginScreen .input-group input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.15); }
+#loginScreen .btn-primary {
+    background: #1565C0; border-radius: 10px; padding: 0.9rem; font-size: 1rem; font-family: inherit;
+    box-shadow: 0 6px 16px rgba(21,101,192,0.30); margin-top: 0.2rem !important;
+}
+#loginScreen .btn-primary:hover { background: #0D47A1; }
+#loginScreen .login-error { min-height: 0.6rem; margin-top: 0; }
+.login-esqueci { display: inline-flex; align-items: center; gap: 6px; margin-top: 1.4rem; background: none; border: none; color: #1565C0; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
+.login-esqueci:hover { text-decoration: underline; }
+.login-seguro { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.78rem; color: #94A3B8; margin-top: 0.9rem; }
+#loginScreen .login-versao { margin: 1.1rem 0 0 !important; font-size: 0.78rem !important; color: #94A3B8 !important; }
+
+.login-hero { display: none; color: #fff; max-width: 440px; margin-right: 64px; }
+.login-hero .marca { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
+.login-hero .marca i { font-size: 26px; background: rgba(255,255,255,.16); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
+.login-hero .marca b { font-size: 28px; font-weight: 700; letter-spacing: .2px; }
+.login-hero h2 { font-size: 32px; line-height: 1.2; font-weight: 700; margin-bottom: 14px; color: #fff; }
+.login-hero p.lead { font-size: 15px; opacity: .88; line-height: 1.65; margin-bottom: 30px; }
+.login-hero ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 22px; }
+.login-hero li { display: flex; gap: 14px; align-items: flex-start; line-height: 1.5; }
+.login-hero li i { font-size: 20px; background: rgba(255,255,255,.16); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.login-hero li b { display: block; font-size: 15px; font-weight: 700; }
+.login-hero li span { opacity: .85; font-size: 13.5px; }
+@media (min-width: 960px) { .login-hero { display: block; } }
+
 /* LOGIN TABS */
 .login-tabs {
     display: flex; border-bottom: 2px solid var(--border);
@@ -778,10 +823,20 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 
 <!-- =================== LOGIN / CADASTRO =================== -->
 <div id="loginScreen" class="login-overlay">
+    <!-- Painel de apresentação: aparece só em telas a partir de 960px (no celular fica só o formulário) -->
+    <div class="login-hero">
+        <div class="marca"><i class="ti ti-building"></i><b>CondoGest</b></div>
+        <h2>Seu condomínio organizado, da cobrança à prestação de contas.</h2>
+        <p class="lead">Gestão completa para síndicos, administradoras e condomínios de todos os tamanhos.</p>
+        <ul>
+            <li><i class="ti ti-receipt-2"></i><div><b>Financeiro integrado</b><span>Taxas, boletos com PIX, inadimplência e balancete.</span></div></li>
+            <li><i class="ti ti-users-group"></i><div><b>Portal do Morador</b><span>Comunicados, reservas de áreas comuns e ocorrências.</span></div></li>
+            <li><i class="ti ti-shield-lock"></i><div><b>Dados protegidos</b><span>Acesso por perfil de usuário, com trilha de auditoria.</span></div></li>
+        </ul>
+    </div>
     <div class="login-box">
-        <div class="logo-icon"><i class="ti ti-building" style="font-size:2rem"></i></div>
-        <h1 style="font-style:italic">CondoGest</h1>
-        <p>Gestão de Condomínios</p>
+        <h1>CondoGest</h1>
+        <p class="sub">Gestão de Condomínios</p>
 
         <!-- Abas Entrar / Cadastrar -->
         <div class="login-tabs">
@@ -798,7 +853,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="input-group">
                 <label>SENHA</label>
                 <div style="position:relative">
-                    <input type="password" id="loginPass" placeholder="Sua senha" autocomplete="current-password" style="padding-right:2.5rem">
+                    <input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password" style="padding-right:2.5rem">
                     <button type="button" class="pass-toggle" onclick="togglePassVisibility('loginPass', this)"><i class="ti ti-eye"></i></button>
                 </div>
             </div>
@@ -806,6 +861,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <button class="btn-primary" onclick="doLogin()" style="margin-top:1rem">
                 <i class="ti ti-login"></i> Entrar
             </button>
+            <button type="button" class="login-esqueci" onclick="esqueciSenha()"><i class="ti ti-key"></i> Esqueci minha senha</button>
         </div>
 
         <!-- FORM CADASTRAR -->
@@ -838,7 +894,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             </button>
         </div>
 
-        <p style="margin-top:1.5rem;font-size:0.75rem;color:var(--text-light)">v1.0 Reis Consultoria ©2026</p>
+        <div class="login-seguro"><i class="ti ti-shield-lock"></i> Conexão segura &middot; seus dados protegidos</div>
+        <p class="login-versao">v1.0 Reis Consultoria ©2026</p>
     </div>
 </div>
 
@@ -1412,13 +1469,17 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <select id="filterInadTaxa" onchange="renderInadimplentes()">
                         <option value="">Todos os tipos</option>
                     </select>
+                    <label id="wrapInadExcluidas" class="access-item" style="display:none;cursor:pointer;white-space:nowrap">
+                        <input type="checkbox" id="filterInadExcluidas" onchange="renderInadimplentes()"> Mostrar excluídas
+                    </label>
                 </div>
                 <div id="inadResumo" style="margin-bottom:1rem"></div>
                 <div class="table-container">
                     <table><thead><tr>
-                        <th>Apto</th><th>Ano</th><th>Mês</th><th>Tipo Taxa</th><th>Valor em Aberto</th><th>Associar</th>
+                        <th>Apto</th><th>Ano</th><th>Mês</th><th>Tipo Taxa</th><th>Valor em Aberto</th><th>Ações</th>
                     </tr></thead><tbody id="tbInadimplentes"></tbody></table>
                 </div>
+                <div id="inadExcluidasBox"></div>
             </div>
         </section>
 
@@ -2063,6 +2124,42 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 </div>
 
 <!-- Modal Usuário -->
+<div class="modal-overlay" id="modalInadExcluir">
+    <div class="modal-box" style="max-width:520px">
+        <div class="modal-header">
+            <h3><i class="ti ti-trash" style="color:var(--accent-red)"></i> Excluir parcela</h3>
+            <button class="modal-close" onclick="closeModal('modalInadExcluir')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="inadExclIdx">
+            <div id="inadExclResumo" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:0.8rem 1rem;margin-bottom:1rem;font-size:0.88rem;line-height:1.6"></div>
+            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.8rem">
+                A parcela será cancelada em <strong>todo o sistema</strong>: sai do painel e do relatório de inadimplentes, do Dashboard e do boleto deste mês. A taxa do apartamento e os demais meses não são alterados. O cancelamento fica registrado e pode ser desfeito em "Mostrar excluídas".
+            </p>
+            <div style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.35);border-radius:10px;padding:0.7rem 0.9rem;margin-bottom:1rem;font-size:0.82rem;line-height:1.5">
+                <i class="ti ti-info-circle" style="color:#D97706"></i> <strong>A parcela já foi paga?</strong> Não cancele: registre o pagamento, para que o valor entre nas receitas e no caixa.
+                <div style="margin-top:0.5rem"><button class="btn btn-outline btn-sm" onclick="inadExclParaAssociar()"><i class="ti ti-link"></i> Registrar pagamento (Associar)</button></div>
+            </div>
+            <div class="form-group"><label>Motivo *</label>
+                <select id="inadExclCategoria">
+                    <option value="">Selecione...</option>
+                    <option value="Lançamento indevido/duplicado">Lançamento indevido/duplicado</option>
+                    <option value="Acordo ou negociação">Acordo ou negociação</option>
+                    <option value="Abono aprovado em assembleia">Abono aprovado em assembleia</option>
+                    <option value="Outros">Outros</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top:0.8rem"><label>Observação <span id="inadExclObsReq" style="display:none">*</span></label>
+                <textarea id="inadExclMotivo" placeholder="Detalhes (obrigatório quando o motivo for &quot;Outros&quot;)"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalInadExcluir')">Cancelar</button>
+            <button class="btn btn-danger" onclick="confirmarExclusaoInad()"><i class="ti ti-trash"></i> Excluir parcela</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="modalUsuario">
     <div class="modal-box">
         <div class="modal-header">
@@ -2126,6 +2223,14 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label class="access-item"><input type="checkbox" value="usuarios"> Usuários</label>
                     <label class="access-item"><input type="checkbox" value="configuracoes"> Configurações</label>
                 </div>
+            </div>
+
+            <div style="margin-top:1rem">
+                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">Permissões Especiais</label>
+                <div class="access-grid" id="accessGridEspecial">
+                    <label class="access-item"><input type="checkbox" value="inadExcluir"> Excluir/restaurar taxas em Inadimplentes</label>
+                </div>
+                <small style="color:var(--text-secondary);font-size:0.75rem">Administradores sempre possuem as permissões especiais.</small>
             </div>
 
             <div style="margin-top:1rem">
@@ -3245,6 +3350,26 @@ function applyMenuPermissions() {
 }
 
 // ===== LOGIN TAB SWITCH =====
+async function esqueciSenha() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const errEl = document.getElementById('loginError');
+    if (!email) {
+        errEl.textContent = 'Digite seu e-mail no campo acima e clique novamente em "Esqueci minha senha".';
+        document.getElementById('loginEmail').focus();
+        return;
+    }
+    if (!APP.auth) { errEl.textContent = 'Serviço de autenticação indisponível. Tente novamente.'; return; }
+    try {
+        await APP.auth.sendPasswordResetEmail(email);
+    } catch(e) {
+        // Mesmo retorno para e-mail existente ou não (não revela quem tem conta)
+        if (e.code === 'auth/invalid-email') { errEl.textContent = 'E-mail inválido.'; return; }
+        console.warn('Reset de senha:', e.code);
+    }
+    errEl.textContent = '';
+    toast('Se o e-mail estiver cadastrado, você receberá um link para redefinir a senha.');
+}
+
 function switchLoginTab(tab) {
     if (tab === 'entrar') {
         document.getElementById('formEntrar').style.display = 'block';
@@ -3665,6 +3790,9 @@ async function loadCondoData() {
             APP.fornecedores = []; fornSnap.forEach(d => APP.fornecedores.push({ id: d.id, ...d.data() }));
         } catch(e) { console.warn('Fornecedores:', e.message); APP.fornecedores = []; }
         renderFornecedores();
+
+        // Exclusões do painel de inadimplentes
+        await loadInadExclusoes();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
@@ -4988,6 +5116,23 @@ function renderInadimplentes() {
     // Ordenar por apto, depois mês
     inadimplentes.sort((a,b) => a.apto.localeCompare(b.apto) || a.mes.localeCompare(b.mes));
 
+    // Separar parcelas excluídas do painel (não altera nenhum outro módulo)
+    const podeExcluir = canExcluirInad();
+    const wrapExcl = document.getElementById('wrapInadExcluidas');
+    if (wrapExcl) wrapExcl.style.display = podeExcluir ? '' : 'none';
+    const mostrarExcl = podeExcluir && document.getElementById('filterInadExcluidas')?.checked;
+    const exclMap = {};
+    (APP.inadExclusoes || []).forEach(e => { exclMap[inadKey(e.apto, e.ano, e.mes, e.tipoTaxa)] = e; });
+    const excluidas = [];
+    const ativos = [];
+    inadimplentes.forEach(i => {
+        const e = exclMap[inadKey(i.apto, i.ano, i.mes, i.tipoTaxaClean)];
+        if (e) { i.exclusao = e; excluidas.push(i); } else ativos.push(i);
+    });
+    inadimplentes.length = 0;
+    inadimplentes.push(...ativos);
+    renderInadExcluidas(mostrarExcl ? excluidas : null);
+
     // Resumo
     const totalAberto = inadimplentes.reduce((s,i) => s + i.valorAberto, 0);
     const aptosUnicos = [...new Set(inadimplentes.map(i => i.apto))].length;
@@ -4996,6 +5141,11 @@ function renderInadimplentes() {
         return acc;
     }, {});
     const maiorAptoEntry = Object.entries(maiorDevedor).sort((a,b) => b[1]-a[1])[0];
+
+    // Guardar para o relatório impresso
+    APP._inadLista = inadimplentes.slice();
+    APP._inadResumo = { totalAberto, aptosUnicos, parcelas: inadimplentes.length };
+    APP._inadFiltro = { ano, mes, apto: filterApto, taxa: filterTaxa };
 
     const resumoEl = document.getElementById('inadResumo');
     if (resumoEl) {
@@ -5011,6 +5161,7 @@ function renderInadimplentes() {
     const tb = document.getElementById('tbInadimplentes');
     if (inadimplentes.length === 0) {
         tb.innerHTML = '<tr><td colspan="6" class="empty-state"><p>Nenhuma inadimplência encontrada</p></td></tr>';
+        APP._inadLista = [];
         return;
     }
 
@@ -5033,7 +5184,7 @@ function renderInadimplentes() {
 
         if (i.apto !== aptoAtual) {
             html += `<tr style="background:var(--bg-sidebar);color:#fff">
-                <td colspan="6" style="padding:0.5rem 0.8rem;font-weight:700;font-size:0.88rem">
+                <td colspan="6" style="padding:0.5rem 0.8rem;font-weight:700;font-size:0.88rem;color:#fff">
                     <i class="ti ti-home-2"></i> Apartamento ${H(i.apto)}
                 </td>
             </tr>`;
@@ -5049,7 +5200,10 @@ function renderInadimplentes() {
             <td>${MESES[parseInt(i.mes)]||i.mes}</td>
             <td>${H(i.tipoTaxa)}</td>
             <td style="color:var(--accent-red);font-weight:600">${fmtMoney(i.valorAberto)}</td>
-            <td><button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxaClean)}')"><i class="ti ti-link"></i> Associar</button></td>
+            <td style="white-space:nowrap">
+                <button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxaClean)}')"><i class="ti ti-link"></i> Associar</button>
+                ${podeExcluir ? `<button class="btn btn-danger btn-sm" title="Excluir parcela" onclick="excluirInadimplente(${idx})"><i class="ti ti-trash"></i></button>` : ''}
+            </td>
         </tr>`;
 
         // Último item
@@ -5064,8 +5218,8 @@ function renderInadimplentes() {
 
     // Total geral
     html += `<tr style="background:var(--bg-sidebar);color:#fff;font-weight:700">
-        <td colspan="4" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem">TOTAL GERAL (${inadimplentes.length} parcelas / ${aptosUnicos} aptos):</td>
-        <td style="padding:0.7rem 0.8rem;font-size:1.05rem">${fmtMoney(totalAberto)}</td>
+        <td colspan="4" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem;color:#fff">TOTAL GERAL (${inadimplentes.length} parcelas / ${aptosUnicos} aptos):</td>
+        <td style="padding:0.7rem 0.8rem;font-size:1.05rem;color:#fff">${fmtMoney(totalAberto)}</td>
         <td></td>
     </tr>`;
 
@@ -5073,35 +5227,251 @@ function renderInadimplentes() {
 }
 
 function printInadimplentes() {
+    const lista = APP._inadLista || [];
+    if (lista.length === 0) { toast('Não há parcelas em aberto para imprimir.', 'error'); return; }
+
     const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
-    const ano = document.getElementById('filterInadAno')?.value || new Date().getFullYear();
-    const mes = document.getElementById('filterInadMes')?.value || '';
-    const resumo = document.getElementById('inadResumo')?.innerHTML || '';
-    const tabela = document.getElementById('tbInadimplentes')?.parentElement?.outerHTML || '';
+    const nomeCondo = condo.nome || 'Condomínio';
+    const f = APP._inadFiltro || {};
+    const r = APP._inadResumo || {};
+    const periodo = (f.mes ? MESES[parseInt(f.mes)] + '/' : '') + (f.ano || new Date().getFullYear());
+    const agora = new Date();
+    const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    const filtros = [];
+    if (f.apto) filtros.push('Apartamento: ' + f.apto);
+    if (f.taxa) filtros.push('Tipo de taxa: ' + f.taxa);
+
+    // Tabela agrupada por apartamento (sem a coluna Associar/Ações)
+    let rows = '';
+    let aptoAtual = null, subtotal = 0, count = 0;
+    const fechaGrupo = () => {
+        rows += `<tr class="sub"><td colspan="3">Subtotal Apto ${H(aptoAtual)} &middot; ${count} parcela${count>1?'s':''}</td><td class="val">${fmtMoney(subtotal)}</td></tr>`;
+    };
+    lista.forEach(i => {
+        if (i.apto !== aptoAtual) {
+            if (aptoAtual !== null) fechaGrupo();
+            aptoAtual = i.apto; subtotal = 0; count = 0;
+            rows += `<tr class="grp"><td colspan="4">Apartamento ${H(i.apto)}</td></tr>`;
+        }
+        subtotal += i.valorAberto; count++;
+        rows += `<tr><td>${H(i.ano)}</td><td>${MESES[parseInt(i.mes)]||H(i.mes)}</td><td>${H(i.tipoTaxa)}</td><td class="val">${fmtMoney(i.valorAberto)}</td></tr>`;
+    });
+    fechaGrupo();
 
     const w = window.open('', '_blank');
-    w.document.write(`<!DOCTYPE html><html><head><title>Inadimplentes - CondoGest</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
-        <style>
-            body { font-family:'Inter',Arial,sans-serif; padding:30px; color:#1E293B; max-width:900px; margin:0 auto; }
-            table { border-collapse:collapse; width:100%; }
-            th { text-align:left; padding:6px 8px; font-size:0.75rem; text-transform:uppercase; color:#64748B; border-bottom:2px solid #e2e8f0; }
-            td { padding:6px 8px; border-bottom:1px solid #f1f5f9; font-size:0.85rem; }
-            .stat-card, .stats-row, .badge, .btn { display:none; }
-            @media print { body { padding:15px; } }
-        </style>
-    </head><body>
-        <div style="text-align:center;margin-bottom:1.5rem">
-            <h2 style="margin:0">${H(condo.nome||'Condominio')}</h2>
-            <p style="font-size:0.85rem;color:#64748B">${H(condo.endereco||'')}${condo.cnpj ? ' | CNPJ: '+H(condo.cnpj) : ''}</p>
-            <h3 style="margin-top:0.5rem">Relatório de Inadimplentes - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h3>
-            <p style="font-size:0.75rem;color:#94A3B8">Gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+    if (!w) { toast('Permita pop-ups para imprimir o relatório.', 'error'); return; }
+    w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Inadimplentes - ${H(nomeCondo)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:A4; margin:14mm 12mm; }
+    body { font-family:'Inter',Arial,sans-serif; color:#1E293B; margin:0 auto; max-width:820px; padding:28px; font-size:13px; }
+    .hdr { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:16px; border-bottom:3px solid #1A2744; position:relative; }
+    .hdr::after { content:''; position:absolute; left:0; bottom:-3px; width:90px; height:3px; background:#F59E0B; }
+    .condo h1 { margin:0; font-size:20px; font-weight:800; color:#1A2744; letter-spacing:-0.3px; }
+    .condo p { margin:4px 0 0; font-size:11.5px; color:#64748B; line-height:1.5; }
+    .doc { text-align:right; flex-shrink:0; }
+    .doc .tag { display:inline-block; background:#1A2744; color:#fff; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:5px 10px; border-radius:6px; }
+    .doc .per { margin-top:6px; font-size:12px; color:#475569; font-weight:600; }
+    .title { margin:22px 0 2px; font-size:17px; font-weight:700; color:#1A2744; }
+    .gen { font-size:11px; color:#94A3B8; }
+    .intro { margin:14px 0 18px; padding:12px 14px; background:#F8FAFC; border-left:4px solid #F59E0B; border-radius:0 8px 8px 0; font-size:12.5px; color:#334155; line-height:1.6; }
+    .filtros { font-size:11px; color:#64748B; margin:-8px 0 14px; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+    .card { border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; }
+    .card span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#64748B; font-weight:600; }
+    .card strong { display:block; font-size:18px; margin-top:3px; color:#1A2744; }
+    .card.red strong { color:#DC2626; }
+    table { width:100%; border-collapse:collapse; }
+    thead th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#fff; background:#1A2744; padding:8px 10px; font-weight:600; }
+    thead th:first-child { border-radius:6px 0 0 6px; } thead th:last-child { border-radius:0 6px 6px 0; text-align:right; }
+    td { padding:7px 10px; border-bottom:1px solid #EEF2F6; }
+    td.val { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+    tr { page-break-inside:avoid; }
+    tr.grp td { background:#EEF2F7; color:#1A2744; font-weight:700; font-size:12px; border-bottom:none; padding-top:9px; }
+    tr.sub td { background:#FEF2F2; font-weight:700; color:#991B1B; text-align:right; }
+    .total { margin-top:12px; display:flex; justify-content:space-between; align-items:center; background:#1A2744; color:#fff; border-radius:8px; padding:11px 14px; font-weight:700; page-break-inside:avoid; }
+    .total b { font-size:16px; color:#FBBF24; }
+    .msg { margin-top:26px; border:1px solid #E2E8F0; border-radius:10px; padding:14px 16px; font-size:12.5px; line-height:1.7; color:#334155; text-align:justify; page-break-inside:avoid; }
+    .msg h4 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
+    .ass { margin:48px auto 0; width:280px; text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; page-break-inside:avoid; }
+    .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; }
+    @media print { body { padding:0; max-width:none; } }
+</style></head><body>
+    <div class="hdr">
+        <div class="condo">
+            <h1>${H(nomeCondo)}</h1>
+            <p>${H(condo.endereco||'')}${condo.cnpj ? '<br>CNPJ: ' + H(condo.cnpj) : ''}</p>
         </div>
-        ${tabela}
-    </body></html>`);
+        <div class="doc">
+            <div class="tag">Posição de Débitos</div>
+            <div class="per">Referência: ${H(periodo)}</div>
+        </div>
+    </div>
+
+    <div class="title">Relatório de Inadimplentes &ndash; ${H(periodo)}</div>
+    <div class="gen">Gerado em ${geradoEm}</div>
+    <div class="intro">Seguem abaixo os valores que se encontram em aberto junto ao condomínio. Solicitamos que sejam verificados e analisados para a devida quitação.</div>
+    ${filtros.length ? `<div class="filtros">Filtros aplicados: ${H(filtros.join(' · '))}</div>` : ''}
+
+    <div class="cards">
+        <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong></div>
+        <div class="card"><span>Parcelas em aberto</span><strong>${r.parcelas||lista.length}</strong></div>
+        <div class="card"><span>Unidades</span><strong>${r.aptosUnicos||0}</strong></div>
+    </div>
+
+    <table>
+        <thead><tr><th>Ano</th><th>Mês</th><th>Tipo de Taxa</th><th>Valor em Aberto</th></tr></thead>
+        <tbody>${rows}</tbody>
+    </table>
+    <div class="total"><span>TOTAL GERAL &middot; ${r.parcelas||lista.length} parcela(s) &middot; ${r.aptosUnicos||0} unidade(s)</span><b>${fmtMoney(r.totalAberto||0)}</b></div>
+
+    <div class="msg">
+        <h4>Comunicado</h4>
+        O ${H(nomeCondo)} solicita gentilmente que verifique os débitos aqui descritos e se os mesmos procedem. Caso desconheça o débito, ou se o mesmo já foi pago junto ao condomínio, solicitamos que sejam encaminhados os devidos comprovantes de pagamento para que possamos identificar e realizar a devida baixa. Qualquer dúvida, colocamo-nos à inteira disposição para eventuais esclarecimentos.
+    </div>
+
+    <div class="ass">Administração<br><strong>${H(nomeCondo)}</strong></div>
+    <div class="foot"><span>Documento gerado pelo CondoGest</span><span>${geradoEm}</span></div>
+</body></html>`);
     w.document.close();
-    setTimeout(() => w.print(), 300);
+    const doPrint = () => { try { w.focus(); w.print(); } catch(e) {} };
+    if (w.document.fonts && w.document.fonts.ready) {
+        w.document.fonts.ready.then(() => setTimeout(doPrint, 250));
+    } else {
+        setTimeout(doPrint, 600);
+    }
+}
+
+// ===== INADIMPLENTES: EXCLUSÃO DO PAINEL =====
+// Coleção: condominios/{id}/inad_exclusoes
+// Estrutura: { apto, ano, mes, tipoTaxa, valorAberto, motivo, excluidoPor, excluidoPorNome, excluidoEm }
+// Afeta SOMENTE o painel e o relatório de inadimplentes.
+function canExcluirInad() {
+    const p = APP.userProfile;
+    if (!p) return false;
+    if (p.perfil === 'admin') return true;
+    return (p.permissoes || []).includes('inadExcluir');
+}
+
+function inadKey(apto, ano, mes, tipoTaxa) {
+    return [String(apto||''), String(ano||''), String(mes||'').padStart(2,'0'), String(tipoTaxa||'')].join('|');
+}
+
+// Fonte única: diz se uma parcela (apto + ano + mês + taxa) foi cancelada.
+// Usada no painel de Inadimplentes, Dashboard, gráfico de inadimplência e Boleto/PIX.
+function parcelaCancelada(apto, ano, mes, tipoTaxa) {
+    const lista = APP.inadExclusoes || [];
+    if (lista.length === 0) return false;
+    const k = inadKey(apto, ano, mes, tipoTaxa);
+    return lista.some(e => inadKey(e.apto, e.ano, e.mes, e.tipoTaxa) === k);
+}
+
+document.addEventListener('change', ev => {
+    if (ev.target && ev.target.id === 'inadExclCategoria') {
+        const r = document.getElementById('inadExclObsReq');
+        if (r) r.style.display = ev.target.value === 'Outros' ? '' : 'none';
+    }
+});
+
+function inadExclParaAssociar() {
+    const i = (APP._inadLista || [])[parseInt(document.getElementById('inadExclIdx').value)];
+    closeModal('modalInadExcluir');
+    if (i) associarInadimplente(i.apto, i.ano, i.mes, i.tipoTaxaClean);
+}
+
+async function loadInadExclusoes() {
+    if (!APP.firebaseReady || !APP.currentCondoId) return;
+    try {
+        const snap = await condoRef().collection('inad_exclusoes').get();
+        APP.inadExclusoes = [];
+        snap.forEach(d => APP.inadExclusoes.push({ id: d.id, ...d.data() }));
+    } catch(e) {
+        console.warn('Exclusões de inadimplentes:', e.message);
+        APP.inadExclusoes = [];
+    }
+    if (document.getElementById('pg-inadimplentes')?.classList.contains('active')) renderInadimplentes();
+    if (document.getElementById('pg-dashboard')?.classList.contains('active')) renderDashboard();
+}
+
+function excluirInadimplente(idx) {
+    if (!canExcluirInad()) { toast('Você não tem permissão para excluir taxas.', 'error'); return; }
+    const i = (APP._inadLista || [])[idx];
+    if (!i) return;
+    document.getElementById('inadExclIdx').value = idx;
+    document.getElementById('inadExclMotivo').value = '';
+    document.getElementById('inadExclCategoria').value = '';
+    document.getElementById('inadExclResumo').innerHTML = `
+        <strong>Apto ${H(i.apto)}</strong> &middot; ${MESES[parseInt(i.mes)]||H(i.mes)}/${H(i.ano)}<br>
+        ${H(i.tipoTaxa)}<br>
+        Valor em aberto: <strong style="color:var(--accent-red)">${fmtMoney(i.valorAberto)}</strong>`;
+    openModal('modalInadExcluir');
+}
+
+async function confirmarExclusaoInad() {
+    if (!canExcluirInad()) { toast('Você não tem permissão para excluir taxas.', 'error'); return; }
+    const idx = parseInt(document.getElementById('inadExclIdx').value);
+    const i = (APP._inadLista || [])[idx];
+    const categoria = document.getElementById('inadExclCategoria').value;
+    const motivo = document.getElementById('inadExclMotivo').value.trim();
+    if (!i) return;
+    if (!categoria) { toast('Selecione o motivo do cancelamento.', 'error'); return; }
+    if (categoria === 'Outros' && motivo.length < 5) { toast('Descreva o motivo na observação.', 'error'); return; }
+    if (!confirm(`Confirmar o cancelamento da parcela do Apto ${i.apto} (${MESES[parseInt(i.mes)]||i.mes}/${i.ano}) em todo o sistema?`)) return;
+
+    const data = {
+        apto: i.apto, ano: String(i.ano), mes: i.mes, tipoTaxa: i.tipoTaxaClean,
+        valorAberto: i.valorAberto, categoria, motivo,
+        excluidoPor: APP.currentUser?.uid || 'unknown',
+        excluidoPorNome: APP.userProfile?.nome || APP.currentUser?.email || '',
+        excluidoEm: new Date().toISOString()
+    };
+    const id = await fbSave('inad_exclusoes', null, data);
+    if (id) {
+        auditLog('INAD_EXCLUSAO', { apto: data.apto, ano: data.ano, mes: data.mes, tipoTaxa: data.tipoTaxa, valor: data.valorAberto, categoria, motivo });
+        APP.inadExclusoes = APP.inadExclusoes || [];
+        APP.inadExclusoes.push({ id, ...data });
+        closeModal('modalInadExcluir');
+        toast('Parcela cancelada em todo o sistema.');
+        renderInadimplentes();
+    }
+}
+
+async function restaurarInadimplente(id) {
+    if (!canExcluirInad()) { toast('Você não tem permissão para restaurar taxas.', 'error'); return; }
+    const e = (APP.inadExclusoes || []).find(x => x.id === id);
+    if (!e) return;
+    if (!confirm(`Restaurar a parcela do Apto ${e.apto} (${MESES[parseInt(e.mes)]||e.mes}/${e.ano} - ${e.tipoTaxa})? Ela volta a ser cobrada em todo o sistema.`)) return;
+    await fbDelete('inad_exclusoes', id);
+    auditLog('INAD_RESTAURACAO', { apto: e.apto, ano: e.ano, mes: e.mes, tipoTaxa: e.tipoTaxa });
+    await loadInadExclusoes();
+    renderInadimplentes();
+}
+
+function renderInadExcluidas(lista) {
+    const box = document.getElementById('inadExcluidasBox');
+    if (!box) return;
+    if (!lista) { box.innerHTML = ''; return; }
+    if (lista.length === 0) {
+        box.innerHTML = `<div style="margin-top:1.2rem;font-size:0.85rem;color:var(--text-secondary)"><i class="ti ti-info-circle"></i> Nenhuma parcela cancelada para os filtros selecionados.</div>`;
+        return;
+    }
+    box.innerHTML = `
+        <div style="margin-top:1.5rem;font-weight:600;font-size:0.92rem;margin-bottom:0.5rem"><i class="ti ti-trash-off"></i> Parcelas canceladas (${lista.length})</div>
+        <div class="table-container"><table><thead><tr>
+            <th>Apto</th><th>Ano</th><th>Mês</th><th>Tipo Taxa</th><th>Valor</th><th>Motivo</th><th>Excluído por</th><th></th>
+        </tr></thead><tbody>
+        ${lista.map(i => `<tr style="opacity:0.85">
+            <td><strong>${H(i.apto)}</strong></td>
+            <td>${H(i.ano)}</td>
+            <td>${MESES[parseInt(i.mes)]||H(i.mes)}</td>
+            <td>${H(i.tipoTaxa)}</td>
+            <td style="text-decoration:line-through">${fmtMoney(i.valorAberto)}</td>
+            <td style="max-width:260px">${i.exclusao.categoria ? `<strong>${H(i.exclusao.categoria)}</strong>` : ''}${i.exclusao.categoria && i.exclusao.motivo ? '<br>' : ''}<span style="font-size:0.82rem">${H(i.exclusao.motivo||'')}</span></td>
+            <td style="font-size:0.8rem">${H(i.exclusao.excluidoPorNome)}<br><span style="color:var(--text-secondary)">${i.exclusao.excluidoEm ? new Date(i.exclusao.excluidoEm).toLocaleString('pt-BR') : ''}</span></td>
+            <td><button class="btn btn-outline btn-sm" onclick="restaurarInadimplente('${H(i.exclusao.id)}')"><i class="ti ti-arrow-back-up"></i> Restaurar</button></td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
 }
 
 function associarInadimplente(apto, ano, mes, tipoTaxa) {
@@ -5373,7 +5743,15 @@ function previewBoleto() {
     const mesNome = MESES[parseInt(mesNum)] || mesNum;
     const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
     const morador = APP.moradores.find(m => m.apto === apto) || {};
-    const taxasDoApto = (APP.taxasApto||[]).filter(t => t.apto === apto);
+    const taxasVinculadas = (APP.taxasApto||[]).filter(t => t.apto === apto);
+    // Parcelas canceladas no painel de Inadimplentes não entram no boleto do mês
+    const taxasDoApto = taxasVinculadas.filter(t => !parcelaCancelada(apto, anoRef, mesNum, t.descricao));
+
+    if (taxasVinculadas.length > 0 && taxasDoApto.length === 0) {
+        toast('Todas as parcelas deste apartamento neste mês foram canceladas.', 'warning');
+        document.getElementById('boletoPreview').style.display = 'none';
+        return;
+    }
 
     if (taxasDoApto.length === 0) {
         toast('Nenhuma taxa vinculada a este apartamento. Vincule na aba "Taxas por Apartamento".', 'warning');
@@ -5977,7 +6355,7 @@ function editUsuario(id) {
     aptoSel.value = u.apartamentoVinculado || '';
 
     // Set permission checkboxes
-    document.querySelectorAll('#accessGrid input[type="checkbox"]').forEach(cb => {
+    document.querySelectorAll('#accessGrid input[type="checkbox"], #accessGridEspecial input[type="checkbox"]').forEach(cb => {
         cb.checked = u.perfil === 'admin' || (u.permissoes||[]).includes(cb.value);
     });
 
@@ -6000,7 +6378,7 @@ async function saveUsuario() {
     if (!nome || !email) { toast('Preencha nome e email', 'error'); return; }
 
     const permissoes = [];
-    document.querySelectorAll('#accessGrid input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
+    document.querySelectorAll('#accessGrid input[type="checkbox"]:checked, #accessGridEspecial input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
 
     const condosPermitidos = [];
     document.querySelectorAll('#accessCondos input[type="checkbox"]:checked').forEach(cb => condosPermitidos.push(cb.value));
@@ -6058,6 +6436,7 @@ function renderDashboard() {
     const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
     let inadCount = 0;
     (APP.taxasApto||[]).forEach(ta => {
+        if (parcelaCancelada(ta.apto, curYear, curMonth, ta.descricao)) return;
         const totalDevido = (ta.valor||0) * (ta.quantidade||1);
         const totalPago = APP.pagamentos.filter(p =>
             p.ano == curYear && p.mes === curMonth &&
@@ -6231,6 +6610,7 @@ function renderCharts() {
         let count = 0;
         for (let ms = 1; ms <= mesAtual; ms++) {
             const msStr = String(ms).padStart(2,'0');
+            if (parcelaCancelada(ta.apto, curYear, msStr, ta.descricao)) continue;
             const totalDevido = (ta.valor||0) * (ta.quantidade||1);
             const totalPago = APP.pagamentos.filter(p =>
                 p.ano == curYear && p.mes === msStr &&
