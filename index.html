@@ -1325,7 +1325,11 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
                     <span><i class="ti ti-circle-check"></i> Lançamento de Pagamentos</span>
-                    <button class="btn btn-fill btn-sm" onclick="openPagamentoModal()">+ Lançar Pagamento</button>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+                        <button class="btn btn-outline btn-sm" onclick="printPagamentos('pdf')" title="Com um apartamento filtrado, gera a Declaração de Quitação"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="printPagamentos('print')" title="Com um apartamento filtrado, gera a Declaração de Quitação"><i class="ti ti-printer"></i> Imprimir</button>
+                        <button class="btn btn-fill btn-sm" onclick="openPagamentoModal()">+ Lançar Pagamento</button>
+                    </div>
                 </div>
                 <div class="filter-bar">
                     <select id="filterPgAno" onchange="renderPagamentos()"></select>
@@ -1449,7 +1453,10 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
                     <span><i class="ti ti-alert-triangle"></i> Painel de Inadimplentes</span>
-                    <button class="btn btn-outline btn-sm" onclick="printInadimplentes()"><i class="ti ti-printer"></i> Imprimir</button>
+                    <div style="display:flex;gap:0.5rem">
+                        <button class="btn btn-outline btn-sm" onclick="printInadimplentes('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="printInadimplentes('print')"><i class="ti ti-printer"></i> Imprimir</button>
+                    </div>
                 </div>
                 <p style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary)">
                     Exibe apenas o número do apartamento e valores em aberto (sem nome do morador por privacidade).
@@ -4917,7 +4924,7 @@ function renderPagamentos() {
         // Se é o primeiro registro ou mudou o mês, inserir cabeçalho
         if (mesKey !== mesAtual) {
             html += `<tr style="background:var(--bg-sidebar);color:#fff">
-                <td colspan="8" style="padding:0.6rem 0.8rem;font-weight:700;font-size:0.9rem;letter-spacing:0.5px">
+                <td colspan="8" style="padding:0.6rem 0.8rem;font-weight:700;font-size:0.9rem;letter-spacing:0.5px;color:#fff">
                     <i class="ti ti-calendar"></i> ${mesNome} / ${H(p.ano)}
                 </td>
             </tr>`;
@@ -4954,8 +4961,8 @@ function renderPagamentos() {
     // Total geral
     const totalGeral = list.reduce((s,p) => s + (p.valor||0), 0);
     html += `<tr style="background:var(--bg-sidebar);color:#fff;font-weight:700">
-        <td colspan="5" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem">TOTAL GERAL (${list.length} pagamentos):</td>
-        <td style="padding:0.7rem 0.8rem;font-size:1.05rem">${fmtMoney(totalGeral)}</td>
+        <td colspan="5" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem;color:#fff">TOTAL GERAL (${list.length} pagamentos):</td>
+        <td style="padding:0.7rem 0.8rem;font-size:1.05rem;color:#fff">${fmtMoney(totalGeral)}</td>
         <td colspan="2"></td>
     </tr>`;
 
@@ -5197,9 +5204,9 @@ function renderInadimplentes() {
         html += `<tr>
             <td><strong>${H(i.apto)}</strong></td>
             <td>${H(i.ano)}</td>
-            <td>${MESES[parseInt(i.mes)]||i.mes}</td>
+            <td>${MESES[parseInt(i.mes)]||i.mes}${inadAVencer(i) ? ` <span class="badge badge-amber" title="Vence em ${inadDataVenc(i).toLocaleDateString('pt-BR')}">A vencer</span>` : ''}</td>
             <td>${H(i.tipoTaxa)}</td>
-            <td style="color:var(--accent-red);font-weight:600">${fmtMoney(i.valorAberto)}</td>
+            <td style="color:${inadAVencer(i) ? 'var(--text-secondary)' : 'var(--accent-red)'};font-weight:600">${fmtMoney(i.valorAberto)}</td>
             <td style="white-space:nowrap">
                 <button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxaClean)}')"><i class="ti ti-link"></i> Associar</button>
                 ${podeExcluir ? `<button class="btn btn-danger btn-sm" title="Excluir parcela" onclick="excluirInadimplente(${idx})"><i class="ti ti-trash"></i></button>` : ''}
@@ -5226,7 +5233,338 @@ function renderInadimplentes() {
     tb.innerHTML = html;
 }
 
-function printInadimplentes() {
+// ===== DOCUMENTO DE RELATÓRIO (janela com Imprimir / Salvar PDF) =====
+function abrirDocumentoRelatorio(opts) {
+    const w = window.open('', '_blank');
+    if (!w) { toast('Permita pop-ups para gerar o relatório.', 'error'); return; }
+    const modo = opts.modo === 'pdf' ? 'pdf' : 'print';
+    w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${H(opts.titulo)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    @page { size:A4; margin:14mm 12mm; }
+    body { font-family:'Inter',Arial,sans-serif; color:#1E293B; margin:0 auto; max-width:820px; padding:28px; font-size:13px; }
+    .hdr { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding-bottom:16px; border-bottom:3px solid #1A2744; position:relative; }
+    .hdr::after { content:''; position:absolute; left:0; bottom:-3px; width:90px; height:3px; background:#F59E0B; }
+    .condo h1 { margin:0; font-size:20px; font-weight:800; color:#1A2744; letter-spacing:-0.3px; }
+    .condo p { margin:4px 0 0; font-size:11.5px; color:#64748B; line-height:1.5; }
+    .doc { text-align:right; flex-shrink:0; }
+    .doc .tag { display:inline-block; background:#1A2744; color:#fff; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:5px 10px; border-radius:6px; }
+    .doc .tag.ok { background:#047857; }
+    .doc .per { margin-top:6px; font-size:12px; color:#475569; font-weight:600; }
+    .title { margin:22px 0 2px; font-size:17px; font-weight:700; color:#1A2744; }
+    .gen { font-size:11px; color:#94A3B8; }
+    .ident { margin:16px 0; display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid #E2E8F0; border-radius:10px; overflow:hidden; }
+    .ident div { padding:9px 14px; border-right:1px solid #E2E8F0; }
+    .ident div:last-child { border-right:none; }
+    .ident span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#64748B; font-weight:600; }
+    .ident b { font-size:13.5px; color:#1A2744; }
+    .intro { margin:14px 0 18px; padding:12px 14px; background:#F8FAFC; border-left:4px solid #F59E0B; border-radius:0 8px 8px 0; font-size:12.5px; color:#334155; line-height:1.6; }
+    .declara { margin:16px 0 18px; padding:14px 16px; background:#ECFDF5; border:1px solid #A7F3D0; border-left:4px solid #059669; border-radius:0 10px 10px 0; font-size:13px; color:#064E3B; line-height:1.75; text-align:justify; }
+    .alerta { margin:16px 0 18px; padding:12px 14px; background:#FEF2F2; border:1px solid #FECACA; border-left:4px solid #DC2626; border-radius:0 10px 10px 0; font-size:12.5px; color:#7F1D1D; line-height:1.6; }
+    .alerta ul { margin:6px 0 0; padding-left:18px; }
+    .filtros { font-size:11px; color:#64748B; margin:-8px 0 14px; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+    .card { border:1px solid #E2E8F0; border-radius:10px; padding:10px 14px; }
+    .card span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#64748B; font-weight:600; }
+    .card strong { display:block; font-size:18px; margin-top:3px; color:#1A2744; }
+    .card.green strong { color:#047857; }
+    table { width:100%; border-collapse:collapse; }
+    thead th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#fff; background:#1A2744; padding:8px 10px; font-weight:600; }
+    thead th:first-child { border-radius:6px 0 0 6px; } thead th:last-child { border-radius:0 6px 6px 0; text-align:right; }
+    td { padding:7px 10px; border-bottom:1px solid #EEF2F6; }
+    td.val { text-align:right; font-weight:600; font-variant-numeric:tabular-nums; }
+    tr { page-break-inside:avoid; }
+    tr.grp td { background:#EEF2F7; color:#1A2744; font-weight:700; font-size:12px; border-bottom:none; padding-top:9px; }
+    tr.sub td { background:#ECFDF5; font-weight:700; color:#065F46; text-align:right; }
+    .chip { display:inline-block; padding:2px 8px; border-radius:20px; background:#D1FAE5; color:#065F46; font-size:10px; font-weight:700; }
+    .total { margin-top:12px; display:flex; justify-content:space-between; align-items:center; background:#1A2744; color:#fff; border-radius:8px; padding:11px 14px; font-weight:700; page-break-inside:avoid; }
+    .total b { font-size:16px; color:#6EE7B7; }
+    .nota { margin-top:8px; font-size:11px; color:#64748B; line-height:1.5; }
+    .msg { margin-top:22px; border:1px solid #E2E8F0; border-radius:10px; padding:14px 16px; font-size:11.5px; line-height:1.7; color:#475569; text-align:justify; page-break-inside:avoid; }
+    .msg h4 { margin:0 0 6px; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
+    .fecho { margin-top:22px; font-size:12.5px; color:#334155; page-break-inside:avoid; }
+    .fecho .local { margin-top:10px; text-align:right; }
+    .ass { margin:48px auto 0; width:300px; text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; page-break-inside:avoid; }
+    .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; align-items:flex-end; line-height:1.5; }
+    .toolbar { position:sticky; top:0; z-index:10; display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:10px 0; margin:-28px 0 18px; background:#fff; border-bottom:1px solid #E2E8F0; }
+    .toolbar span { margin-right:auto; font-size:12px; color:#64748B; }
+    .toolbar button { font-family:inherit; font-size:13px; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer; border:1px solid #CBD5E1; background:#fff; color:#1A2744; }
+    .toolbar button.pri { background:#1A2744; border-color:#1A2744; color:#fff; }
+    .toolbar button:disabled { opacity:.6; cursor:wait; }
+    @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
+</style></head><body>
+    <div class="toolbar">
+        <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Documento pronto'}</span>
+        <button onclick="salvarPDF()" id="btnPdf">Salvar PDF</button>
+        <button class="pri" onclick="window.print()">Imprimir</button>
+    </div>
+    <div id="rel">${opts.corpo}</div>
+<script>
+    var NOME_PDF = ${JSON.stringify(opts.nomeArquivo)};
+    function carregarLib(cb) {
+        if (window.html2pdf) return cb();
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+        s.onload = cb;
+        s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
+        document.head.appendChild(s);
+    }
+    function status(t) { var e = document.getElementById('tbStatus'); if (e) e.textContent = t; }
+    function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
+    function salvarPDF() {
+        botao(true); status('Gerando PDF...');
+        var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+        pronto.then(function() { carregarLib(function() {
+            html2pdf().set({
+                margin: [10, 8, 12, 8],
+                filename: NOME_PDF,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.declara', '.alerta', '.fecho', '.ident'] }
+            }).from(document.getElementById('rel')).save().then(function() {
+                status('PDF salvo: ' + NOME_PDF); botao(false);
+            }).catch(function() {
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
+            });
+        }); });
+    }
+<\/script>
+</body></html>`);
+    w.document.close();
+    const acao = () => { try { w.focus(); if (modo === 'pdf') w.salvarPDF(); else w.print(); } catch(e) {} };
+    if (w.document.fonts && w.document.fonts.ready) w.document.fonts.ready.then(() => setTimeout(acao, 250));
+    else setTimeout(acao, 600);
+}
+
+function slugArquivo(s) {
+    return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
+}
+
+function cabecalhoCondoHtml(condo, tag, periodo, tagClass) {
+    return `<div class="hdr">
+        <div class="condo">
+            <h1>${H(condo.nome || 'Condomínio')}</h1>
+            <p>${H(condo.endereco||'')}${condo.cnpj ? '<br>CNPJ: ' + H(condo.cnpj) : ''}</p>
+        </div>
+        <div class="doc">
+            <div class="tag ${tagClass||''}">${H(tag)}</div>
+            <div class="per">Referência: ${H(periodo)}</div>
+        </div>
+    </div>`;
+}
+
+function cidadeDoCondominio(condo) {
+    // Endereço no padrão "Rua X, 101 - Bairro - Cidade - UF"
+    const partes = String(condo.endereco||'').split(' - ').map(s => s.trim()).filter(Boolean);
+    if (partes.length >= 2 && /^[A-Z]{2}$/.test(partes[partes.length-1])) return partes[partes.length-2];
+    return '';
+}
+
+// Parcelas VENCIDAS em aberto de um apartamento (mesma regra do painel de Inadimplentes,
+// desconsiderando parcelas canceladas e parcelas ainda "a vencer")
+function pendenciasVencidasApto(apto, ano, meses) {
+    const out = [];
+    (APP.taxasApto || []).filter(ta => ta.apto === apto).forEach(ta => {
+        const tipo = ta.tipo || 'recorrente';
+        const totalDevido = (ta.valor || 0) * (ta.quantidade || 1);
+        if (tipo === 'unica') {
+            const [refAno, refMes] = String(ta.mesRef||'').split('-');
+            if (String(ano) !== refAno || !meses.includes(refMes)) return;
+            const pago = APP.pagamentos.filter(p => p.apto === apto && p.tipoTaxa === ta.descricao).reduce((s,p) => s + (p.valor||0), 0);
+            const item = { apto, ano: String(ano), mes: refMes, tipoTaxa: ta.descricao, valorAberto: totalDevido - pago };
+            if (pago < totalDevido && !parcelaCancelada(apto, ano, refMes, ta.descricao) && !inadAVencer(item)) out.push(item);
+        } else {
+            meses.forEach(ms => {
+                const item = { apto, ano: String(ano), mes: ms, tipoTaxa: ta.descricao };
+                if (inadAVencer(item)) return;
+                const pago = APP.pagamentos.filter(p => p.ano == ano && p.mes === ms && p.apto === apto && p.tipoTaxa === ta.descricao).reduce((s,p) => s + (p.valor||0), 0);
+                if (pago < totalDevido && !parcelaCancelada(apto, ano, ms, ta.descricao)) {
+                    item.valorAberto = totalDevido - pago; out.push(item);
+                }
+            });
+        }
+    });
+    return out.sort((a,b) => a.mes.localeCompare(b.mes));
+}
+
+// ===== RELATÓRIO DE PAGAMENTOS / DECLARAÇÃO DE QUITAÇÃO =====
+function printPagamentos(modo) {
+    const ano = document.getElementById('filterPgAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('filterPgMes')?.value || '';
+    const filtroApto = (document.getElementById('filterPgApto')?.value || '').trim().toLowerCase();
+
+    let list = APP.pagamentos.filter(p => p.ano == ano);
+    if (mes) list = list.filter(p => p.mes === mes);
+    if (filtroApto) list = list.filter(p => (p.apto||'').toLowerCase().includes(filtroApto));
+    list = [...list].sort((a,b) => (a.apto||'').localeCompare(b.apto||'') || (a.mes||'').localeCompare(b.mes||'') || (a.tipoTaxa||'').localeCompare(b.tipoTaxa||''));
+
+    if (list.length === 0) { toast('Nenhum pagamento encontrado para os filtros selecionados.', 'error'); return; }
+
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const nomeCondo = condo.nome || 'Condomínio';
+    const agora = new Date();
+    const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    const total = list.reduce((s,p) => s + (p.valor||0), 0);
+    const aptos = [...new Set(list.map(p => p.apto))];
+    const nomeMes = m => MESES[parseInt(m)] || m;
+
+    // ---------- Declaração de Quitação (um apartamento filtrado) ----------
+    if (filtroApto && aptos.length === 1) {
+        const apto = aptos[0];
+        const responsavel = [...list].reverse().find(p => p.moradorNome)?.moradorNome
+            || (APP.moradores || []).find(m => String(m.apto||m.apartamento||'') === apto)?.nome || '';
+
+        // Período: mês filtrado, ou de janeiro até o último mês vencido/pago do ano
+        let meses;
+        if (mes) meses = [mes];
+        else {
+            const hoje = new Date();
+            let ultimoVencido = 0;
+            for (let m = 1; m <= 12; m++) {
+                if (!inadAVencer({ ano, mes: String(m).padStart(2,'0') })) ultimoVencido = m;
+            }
+            const ultimoPago = Math.max(...list.map(p => parseInt(p.mes)||0));
+            const fim = Math.max(ultimoVencido, ultimoPago, 1);
+            meses = Array.from({ length: fim }, (_, k) => String(k+1).padStart(2,'0'));
+        }
+        const periodo = meses.length === 1 ? `${nomeMes(meses[0])}/${ano}` : `${nomeMes(meses[0])}/${ano} a ${nomeMes(meses[meses.length-1])}/${ano}`;
+        const pend = pendenciasVencidasApto(apto, ano, meses);
+        const quite = pend.length === 0;
+        const totalPend = pend.reduce((s,p) => s + p.valorAberto, 0);
+
+        // Parcela do mês corrente ainda a vencer (informativo)
+        const aVencer = (APP.taxasApto||[]).filter(ta => ta.apto === apto && (ta.tipo||'recorrente') !== 'unica').length > 0
+            ? (() => { const m = String(agora.getMonth()+1).padStart(2,'0');
+                       const it = { ano: String(agora.getFullYear()), mes: m };
+                       return (String(ano) === it.ano && inadAVencer(it) && !list.some(p => p.mes === m)) ? it : null; })()
+            : null;
+
+        const cidade = cidadeDoCondominio(condo);
+        const dataExtenso = agora.toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' });
+
+        let rows = '';
+        list.forEach(p => {
+            rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
+        });
+
+        const corpo = `
+            ${cabecalhoCondoHtml(condo, quite ? 'Declaração de Quitação' : 'Extrato de Pagamentos', periodo, quite ? 'ok' : '')}
+            <div class="title">${quite ? 'Declaração de Quitação de Débitos' : 'Extrato de Pagamentos'} &ndash; Apto ${H(apto)}</div>
+            <div class="gen">Emitido em ${geradoEm}</div>
+
+            <div class="ident">
+                <div><span>Unidade</span><b>Apto ${H(apto)}</b></div>
+                <div><span>Responsável</span><b>${H(responsavel || '—')}</b></div>
+                <div><span>Período</span><b>${H(periodo)}</b></div>
+            </div>
+
+            ${quite ? `<div class="declara">
+                O <strong>${H(nomeCondo)}</strong>${condo.cnpj ? `, inscrito no CNPJ sob o nº ${H(condo.cnpj)},` : ''} <strong>DECLARA</strong>, para os devidos fins, que a unidade <strong>Apto ${H(apto)}</strong> encontra-se <strong>QUITE</strong> com as taxas condominiais referentes ao período de <strong>${H(periodo)}</strong>, conforme os pagamentos relacionados abaixo e registrados nos controles financeiros deste condomínio.
+            </div>` : `<div class="alerta">
+                <strong>Não é possível declarar a quitação deste período.</strong> Constam ${pend.length} parcela(s) vencida(s) em aberto, no total de <strong>${fmtMoney(totalPend)}</strong>:
+                <ul>${pend.map(p => `<li>${nomeMes(p.mes)}/${H(p.ano)} &ndash; ${H(p.tipoTaxa)}: ${fmtMoney(p.valorAberto)}</li>`).join('')}</ul>
+                <div style="margin-top:6px">Os pagamentos já efetuados no período estão relacionados abaixo.</div>
+            </div>`}
+
+            <div class="cards">
+                <div class="card green"><span>Total pago</span><strong>${fmtMoney(total)}</strong></div>
+                <div class="card"><span>Parcelas pagas</span><strong>${list.length}</strong></div>
+                <div class="card"><span>Situação</span><strong style="color:${quite ? '#047857' : '#DC2626'}">${quite ? 'Em dia' : 'Com pendências'}</strong></div>
+            </div>
+
+            <table>
+                <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="total"><span>TOTAL PAGO &middot; ${list.length} parcela(s)</span><b>${fmtMoney(total)}</b></div>
+            ${aVencer ? `<div class="nota">A parcela de ${nomeMes(aVencer.mes)}/${aVencer.ano}, com vencimento em ${inadDataVenc(aVencer).toLocaleDateString('pt-BR')}, ainda está dentro do prazo de pagamento e não integra este documento.</div>` : ''}
+
+            <div class="msg">
+                <h4>Observações</h4>
+                Este documento refere-se exclusivamente às parcelas e ao período nele relacionados, não abrangendo débitos de períodos anteriores ou posteriores, nem valores eventualmente apurados após a sua emissão, tais como diferenças de rateio, taxas extras, multas, juros ou lançamentos ainda não identificados nesta data. Pagamentos realizados por cheque, boleto ou transferência estão sujeitos à respectiva compensação bancária.
+            </div>
+
+            ${quite ? `<div class="fecho">
+                Por ser expressão da verdade, firmamos a presente declaração.
+                <div class="local">${cidade ? H(cidade) + ', ' : ''}${dataExtenso}.</div>
+            </div>` : ''}
+
+            <div class="ass">Síndico(a) / Administração<br><strong>${H(nomeCondo)}</strong></div>
+            <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
+
+        abrirDocumentoRelatorio({
+            modo, corpo,
+            titulo: `${quite ? 'Declaração de Quitação' : 'Extrato de Pagamentos'} - Apto ${apto} - ${nomeCondo}`,
+            nomeArquivo: [quite ? 'Declaracao_Quitacao' : 'Extrato_Pagamentos', slugArquivo(nomeCondo), 'Apto_' + slugArquivo(apto), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+        });
+        return;
+    }
+
+    // ---------- Relatório geral de pagamentos (vários apartamentos) ----------
+    const periodo = (mes ? nomeMes(mes) + '/' : '') + ano;
+    let rows = '', aptoAtual = null, sub = 0, cnt = 0;
+    const fecha = () => { rows += `<tr class="sub"><td colspan="4">Subtotal Apto ${H(aptoAtual)} &middot; ${cnt} pagamento${cnt>1?'s':''}</td><td class="val">${fmtMoney(sub)}</td></tr>`; };
+    list.forEach(p => {
+        if (p.apto !== aptoAtual) {
+            if (aptoAtual !== null) fecha();
+            aptoAtual = p.apto; sub = 0; cnt = 0;
+            rows += `<tr class="grp"><td colspan="5">Apartamento ${H(p.apto)}${p.moradorNome ? ' &middot; ' + H(p.moradorNome) : ''}</td></tr>`;
+        }
+        sub += (p.valor||0); cnt++;
+        rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
+    });
+    fecha();
+
+    const corpo = `
+        ${cabecalhoCondoHtml(condo, 'Relatório de Pagamentos', periodo)}
+        <div class="title">Relatório de Taxas Pagas &ndash; ${H(periodo)}</div>
+        <div class="gen">Gerado em ${geradoEm}</div>
+        <div class="intro">Relação dos pagamentos de taxas condominiais registrados no período, agrupados por unidade.</div>
+        ${filtroApto ? `<div class="filtros">Filtros aplicados: Apartamento contém "${H(filtroApto)}"</div>` : ''}
+        <div class="cards">
+            <div class="card green"><span>Total recebido</span><strong>${fmtMoney(total)}</strong></div>
+            <div class="card"><span>Pagamentos</span><strong>${list.length}</strong></div>
+            <div class="card"><span>Unidades</span><strong>${aptos.length}</strong></div>
+        </div>
+        <table>
+            <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+        <div class="total"><span>TOTAL RECEBIDO &middot; ${list.length} pagamento(s) &middot; ${aptos.length} unidade(s)</span><b>${fmtMoney(total)}</b></div>
+        <div class="nota">Para emitir a Declaração de Quitação de uma unidade, filtre por um único apartamento antes de gerar o documento.</div>
+        <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
+
+    abrirDocumentoRelatorio({
+        modo, corpo,
+        titulo: `Relatório de Taxas Pagas - ${nomeCondo}`,
+        nomeArquivo: ['Taxas_Pagas', slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+    });
+}
+
+// ===== VENCIMENTO DAS PARCELAS (regra "A vencer") =====
+// Vencimento padrão: todo dia 16. Se o condomínio tiver o campo diaVencimento, ele prevalece.
+const INAD_DIA_VENCIMENTO = 16;
+function inadDiaVenc() {
+    const condo = (APP.condominios || []).find(c => c.id === APP.currentCondoId) || {};
+    const d = parseInt(condo.diaVencimento);
+    return (d >= 1 && d <= 31) ? d : INAD_DIA_VENCIMENTO;
+}
+function inadDataVenc(i) {
+    const ano = parseInt(i.ano), mes = parseInt(i.mes);
+    const ultimoDia = new Date(ano, mes, 0).getDate();
+    return new Date(ano, mes - 1, Math.min(inadDiaVenc(), ultimoDia));
+}
+// Parcela ainda dentro do prazo: o vencimento é hoje ou depois (continua somando no total)
+function inadAVencer(i) {
+    if (!i || !i.ano || !i.mes) return false;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    return inadDataVenc(i) >= hoje;
+}
+
+function printInadimplentes(modo) {
+    modo = modo === 'pdf' ? 'pdf' : 'print';
     const lista = APP._inadLista || [];
     if (lista.length === 0) { toast('Não há parcelas em aberto para imprimir.', 'error'); return; }
 
@@ -5244,6 +5582,7 @@ function printInadimplentes() {
     // Tabela agrupada por apartamento (sem a coluna Associar/Ações)
     let rows = '';
     let aptoAtual = null, subtotal = 0, count = 0;
+    let totalAVencer = 0, qtdAVencer = 0;
     const fechaGrupo = () => {
         rows += `<tr class="sub"><td colspan="3">Subtotal Apto ${H(aptoAtual)} &middot; ${count} parcela${count>1?'s':''}</td><td class="val">${fmtMoney(subtotal)}</td></tr>`;
     };
@@ -5254,12 +5593,18 @@ function printInadimplentes() {
             rows += `<tr class="grp"><td colspan="4">Apartamento ${H(i.apto)}</td></tr>`;
         }
         subtotal += i.valorAberto; count++;
-        rows += `<tr><td>${H(i.ano)}</td><td>${MESES[parseInt(i.mes)]||H(i.mes)}</td><td>${H(i.tipoTaxa)}</td><td class="val">${fmtMoney(i.valorAberto)}</td></tr>`;
+        const av = inadAVencer(i);
+        if (av) { totalAVencer += i.valorAberto; qtdAVencer++; }
+        const dv = inadDataVenc(i).toLocaleDateString('pt-BR');
+        rows += `<tr${av ? ' class="avencer"' : ''}><td>${H(i.ano)}</td><td>${MESES[parseInt(i.mes)]||H(i.mes)}${av ? ` <span class="chip">A vencer &middot; ${dv}</span>` : ''}</td><td>${H(i.tipoTaxa)}</td><td class="val">${fmtMoney(i.valorAberto)}</td></tr>`;
     });
     fechaGrupo();
 
+    const slug = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'');
+    const nomeArquivo = ['Inadimplentes', slug(nomeCondo), f.apto ? 'Apto_' + slug(f.apto) : '', String(f.ano||agora.getFullYear()) + (f.mes ? '-' + f.mes : '')].filter(Boolean).join('_') + '.pdf';
+
     const w = window.open('', '_blank');
-    if (!w) { toast('Permita pop-ups para imprimir o relatório.', 'error'); return; }
+    if (!w) { toast('Permita pop-ups para gerar o relatório.', 'error'); return; }
     w.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório de Inadimplentes - ${H(nomeCondo)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -5290,14 +5635,29 @@ function printInadimplentes() {
     tr { page-break-inside:avoid; }
     tr.grp td { background:#EEF2F7; color:#1A2744; font-weight:700; font-size:12px; border-bottom:none; padding-top:9px; }
     tr.sub td { background:#FEF2F2; font-weight:700; color:#991B1B; text-align:right; }
+    tr.avencer td { color:#475569; }
+    .chip { display:inline-block; margin-left:6px; padding:2px 8px; border-radius:20px; background:#FEF3C7; color:#92400E; font-size:10px; font-weight:700; letter-spacing:0.3px; white-space:nowrap; vertical-align:middle; }
+    .card small { display:block; font-size:10.5px; color:#92400E; margin-top:2px; font-weight:600; }
+    .nota { margin-top:8px; font-size:11px; color:#64748B; }
+    .toolbar { position:sticky; top:0; z-index:10; display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:10px 0; margin:-28px 0 18px; background:#fff; border-bottom:1px solid #E2E8F0; }
+    .toolbar span { margin-right:auto; font-size:12px; color:#64748B; }
+    .toolbar button { font-family:inherit; font-size:13px; font-weight:600; padding:8px 14px; border-radius:8px; cursor:pointer; border:1px solid #CBD5E1; background:#fff; color:#1A2744; }
+    .toolbar button.pri { background:#1A2744; border-color:#1A2744; color:#fff; }
+    .toolbar button:disabled { opacity:.6; cursor:wait; }
     .total { margin-top:12px; display:flex; justify-content:space-between; align-items:center; background:#1A2744; color:#fff; border-radius:8px; padding:11px 14px; font-weight:700; page-break-inside:avoid; }
     .total b { font-size:16px; color:#FBBF24; }
     .msg { margin-top:26px; border:1px solid #E2E8F0; border-radius:10px; padding:14px 16px; font-size:12.5px; line-height:1.7; color:#334155; text-align:justify; page-break-inside:avoid; }
     .msg h4 { margin:0 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
     .ass { margin:48px auto 0; width:280px; text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; page-break-inside:avoid; }
-    .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; }
-    @media print { body { padding:0; max-width:none; } }
+    .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; align-items:flex-end; line-height:1.5; }
+    @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
 </style></head><body>
+    <div class="toolbar">
+        <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Relatório pronto'}</span>
+        <button onclick="salvarPDF()" id="btnPdf">Salvar PDF</button>
+        <button class="pri" onclick="window.print()">Imprimir</button>
+    </div>
+    <div id="rel">
     <div class="hdr">
         <div class="condo">
             <h1>${H(nomeCondo)}</h1>
@@ -5315,8 +5675,8 @@ function printInadimplentes() {
     ${filtros.length ? `<div class="filtros">Filtros aplicados: ${H(filtros.join(' · '))}</div>` : ''}
 
     <div class="cards">
-        <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong></div>
-        <div class="card"><span>Parcelas em aberto</span><strong>${r.parcelas||lista.length}</strong></div>
+        <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong>${qtdAVencer ? `<small>Inclui ${fmtMoney(totalAVencer)} a vencer</small>` : ''}</div>
+        <div class="card"><span>Parcelas em aberto</span><strong>${r.parcelas||lista.length}</strong>${qtdAVencer ? `<small>${qtdAVencer} a vencer</small>` : ''}</div>
         <div class="card"><span>Unidades</span><strong>${r.aptosUnicos||0}</strong></div>
     </div>
 
@@ -5325,6 +5685,7 @@ function printInadimplentes() {
         <tbody>${rows}</tbody>
     </table>
     <div class="total"><span>TOTAL GERAL &middot; ${r.parcelas||lista.length} parcela(s) &middot; ${r.aptosUnicos||0} unidade(s)</span><b>${fmtMoney(r.totalAberto||0)}</b></div>
+    ${qtdAVencer ? `<div class="nota">Parcelas marcadas como <strong>"A vencer"</strong> ainda estão dentro do prazo de pagamento (vencimento todo dia ${inadDiaVenc()}) e estão incluídas no total acima.</div>` : ''}
 
     <div class="msg">
         <h4>Comunicado</h4>
@@ -5332,14 +5693,51 @@ function printInadimplentes() {
     </div>
 
     <div class="ass">Administração<br><strong>${H(nomeCondo)}</strong></div>
-    <div class="foot"><span>Documento gerado pelo CondoGest</span><span>${geradoEm}</span></div>
+    <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>
+    </div>
+<script>
+    var NOME_PDF = ${JSON.stringify(nomeArquivo)};
+    function carregarLib(cb) {
+        if (window.html2pdf) return cb();
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+        s.onload = cb;
+        s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
+        document.head.appendChild(s);
+    }
+    function status(t) { var e = document.getElementById('tbStatus'); if (e) e.textContent = t; }
+    function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
+    function salvarPDF() {
+        botao(true); status('Gerando PDF...');
+        var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+        pronto.then(function() { carregarLib(function() {
+            html2pdf().set({
+                margin: [10, 8, 12, 8],
+                filename: NOME_PDF,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.intro'] }
+            }).from(document.getElementById('rel')).save().then(function() {
+                status('PDF salvo: ' + NOME_PDF); botao(false);
+            }).catch(function() {
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
+            });
+        }); });
+    }
+<\/script>
 </body></html>`);
     w.document.close();
-    const doPrint = () => { try { w.focus(); w.print(); } catch(e) {} };
+    const acao = () => {
+        try {
+            w.focus();
+            if (modo === 'pdf') w.salvarPDF(); else w.print();
+        } catch(e) {}
+    };
     if (w.document.fonts && w.document.fonts.ready) {
-        w.document.fonts.ready.then(() => setTimeout(doPrint, 250));
+        w.document.fonts.ready.then(() => setTimeout(acao, 250));
     } else {
-        setTimeout(doPrint, 600);
+        setTimeout(acao, 600);
     }
 }
 
