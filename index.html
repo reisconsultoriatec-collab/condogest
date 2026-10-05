@@ -1346,7 +1346,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
                 <div class="table-container">
                     <table><thead><tr>
-                        <th>Ano</th><th>Mês</th><th>Apto</th><th>Morador</th><th>Tipo Taxa</th><th>Valor</th><th>Data Pgto</th><th>Ações</th>
+                        <th>Ano</th><th>Mês</th><th>Apto</th><th>Morador</th><th>Tipo Taxa</th><th>Valor</th><th>Data Pgto</th><th>Forma Pgto</th><th>Ações</th>
                     </tr></thead><tbody id="tbPagamentos"></tbody></table>
                 </div>
             </div>
@@ -2089,6 +2089,16 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="form-group"><label>Tipo de Taxa *</label><select id="pgtoTipoTaxa"></select></div>
                 <div class="form-group"><label>Valor Pago (R$) *</label><input type="number" step="0.01" id="pgtoValor"></div>
                 <div class="form-group"><label>Data Pagamento *</label><input type="date" id="pgtoData"></div>
+                <div class="form-group"><label>Forma de Pagamento *</label>
+                    <select id="pgtoForma">
+                        <option value="">Selecione...</option>
+                        <option value="PIX">PIX</option>
+                        <option value="Crédito em Conta">Crédito em Conta</option>
+                        <option value="Depósito em Conta">Depósito em Conta</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -4896,7 +4906,7 @@ function renderPagamentos() {
 
     const tb = document.getElementById('tbPagamentos');
     if (list.length === 0) {
-        tb.innerHTML = '<tr><td colspan="8" class="empty-state"><p>Nenhum pagamento encontrado</p></td></tr>';
+        tb.innerHTML = '<tr><td colspan="9" class="empty-state"><p>Nenhum pagamento encontrado</p></td></tr>';
         return;
     }
 
@@ -4915,7 +4925,7 @@ function renderPagamentos() {
             html += `<tr style="background:rgba(37,99,235,0.06);font-weight:600">
                 <td colspan="5" style="text-align:right;padding:0.5rem 0.8rem">Subtotal ${MESES[parseInt(mesAtual)]} (${countMes} pgtos):</td>
                 <td style="padding:0.5rem 0.8rem;color:var(--primary)">${fmtMoney(subtotal)}</td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>`;
             subtotal = 0;
             countMes = 0;
@@ -4924,7 +4934,7 @@ function renderPagamentos() {
         // Se é o primeiro registro ou mudou o mês, inserir cabeçalho
         if (mesKey !== mesAtual) {
             html += `<tr style="background:var(--bg-sidebar);color:#fff">
-                <td colspan="8" style="padding:0.6rem 0.8rem;font-weight:700;font-size:0.9rem;letter-spacing:0.5px;color:#fff">
+                <td colspan="9" style="padding:0.6rem 0.8rem;font-weight:700;font-size:0.9rem;letter-spacing:0.5px;color:#fff">
                     <i class="ti ti-calendar"></i> ${mesNome} / ${H(p.ano)}
                 </td>
             </tr>`;
@@ -4942,6 +4952,7 @@ function renderPagamentos() {
             <td><span class="badge badge-blue">${H(p.tipoTaxa)}</span></td>
             <td><strong>${fmtMoney(p.valor)}</strong></td>
             <td>${fmtDate(p.dataPgto)}</td>
+            <td>${p.formaPagamento ? H(p.formaPagamento) : '<span style="color:var(--text-light)">—</span>'}</td>
             <td>
                 <button class="btn btn-outline btn-sm" onclick="editPagamento('${p.id}')"><i class="ti ti-pencil"></i></button>
                 <button class="btn btn-danger btn-sm" onclick="deletePagamento('${p.id}')"><i class="ti ti-trash"></i></button>
@@ -4953,7 +4964,7 @@ function renderPagamentos() {
             html += `<tr style="background:rgba(37,99,235,0.06);font-weight:600">
                 <td colspan="5" style="text-align:right;padding:0.5rem 0.8rem">Subtotal ${MESES[parseInt(mesAtual)]} (${countMes} pgtos):</td>
                 <td style="padding:0.5rem 0.8rem;color:var(--primary)">${fmtMoney(subtotal)}</td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
             </tr>`;
         }
     });
@@ -4963,7 +4974,7 @@ function renderPagamentos() {
     html += `<tr style="background:var(--bg-sidebar);color:#fff;font-weight:700">
         <td colspan="5" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem;color:#fff">TOTAL GERAL (${list.length} pagamentos):</td>
         <td style="padding:0.7rem 0.8rem;font-size:1.05rem;color:#fff">${fmtMoney(totalGeral)}</td>
-        <td colspan="2"></td>
+        <td colspan="3"></td>
     </tr>`;
 
     tb.innerHTML = html;
@@ -4988,6 +4999,7 @@ function openPagamentoModal() {
     document.getElementById('pgtoMes').value = String(new Date().getMonth() + 1).padStart(2, '0');
     document.getElementById('pgtoValor').value = '';
     document.getElementById('pgtoData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('pgtoForma').value = '';
     populatePagamentoSelects();
     openModal('modalPagamento');
 }
@@ -5001,6 +5013,7 @@ function editPagamento(id) {
     document.getElementById('pgtoMes').value = p.mes || '01';
     document.getElementById('pgtoValor').value = p.valor || '';
     document.getElementById('pgtoData').value = p.dataPgto || '';
+    document.getElementById('pgtoForma').value = p.formaPagamento || '';
     setTimeout(() => {
         document.getElementById('pgtoApto').value = p.apto || '';
         document.getElementById('pgtoTipoTaxa').value = p.tipoTaxa || '';
@@ -5015,10 +5028,12 @@ async function savePagamento() {
     const tipoTaxa = document.getElementById('pgtoTipoTaxa').value;
     const valor = parseFloat(document.getElementById('pgtoValor').value);
     const dataPgto = document.getElementById('pgtoData').value;
+    const formaPagamento = document.getElementById('pgtoForma').value;
     if (!ano || !mes || !apto || !tipoTaxa || isNaN(valor)) { toast('Preencha todos os campos', 'error'); return; }
+    if (!formaPagamento) { toast('Selecione a forma de pagamento', 'error'); return; }
 
     const moradorObj = APP.moradores.find(m => m.apto === apto);
-    const data = { ano, mes, apto, tipoTaxa, valor, dataPgto, moradorNome: moradorObj?.nome || '' };
+    const data = { ano, mes, apto, tipoTaxa, valor, dataPgto, formaPagamento, moradorNome: moradorObj?.nome || '' };
 
     const id = document.getElementById('pgtoEditId').value;
     const res = await fbSave('pagamentos', id || null, data);
@@ -5446,7 +5461,7 @@ function printPagamentos(modo) {
 
         let rows = '';
         list.forEach(p => {
-            rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
+            rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td>${H(p.formaPagamento || '—')}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
         });
 
         const corpo = `
@@ -5475,7 +5490,7 @@ function printPagamentos(modo) {
             </div>
 
             <table>
-                <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
+                <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Forma de Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
                 <tbody>${rows}</tbody>
             </table>
             <div class="total"><span>TOTAL PAGO &middot; ${list.length} parcela(s)</span><b>${fmtMoney(total)}</b></div>
@@ -5505,15 +5520,15 @@ function printPagamentos(modo) {
     // ---------- Relatório geral de pagamentos (vários apartamentos) ----------
     const periodo = (mes ? nomeMes(mes) + '/' : '') + ano;
     let rows = '', aptoAtual = null, sub = 0, cnt = 0;
-    const fecha = () => { rows += `<tr class="sub"><td colspan="4">Subtotal Apto ${H(aptoAtual)} &middot; ${cnt} pagamento${cnt>1?'s':''}</td><td class="val">${fmtMoney(sub)}</td></tr>`; };
+    const fecha = () => { rows += `<tr class="sub"><td colspan="5">Subtotal Apto ${H(aptoAtual)} &middot; ${cnt} pagamento${cnt>1?'s':''}</td><td class="val">${fmtMoney(sub)}</td></tr>`; };
     list.forEach(p => {
         if (p.apto !== aptoAtual) {
             if (aptoAtual !== null) fecha();
             aptoAtual = p.apto; sub = 0; cnt = 0;
-            rows += `<tr class="grp"><td colspan="5">Apartamento ${H(p.apto)}${p.moradorNome ? ' &middot; ' + H(p.moradorNome) : ''}</td></tr>`;
+            rows += `<tr class="grp"><td colspan="6">Apartamento ${H(p.apto)}${p.moradorNome ? ' &middot; ' + H(p.moradorNome) : ''}</td></tr>`;
         }
         sub += (p.valor||0); cnt++;
-        rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
+        rows += `<tr><td>${nomeMes(p.mes)}/${H(p.ano)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtDate(p.dataPgto)}</td><td>${H(p.formaPagamento || '—')}</td><td><span class="chip">Pago</span></td><td class="val">${fmtMoney(p.valor)}</td></tr>`;
     });
     fecha();
 
@@ -5529,7 +5544,7 @@ function printPagamentos(modo) {
             <div class="card"><span>Unidades</span><strong>${aptos.length}</strong></div>
         </div>
         <table>
-            <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
+            <thead><tr><th>Referência</th><th>Tipo de Taxa</th><th>Data do Pagamento</th><th>Forma de Pagamento</th><th>Situação</th><th>Valor Pago</th></tr></thead>
             <tbody>${rows}</tbody>
         </table>
         <div class="total"><span>TOTAL RECEBIDO &middot; ${list.length} pagamento(s) &middot; ${aptos.length} unidade(s)</span><b>${fmtMoney(total)}</b></div>
@@ -5880,6 +5895,7 @@ function associarInadimplente(apto, ano, mes, tipoTaxa) {
     document.getElementById('pgtoAno').value = ano;
     document.getElementById('pgtoMes').value = mes;
     document.getElementById('pgtoData').value = new Date().toISOString().split('T')[0];
+    document.getElementById('pgtoForma').value = '';
     const taxa = (APP.taxasApto||[]).find(t => t.apto === apto && t.descricao === taxaClean);
     if (taxa) document.getElementById('pgtoValor').value = (taxa.valor||0) * (taxa.quantidade||1);
     openModal('modalPagamento');
