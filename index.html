@@ -5371,6 +5371,10 @@ function abrirDocumentoRelatorio(opts) {
     .toolbar button.pri { background:#1A2744; border-color:#1A2744; color:#fff; }
     .toolbar button:disabled { opacity:.6; cursor:wait; }
     @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
+    /* Geração do PDF: largura fixa e centralizada, menor que a área útil do A4 (190mm),
+       para nenhuma borda ou texto ser cortado à direita */
+    body.gerando-pdf #rel { width:680px; margin:0 auto; }
+    body.gerando-pdf #rel * { box-shadow:none !important; }
 </style></head><body>
     <div class="toolbar">
         <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Documento pronto'}</span>
@@ -5392,19 +5396,22 @@ function abrirDocumentoRelatorio(opts) {
     function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
     function salvarPDF() {
         botao(true); status('Gerando PDF...');
+        window.scrollTo(0, 0);
+        document.body.classList.add('gerando-pdf');
+        var fim = function() { document.body.classList.remove('gerando-pdf'); botao(false); };
         var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
         pronto.then(function() { carregarLib(function() {
             html2pdf().set({
-                margin: [10, 8, 12, 8],
+                margin: [10, 10, 12, 10],
                 filename: NOME_PDF,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 1024 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.declara', '.alerta', '.fecho', '.ident'] }
             }).from(document.getElementById('rel')).save().then(function() {
-                status('PDF salvo: ' + NOME_PDF); botao(false);
+                status('PDF salvo: ' + NOME_PDF); fim();
             }).catch(function() {
-                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); fim();
             });
         }); });
     }
@@ -5729,6 +5736,10 @@ function printInadimplentes(modo) {
     .ass { margin:48px auto 0; width:280px; text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; page-break-inside:avoid; }
     .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; align-items:flex-end; line-height:1.5; }
     @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
+    /* Geração do PDF: largura fixa e centralizada, menor que a área útil do A4 (190mm),
+       para nenhuma borda ou texto ser cortado à direita */
+    body.gerando-pdf #rel { width:680px; margin:0 auto; }
+    body.gerando-pdf #rel * { box-shadow:none !important; }
 </style></head><body>
     <div class="toolbar">
         <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Relatório pronto'}</span>
@@ -5787,19 +5798,22 @@ function printInadimplentes(modo) {
     function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
     function salvarPDF() {
         botao(true); status('Gerando PDF...');
+        window.scrollTo(0, 0);
+        document.body.classList.add('gerando-pdf');
+        var fim = function() { document.body.classList.remove('gerando-pdf'); botao(false); };
         var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
         pronto.then(function() { carregarLib(function() {
             html2pdf().set({
-                margin: [10, 8, 12, 8],
+                margin: [10, 10, 12, 10],
                 filename: NOME_PDF,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 1024 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.intro'] }
             }).from(document.getElementById('rel')).save().then(function() {
-                status('PDF salvo: ' + NOME_PDF); botao(false);
+                status('PDF salvo: ' + NOME_PDF); fim();
             }).catch(function() {
-                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); fim();
             });
         }); });
     }
