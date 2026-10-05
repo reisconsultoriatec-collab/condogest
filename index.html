@@ -5371,10 +5371,6 @@ function abrirDocumentoRelatorio(opts) {
     .toolbar button.pri { background:#1A2744; border-color:#1A2744; color:#fff; }
     .toolbar button:disabled { opacity:.6; cursor:wait; }
     @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
-    /* Geração do PDF: largura fixa e centralizada, menor que a área útil do A4 (190mm),
-       para nenhuma borda ou texto ser cortado à direita */
-    body.gerando-pdf #rel { width:680px; margin:0 auto; }
-    body.gerando-pdf #rel * { box-shadow:none !important; }
 </style></head><body>
     <div class="toolbar">
         <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Documento pronto'}</span>
@@ -5384,34 +5380,102 @@ function abrirDocumentoRelatorio(opts) {
     <div id="rel">${opts.corpo}</div>
 <script>
     var NOME_PDF = ${JSON.stringify(opts.nomeArquivo)};
-    function carregarLib(cb) {
-        if (window.html2pdf) return cb();
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
-        s.onload = cb;
-        s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
-        document.head.appendChild(s);
+    var LIBS_PDF = [
+        { teste: function() { return !!window.html2canvas; }, src: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js' },
+        { teste: function() { return !!(window.jspdf && window.jspdf.jsPDF); }, src: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' }
+    ];
+    function carregarLibs(cb) {
+        var i = 0;
+        (function proxima() {
+            if (i >= LIBS_PDF.length) return cb();
+            var lib = LIBS_PDF[i++];
+            if (lib.teste()) return proxima();
+            var s = document.createElement('script');
+            s.src = lib.src;
+            s.onload = proxima;
+            s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
+            document.head.appendChild(s);
+        })();
     }
     function status(t) { var e = document.getElementById('tbStatus'); if (e) e.textContent = t; }
     function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
+
+    // Gera o PDF desenhando o relatório numa largura FIXA (independe do tamanho da janela
+    // e da escala do Windows) e encaixando essa imagem inteira na largura útil do A4.
     function salvarPDF() {
         botao(true); status('Gerando PDF...');
-        window.scrollTo(0, 0);
-        document.body.classList.add('gerando-pdf');
-        var fim = function() { document.body.classList.remove('gerando-pdf'); botao(false); };
         var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
-        pronto.then(function() { carregarLib(function() {
-            html2pdf().set({
-                margin: [10, 10, 12, 10],
-                filename: NOME_PDF,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 1024 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.declara', '.alerta', '.fecho', '.ident'] }
-            }).from(document.getElementById('rel')).save().then(function() {
-                status('PDF salvo: ' + NOME_PDF); fim();
+        pronto.then(function() { carregarLibs(function() {
+            var LARG = 760;                               // largura do desenho, em px
+            var orig = document.getElementById('rel');
+            var palco = document.createElement('div');
+            palco.style.cssText = 'position:absolute;left:0;top:0;width:' + LARG + 'px;margin:0;padding:0;background:#ffffff;z-index:-1;';
+            var clone = orig.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = 'width:' + LARG + 'px;margin:0;padding:0;box-sizing:border-box;background:#ffffff;';
+            palco.appendChild(clone);
+            document.body.appendChild(palco);
+            window.scrollTo(0, 0);
+
+            // Pontos onde a página pode ser quebrada sem cortar linhas ou blocos
+            var topo = clone.getBoundingClientRect().top;
+            var cortes = [];
+            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot')
+                .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
+            cortes.sort(function(a, b) { return a - b; });
+            var altura = Math.ceil(clone.scrollHeight);
+
+            window.html2canvas(clone, {
+                scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+                width: LARG, height: altura, windowWidth: LARG + 40, scrollX: 0, scrollY: 0, x: 0, y: 0
+            }).then(function(canvas) {
+                document.body.removeChild(palco);
+                var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                var mL = 12, mT = 12, mB = 14;
+                var uW = 210 - 2 * mL, uH = 297 - mT - mB;   // área útil em mm
+                var mmPorPx = uW / LARG;
+                var pagPx = uH / mmPorPx;                    // altura útil da página em px do desenho
+                var esc = canvas.width / LARG;
+
+                var ini = 0, pag = 0;
+                // Se sobrar só um pedaço pequeno para a 2ª página, reduz levemente e mantém tudo em 1 página
+                var alturaMm = altura * mmPorPx;
+                if (alturaMm > uH && alturaMm <= uH * 1.12) {
+                    var f = uH / alturaMm, w = uW * f;
+                    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', mL + (uW - w) / 2, mT, w, uH);
+                    ini = altura; pag = 1;
+                }
+                while (ini < altura - 1) {
+                    var lim = ini + pagPx, fimPg;
+                    if (lim >= altura) fimPg = altura;
+                    else {
+                        fimPg = ini;
+                        for (var k = 0; k < cortes.length; k++) if (cortes[k] > ini + 20 && cortes[k] <= lim) fimPg = cortes[k];
+                        if (fimPg <= ini + pagPx * 0.3) fimPg = lim;
+                    }
+                    var hPx = fimPg - ini;
+                    var fatia = document.createElement('canvas');
+                    fatia.width = canvas.width;
+                    fatia.height = Math.max(1, Math.round(hPx * esc));
+                    var ctx = fatia.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, fatia.width, fatia.height);
+                    ctx.drawImage(canvas, 0, Math.round(ini * esc), canvas.width, fatia.height, 0, 0, canvas.width, fatia.height);
+                    if (pag > 0) pdf.addPage();
+                    pdf.addImage(fatia.toDataURL('image/jpeg', 0.95), 'JPEG', mL, mT, uW, hPx * mmPorPx);
+                    pag++; ini = fimPg;
+                }
+                var tot = pdf.getNumberOfPages();
+                if (tot > 1) {
+                    for (var p = 1; p <= tot; p++) {
+                        pdf.setPage(p); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
+                        pdf.text('Página ' + p + ' de ' + tot, 210 - mL, 297 - 6, { align: 'right' });
+                    }
+                }
+                pdf.save(NOME_PDF);
+                status('PDF salvo: ' + NOME_PDF); botao(false);
             }).catch(function() {
-                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); fim();
+                if (palco.parentNode) palco.parentNode.removeChild(palco);
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
             });
         }); });
     }
@@ -5736,10 +5800,6 @@ function printInadimplentes(modo) {
     .ass { margin:48px auto 0; width:280px; text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; page-break-inside:avoid; }
     .foot { margin-top:30px; padding-top:8px; border-top:1px solid #E2E8F0; font-size:10px; color:#94A3B8; display:flex; justify-content:space-between; align-items:flex-end; line-height:1.5; }
     @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
-    /* Geração do PDF: largura fixa e centralizada, menor que a área útil do A4 (190mm),
-       para nenhuma borda ou texto ser cortado à direita */
-    body.gerando-pdf #rel { width:680px; margin:0 auto; }
-    body.gerando-pdf #rel * { box-shadow:none !important; }
 </style></head><body>
     <div class="toolbar">
         <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Relatório pronto'}</span>
@@ -5786,34 +5846,102 @@ function printInadimplentes(modo) {
     </div>
 <script>
     var NOME_PDF = ${JSON.stringify(nomeArquivo)};
-    function carregarLib(cb) {
-        if (window.html2pdf) return cb();
-        var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
-        s.onload = cb;
-        s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
-        document.head.appendChild(s);
+    var LIBS_PDF = [
+        { teste: function() { return !!window.html2canvas; }, src: 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js' },
+        { teste: function() { return !!(window.jspdf && window.jspdf.jsPDF); }, src: 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js' }
+    ];
+    function carregarLibs(cb) {
+        var i = 0;
+        (function proxima() {
+            if (i >= LIBS_PDF.length) return cb();
+            var lib = LIBS_PDF[i++];
+            if (lib.teste()) return proxima();
+            var s = document.createElement('script');
+            s.src = lib.src;
+            s.onload = proxima;
+            s.onerror = function() { status('Não foi possível carregar o gerador de PDF. Use Imprimir > Salvar como PDF.'); botao(false); };
+            document.head.appendChild(s);
+        })();
     }
     function status(t) { var e = document.getElementById('tbStatus'); if (e) e.textContent = t; }
     function botao(ocupado) { var b = document.getElementById('btnPdf'); if (b) b.disabled = ocupado; }
+
+    // Gera o PDF desenhando o relatório numa largura FIXA (independe do tamanho da janela
+    // e da escala do Windows) e encaixando essa imagem inteira na largura útil do A4.
     function salvarPDF() {
         botao(true); status('Gerando PDF...');
-        window.scrollTo(0, 0);
-        document.body.classList.add('gerando-pdf');
-        var fim = function() { document.body.classList.remove('gerando-pdf'); botao(false); };
         var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
-        pronto.then(function() { carregarLib(function() {
-            html2pdf().set({
-                margin: [10, 10, 12, 10],
-                filename: NOME_PDF,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0, windowWidth: 1024 },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.total', '.msg', '.ass', '.cards', '.intro'] }
-            }).from(document.getElementById('rel')).save().then(function() {
-                status('PDF salvo: ' + NOME_PDF); fim();
+        pronto.then(function() { carregarLibs(function() {
+            var LARG = 760;                               // largura do desenho, em px
+            var orig = document.getElementById('rel');
+            var palco = document.createElement('div');
+            palco.style.cssText = 'position:absolute;left:0;top:0;width:' + LARG + 'px;margin:0;padding:0;background:#ffffff;z-index:-1;';
+            var clone = orig.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.cssText = 'width:' + LARG + 'px;margin:0;padding:0;box-sizing:border-box;background:#ffffff;';
+            palco.appendChild(clone);
+            document.body.appendChild(palco);
+            window.scrollTo(0, 0);
+
+            // Pontos onde a página pode ser quebrada sem cortar linhas ou blocos
+            var topo = clone.getBoundingClientRect().top;
+            var cortes = [];
+            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot')
+                .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
+            cortes.sort(function(a, b) { return a - b; });
+            var altura = Math.ceil(clone.scrollHeight);
+
+            window.html2canvas(clone, {
+                scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+                width: LARG, height: altura, windowWidth: LARG + 40, scrollX: 0, scrollY: 0, x: 0, y: 0
+            }).then(function(canvas) {
+                document.body.removeChild(palco);
+                var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                var mL = 12, mT = 12, mB = 14;
+                var uW = 210 - 2 * mL, uH = 297 - mT - mB;   // área útil em mm
+                var mmPorPx = uW / LARG;
+                var pagPx = uH / mmPorPx;                    // altura útil da página em px do desenho
+                var esc = canvas.width / LARG;
+
+                var ini = 0, pag = 0;
+                // Se sobrar só um pedaço pequeno para a 2ª página, reduz levemente e mantém tudo em 1 página
+                var alturaMm = altura * mmPorPx;
+                if (alturaMm > uH && alturaMm <= uH * 1.12) {
+                    var f = uH / alturaMm, w = uW * f;
+                    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', mL + (uW - w) / 2, mT, w, uH);
+                    ini = altura; pag = 1;
+                }
+                while (ini < altura - 1) {
+                    var lim = ini + pagPx, fimPg;
+                    if (lim >= altura) fimPg = altura;
+                    else {
+                        fimPg = ini;
+                        for (var k = 0; k < cortes.length; k++) if (cortes[k] > ini + 20 && cortes[k] <= lim) fimPg = cortes[k];
+                        if (fimPg <= ini + pagPx * 0.3) fimPg = lim;
+                    }
+                    var hPx = fimPg - ini;
+                    var fatia = document.createElement('canvas');
+                    fatia.width = canvas.width;
+                    fatia.height = Math.max(1, Math.round(hPx * esc));
+                    var ctx = fatia.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, fatia.width, fatia.height);
+                    ctx.drawImage(canvas, 0, Math.round(ini * esc), canvas.width, fatia.height, 0, 0, canvas.width, fatia.height);
+                    if (pag > 0) pdf.addPage();
+                    pdf.addImage(fatia.toDataURL('image/jpeg', 0.95), 'JPEG', mL, mT, uW, hPx * mmPorPx);
+                    pag++; ini = fimPg;
+                }
+                var tot = pdf.getNumberOfPages();
+                if (tot > 1) {
+                    for (var p = 1; p <= tot; p++) {
+                        pdf.setPage(p); pdf.setFontSize(8); pdf.setTextColor(148, 163, 184);
+                        pdf.text('Página ' + p + ' de ' + tot, 210 - mL, 297 - 6, { align: 'right' });
+                    }
+                }
+                pdf.save(NOME_PDF);
+                status('PDF salvo: ' + NOME_PDF); botao(false);
             }).catch(function() {
-                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); fim();
+                if (palco.parentNode) palco.parentNode.removeChild(palco);
+                status('Erro ao gerar o PDF. Use Imprimir > Salvar como PDF.'); botao(false);
             });
         }); });
     }
@@ -8936,180 +9064,4 @@ function updateRateioConfig() {
         igual: '<i class="ti ti-info-circle"></i> <strong>Divisão Igual:</strong> O consumo total é dividido igualmente entre todas as unidades cadastradas.',
         fracao: '<i class="ti ti-info-circle"></i> <strong>Fração Ideal:</strong> Cada unidade recebe o percentual de acordo com sua fração ideal registrada no condomínio.',
         moradores: '<i class="ti ti-info-circle"></i> <strong>Por Moradores:</strong> O consumo é dividido proporcionalmente ao número de moradores em cada unidade.',
-        personalizado: '<i class="ti ti-info-circle"></i> <strong>Personalizado:</strong> Defina manualmente o percentual de cada unidade.'
-    };
-    desc.innerHTML = descricoes[criterio] || '';
-
-    // Mostrar grid de configuração para fração e personalizado
-    if (criterio === 'fracao' || criterio === 'personalizado') {
-        configGrid.style.display = 'block';
-        document.getElementById('rateioColLabel').textContent = criterio === 'fracao' ? 'Fração Ideal (%)' : 'Percentual (%)';
-        populateRateioConfigTable(criterio);
-    } else if (criterio === 'moradores') {
-        configGrid.style.display = 'block';
-        document.getElementById('rateioColLabel').textContent = 'Nº Moradores';
-        populateRateioConfigTableMoradores();
-    } else {
-        configGrid.style.display = 'none';
-    }
-}
-
-function populateRateioConfigTable(criterio) {
-    const tb = document.getElementById('tbRateioConfig');
-    const aptos = [...new Set((APP.moradores||[]).map(m => m.apto).filter(Boolean))].sort();
-    const config = APP.hidroRateioConfig?.unidades || {};
-    const defaultPct = (100 / aptos.length).toFixed(2);
-
-    tb.innerHTML = aptos.map(a => `<tr>
-        <td><strong>${H(a)}</strong></td>
-        <td><input type="number" step="0.01" min="0" max="100" class="rateio-pct-input" data-apto="${H(a)}" value="${config[a] || defaultPct}" style="width:100px;padding:0.4rem;border:1.5px solid var(--border);border-radius:var(--radius-sm)" oninput="updateRateioTotal()"></td>
-    </tr>`).join('');
-
-    updateRateioTotal();
-}
-
-function populateRateioConfigTableMoradores() {
-    const tb = document.getElementById('tbRateioConfig');
-    const aptos = [...new Set((APP.moradores||[]).map(m => m.apto).filter(Boolean))].sort();
-    const contagem = {};
-    (APP.moradores||[]).forEach(m => { if (m.apto) contagem[m.apto] = (contagem[m.apto]||0) + 1; });
-    const total = (APP.moradores||[]).length || 1;
-
-    tb.innerHTML = aptos.map(a => {
-        const n = contagem[a] || 1;
-        const pct = ((n / total) * 100).toFixed(1);
-        return `<tr>
-            <td><strong>${H(a)}</strong></td>
-            <td>${n} morador${n>1?'es':''} <span style="color:var(--text-light);font-size:0.78rem">(${pct}%)</span></td>
-        </tr>`;
-    }).join('');
-
-    document.getElementById('rateioTotalRow').innerHTML = `Total: ${total} morador${total>1?'es':''} em ${aptos.length} unidades`;
-}
-
-function updateRateioTotal() {
-    const inputs = document.querySelectorAll('.rateio-pct-input');
-    let total = 0;
-    inputs.forEach(i => { total += parseFloat(i.value) || 0; });
-    const totalRow = document.getElementById('rateioTotalRow');
-    const color = Math.abs(total - 100) < 0.1 ? 'var(--accent)' : 'var(--accent-red)';
-    totalRow.innerHTML = `Total: <span style="color:${color};font-weight:700">${total.toFixed(2)}%</span> ${Math.abs(total - 100) >= 0.1 ? ' — <span style="color:var(--accent-red)">deve ser 100%</span>' : ' ✓'}`;
-}
-
-async function saveRateioConfig() {
-    const criterio = document.getElementById('rateioCriterio').value;
-    const unidades = {};
-
-    if (criterio === 'fracao' || criterio === 'personalizado') {
-        const inputs = document.querySelectorAll('.rateio-pct-input');
-        let total = 0;
-        inputs.forEach(i => {
-            const val = parseFloat(i.value) || 0;
-            unidades[i.dataset.apto] = val;
-            total += val;
-        });
-        if (Math.abs(total - 100) >= 0.5) {
-            toast('O total dos percentuais deve ser 100%. Atual: ' + total.toFixed(2) + '%', 'error');
-            return;
-        }
-    }
-
-    APP.hidroRateioConfig = { criterio, unidades };
-
-    if (APP.firebaseReady && APP.currentCondoId) {
-        try {
-            await APP.db.collection('condominios').doc(APP.currentCondoId).collection('settings').doc('hidrometro_config')
-                .set({ modo: APP.hidroModo, rateio: APP.hidroRateioConfig }, { merge: true });
-            toast('Configuração de rateio salva!');
-        } catch(e) {
-            toast('Erro ao salvar: ' + e.message, 'error');
-        }
-    }
-
-    closeModal('modalRateioConfig');
-}
-
-// ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
-    // Theme
-    const savedTheme = localStorage.getItem('condogest_theme');
-    if (savedTheme) setTheme(savedTheme);
-
-    // Restaurar estado dos menus colapsáveis
-    restoreMenuState();
-
-    // Inicializar Firebase com config hardcoded
-    initFirebase(FIREBASE_CONFIG);
-
-    // Preencher campos de configuração na UI
-    loadFirebaseConfig();
-
-    // Year for payment modal
-    document.getElementById('pgtoAno').value = new Date().getFullYear();
-    document.getElementById('orcAno').value = new Date().getFullYear();
-
-    // Enter key on login
-    document.getElementById('loginPass').addEventListener('keypress', e => {
-        if (e.key === 'Enter') doLogin();
-    });
-    document.getElementById('regPassConfirm').addEventListener('keypress', e => {
-        if (e.key === 'Enter') doRegister();
-    });
-});
-
-// ===== MODO CELULAR: rótulos das tabelas =====
-// Copia o título de cada coluna (thead) para data-label das células, usado pelo CSS de cartões.
-function mcRotularTabelas(raiz) {
-    (raiz || document).querySelectorAll('.app-container table').forEach(table => {
-        if (table.classList.contains('no-cards')) return;
-        const ths = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
-        if (!ths.length) return;
-        table.classList.add('mc');
-        table.querySelectorAll('tbody tr').forEach(tr => {
-            const tds = [...tr.children];
-            if (tds.some(td => td.colSpan > 1)) { tr.classList.add('mc-span'); return; }
-            tds.forEach((td, i) => td.setAttribute('data-label', ths[i] || ''));
-        });
-    });
-}
-(function() {
-    let agendado = false;
-    const obs = new MutationObserver(() => {
-        if (agendado) return;
-        agendado = true;
-        requestAnimationFrame(() => { agendado = false; mcRotularTabelas(); });
-    });
-    document.addEventListener('DOMContentLoaded', () => {
-        const app = document.getElementById('appContainer');
-        if (app) { obs.observe(app, { childList: true, subtree: true }); mcRotularTabelas(); }
-    });
-})();
-
-// ===== PWA: Service Worker Registration =====
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-            .then((reg) => {
-                console.log('[PWA] Service Worker registrado:', reg.scope);
-                setInterval(() => reg.update(), 60 * 60 * 1000);
-                reg.addEventListener('updatefound', () => {
-                    const newWorker = reg.installing;
-                    if (newWorker) {
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showPWAUpdateBanner(newWorker);
-                            }
-                        });
-                    }
-                });
-            })
-            .catch((err) => console.warn('[PWA] Falha no registro do SW:', err));
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) { refreshing = true; window.location.reload(); }
-        });
-    });
-}
-</script>
-</body>
-</html>
+        personalizado: '<i class="ti ti-info-circle"></i> <strong>Personalizado:</strong> Defina manualm
