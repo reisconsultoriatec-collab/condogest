@@ -637,6 +637,69 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     .card { padding: 1rem; }
 }
 
+/* ===== MODO CELULAR: leitura em cartões ===== */
+.main-content { min-width: 0; }
+@media (max-width: 768px) {
+    html, body { overflow-x: hidden; }
+    .main-content { width: 100%; }
+    .top-header { padding: 0 0.9rem; gap: 0.5rem; }
+    .header-left { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+    .header-title { font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-right { gap: 0.5rem; }
+    .header-right .btn-icon[title="Imprimir"] { display: none; }
+    .page-content { padding: 0.9rem; }
+    .card { padding: 1rem; border-radius: 14px; }
+    .card-header { flex-wrap: wrap; gap: 0.7rem; }
+    .card-header > div { flex-wrap: wrap; }
+    .card-header .btn { flex: 1 1 auto; justify-content: center; }
+    .filter-bar input, .filter-bar select { width: 100%; font-size: 16px; padding: 0.65rem 0.8rem; }
+    .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal-box { max-height: 92vh; border-radius: 18px 18px 0 0; width: 100%; }
+    .modal-footer { position: sticky; bottom: 0; background: var(--bg-card); }
+    .modal-footer .btn { flex: 1; justify-content: center; }
+
+    .card-header .card-title { flex: 1 1 100%; margin-bottom: 0; }
+    .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .filter-bar > * { width: 100% !important; min-width: 0; }
+    .filter-bar > input[type="text"], .filter-bar > input:not([type]), .filter-bar > label { grid-column: 1 / -1; }
+    .stats-row { grid-template-columns: 1fr 1fr !important; gap: 0.6rem; }
+    .stat-card { padding: 0.8rem; gap: 0.6rem; flex-direction: column; align-items: flex-start; }
+    .stat-icon { width: 36px; height: 36px; border-radius: 10px; font-size: 1rem; }
+    .stat-info h4 { font-size: 1.15rem; line-height: 1.2; word-break: break-word; }
+    .stat-info span { font-size: 0.72rem; }
+
+    /* Tabelas viram cartões */
+    .table-container { overflow-x: visible; }
+    .app-container table.mc thead { display: none; }
+    .app-container table.mc, .app-container table.mc tbody { display: block; width: 100%; }
+    .app-container table.mc tbody tr {
+        display: block; background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 12px; margin-bottom: 0.7rem; padding: 0.35rem 0; box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+    }
+    .app-container table.mc tbody tr:hover { background: var(--bg-card); }
+    .app-container table.mc tbody td {
+        display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+        border: none; padding: 0.4rem 0.9rem; text-align: right; font-size: 0.92rem; min-height: 2rem;
+    }
+    .app-container table.mc tbody td::before {
+        content: attr(data-label); flex-shrink: 0; text-align: left;
+        font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-light);
+    }
+    .app-container table.mc tbody td[data-label=""]::before { content: none; }
+    .app-container table.mc tbody td:last-child:has(.btn) { justify-content: flex-end; flex-wrap: wrap; border-top: 1px solid var(--border); margin-top: 0.3rem; padding-top: 0.6rem; }
+    .app-container table.mc tbody td:last-child:has(.btn)::before { content: none; }
+    /* Linhas de agrupamento / subtotal / total */
+    .app-container table.mc tbody tr.mc-span {
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+        padding: 0; overflow: hidden; box-shadow: none;
+    }
+    .app-container table.mc tbody tr.mc-span td { display: block; text-align: left; padding: 0.65rem 0.9rem; min-height: 0; }
+    .app-container table.mc tbody tr.mc-span td::before { content: none; }
+    .app-container table.mc tbody tr.mc-span td:empty { display: none; }
+    .app-container table.mc tbody tr.mc-span td:not(:first-child) { text-align: right; }
+}
+
 /* SIDEBAR OVERLAY ON MOBILE */
 .sidebar-overlay {
     display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -5476,7 +5539,7 @@ function printPagamentos(modo) {
             </div>
 
             ${quite ? `<div class="declara">
-                O <strong>${H(nomeCondo)}</strong>${condo.cnpj ? `, inscrito no CNPJ sob o nº ${H(condo.cnpj)},` : ''} <strong>DECLARA</strong>, para os devidos fins, que a unidade <strong>Apto ${H(apto)}</strong> encontra-se <strong>QUITE</strong> com as taxas condominiais referentes ao período de <strong>${H(periodo)}</strong>, conforme os pagamentos relacionados abaixo e registrados nos controles financeiros deste condomínio.
+                O <strong>${H(nomeCondo)}</strong>${condo.cnpj ? `, inscrito no CNPJ sob o nº ${H(condo.cnpj)},` : ''} <strong>DECLARA</strong>, para os devidos fins, que a unidade <strong>Apto ${H(apto)}</strong> encontra-se com <strong>todos os débitos devidamente quitados</strong> referentes às taxas condominiais do período de <strong>${H(periodo)}</strong>, conforme os pagamentos relacionados abaixo e registrados nos controles financeiros deste condomínio.
             </div>` : `<div class="alerta">
                 <strong>Não é possível declarar a quitação deste período.</strong> Constam ${pend.length} parcela(s) vencida(s) em aberto, no total de <strong>${fmtMoney(totalPend)}</strong>:
                 <ul>${pend.map(p => `<li>${nomeMes(p.mes)}/${H(p.ano)} &ndash; ${H(p.tipoTaxa)}: ${fmtMoney(p.valorAberto)}</li>`).join('')}</ul>
@@ -5506,7 +5569,7 @@ function printPagamentos(modo) {
                 <div class="local">${cidade ? H(cidade) + ', ' : ''}${dataExtenso}.</div>
             </div>` : ''}
 
-            <div class="ass">Síndico(a) / Administração<br><strong>${H(nomeCondo)}</strong></div>
+            <div class="ass">Síndico(a) / Administração Financeira<br><strong>${H(nomeCondo)}</strong></div>
             <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
 
         abrirDocumentoRelatorio({
@@ -8980,10 +9043,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// ===== MODO CELULAR: rótulos das tabelas =====
+// Copia o título de cada coluna (thead) para data-label das células, usado pelo CSS de cartões.
+function mcRotularTabelas(raiz) {
+    (raiz || document).querySelectorAll('.app-container table').forEach(table => {
+        if (table.classList.contains('no-cards')) return;
+        const ths = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+        if (!ths.length) return;
+        table.classList.add('mc');
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const tds = [...tr.children];
+            if (tds.some(td => td.colSpan > 1)) { tr.classList.add('mc-span'); return; }
+            tds.forEach((td, i) => td.setAttribute('data-label', ths[i] || ''));
+        });
+    });
+}
+(function() {
+    let agendado = false;
+    const obs = new MutationObserver(() => {
+        if (agendado) return;
+        agendado = true;
+        requestAnimationFrame(() => { agendado = false; mcRotularTabelas(); });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        const app = document.getElementById('appContainer');
+        if (app) { obs.observe(app, { childList: true, subtree: true }); mcRotularTabelas(); }
+    });
+})();
+
 // ===== PWA: Service Worker Registration =====
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/CondoGest/sw.js', { scope: '/CondoGest/' })
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
             .then((reg) => {
                 console.log('[PWA] Service Worker registrado:', reg.scope);
                 setInterval(() => reg.update(), 60 * 60 * 1000);
