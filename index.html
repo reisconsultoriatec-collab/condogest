@@ -519,6 +519,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 }
 .badge-green { background: rgba(16,185,129,0.12); color: #059669; }
 .badge-red { background: rgba(239,68,68,0.12); color: #DC2626; }
+.badge-purple { background: rgba(139,92,246,0.12); color: #7C3AED; }
 .badge-blue { background: rgba(37,99,235,0.12); color: var(--primary); }
 .badge-amber { background: rgba(245,158,11,0.12); color: #D97706; }
 
@@ -1608,8 +1609,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relReceitas')"><i class="ti ti-printer"></i> Imprimir</button>
-                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-relReceitas','Relatório de Receitas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printRelReceitas('print')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="printRelReceitas('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
                 </div>
                 <div id="relRecContent"></div>
             </div>
@@ -1642,8 +1643,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('balancete')"><i class="ti ti-printer"></i> Imprimir</button>
-                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-balancete','Balancete - Prestação de Contas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printBalancete('print')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="printBalancete('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
                 </div>
                 <div id="balContent"></div>
             </div>
@@ -6690,8 +6691,39 @@ function getExtratoConciliado(ano, mes) {
     return { despesasExtrato, receitasExtrato };
 }
 
-// ===== RELATÓRIO DE DESPESAS =====
-// Consolida Contas a Pagar + débitos do extrato bancário conciliado
+// ===== RELATÓRIOS DE MOVIMENTO (Despesas / Receitas / Balancete) =====
+function _isoDeData(d) {
+    d = String(d || '');
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) return `${d.slice(6,10)}-${d.slice(3,5)}-${d.slice(0,2)}`;
+    if (/^\d{4}-\d{2}-\d{2}/.test(d)) return d.slice(0,10);
+    if (/^\d{8}$/.test(d)) return `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}`;
+    return '';
+}
+
+// Resume uma lista de itens {iso, mes, categoria, descricao, valor, origem, pago}
+function _resumoMovimento(ano, mes, itens) {
+    itens.sort((a,b) => (a.iso||'').localeCompare(b.iso||''));
+    const total = itens.reduce((s,i) => s + i.valor, 0);
+    const porCat = {};
+    itens.forEach(i => {
+        const c = porCat[i.categoria] || (porCat[i.categoria] = { categoria: i.categoria, total: 0, qtd: 0, origens: {} });
+        c.total += i.valor; c.qtd++; c.origens[i.origem] = (c.origens[i.origem] || 0) + i.valor;
+    });
+    const categorias = Object.values(porCat).sort((a,b) => b.total - a.total);
+    const porMes = Array.from({ length: 12 }, (_, k) => ({ mes: String(k+1).padStart(2,'0'), total: 0 }));
+    itens.forEach(i => { const m = parseInt(i.mes); if (m >= 1 && m <= 12) porMes[m-1].total += i.valor; });
+    const mesesCom = porMes.filter(m => m.total > 0).length;
+    const porOrigem = {};
+    itens.forEach(i => { porOrigem[i.origem] = (porOrigem[i.origem] || 0) + i.valor; });
+    return {
+        ano: String(ano), mes, itens, total, categorias, porMes, mesesComDespesa: mesesCom, porOrigem,
+        mediaMensal: mesesCom ? total / mesesCom : 0,
+        totalPendente: itens.filter(i => !i.pago).reduce((s,i) => s + i.valor, 0),
+        qtdPendente: itens.filter(i => !i.pago).length
+    };
+}
+
+// Despesas: Contas a Pagar + débitos do extrato conciliado
 function dadosRelDespesas(ano, mes) {
     ano = String(ano);
     const itens = [];
@@ -6699,72 +6731,73 @@ function dadosRelDespesas(ano, mes) {
         const v = c.vencimento || '';
         if (!v.startsWith(ano)) return;
         if (mes && !v.startsWith(`${ano}-${mes}`)) return;
-        itens.push({
-            iso: v.slice(0,10), mes: v.slice(5,7), categoria: c.categoria || 'Outros',
+        itens.push({ iso: v.slice(0,10), mes: v.slice(5,7), categoria: c.categoria || 'Outros',
             descricao: c.descricao || '', fornecedor: c.fornecedor || c.fornecedorNome || '',
-            valor: c.valor || 0, origem: 'Contas a Pagar', pago: c.status === 'pago'
-        });
+            valor: c.valor || 0, origem: 'Contas a Pagar', pago: c.status === 'pago' });
     });
     getExtratoConciliado(ano, mes).despesasExtrato.forEach(e => {
-        let iso = '';
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(e.data)) iso = `${e.data.slice(6,10)}-${e.data.slice(3,5)}-${e.data.slice(0,2)}`;
-        else if (/^\d{4}-\d{2}-\d{2}/.test(e.data)) iso = e.data.slice(0,10);
-        else if (/^\d{8}$/.test(e.data)) iso = `${e.data.slice(0,4)}-${e.data.slice(4,6)}-${e.data.slice(6,8)}`;
-        itens.push({
-            iso, mes: iso.slice(5,7), categoria: e.categoria || 'Outros', descricao: e.historico || '', fornecedor: '',
-            valor: e.valor || 0, origem: 'Extrato Bancário', pago: true
-        });
+        const iso = _isoDeData(e.data);
+        itens.push({ iso, mes: iso.slice(5,7), categoria: e.categoria || 'Outros', descricao: e.historico || '', fornecedor: '',
+            valor: e.valor || 0, origem: 'Extrato Bancário', pago: true });
     });
-    itens.sort((a,b) => a.iso.localeCompare(b.iso));
-
-    const total = itens.reduce((s,i) => s + i.valor, 0);
-    const porCat = {};
-    itens.forEach(i => {
-        const c = porCat[i.categoria] || (porCat[i.categoria] = { categoria: i.categoria, total: 0, qtd: 0 });
-        c.total += i.valor; c.qtd++;
-    });
-    const categorias = Object.values(porCat).sort((a,b) => b.total - a.total);
-    const porMes = Array.from({ length: 12 }, (_, k) => ({ mes: String(k+1).padStart(2,'0'), total: 0 }));
-    itens.forEach(i => { const m = parseInt(i.mes); if (m >= 1 && m <= 12) porMes[m-1].total += i.valor; });
-    const mesesComDespesa = porMes.filter(m => m.total > 0).length;
-    const totalPendente = itens.filter(i => !i.pago).reduce((s,i) => s + i.valor, 0);
-    const qtdPendente = itens.filter(i => !i.pago).length;
-    return {
-        ano, mes, itens, total, categorias, porMes, mesesComDespesa, totalPendente, qtdPendente,
-        mediaMensal: mesesComDespesa ? total / mesesComDespesa : 0,
-        totalContas: itens.filter(i => i.origem === 'Contas a Pagar').reduce((s,i) => s + i.valor, 0),
-        totalExtrato: itens.filter(i => i.origem !== 'Contas a Pagar').reduce((s,i) => s + i.valor, 0)
-    };
+    const r = _resumoMovimento(ano, mes, itens);
+    r.totalContas = r.porOrigem['Contas a Pagar'] || 0;
+    r.totalExtrato = r.porOrigem['Extrato Bancário'] || 0;
+    return r;
 }
 
-function renderRelDespesas() {
-    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
-    const mes = document.getElementById('relDespMes')?.value || '';
-    const d = dadosRelDespesas(ano, mes);
-    const el = document.getElementById('relDespContent');
-    if (!el) return;
-    const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
-    const maior = d.categorias[0];
-    const barra = (pct, cor) => `<div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden;min-width:80px"><div style="height:100%;width:${Math.max(pct, 0.5).toFixed(1)}%;background:${cor};border-radius:6px"></div></div>`;
+// Receitas: pagamentos de taxas + créditos do extrato conciliado + receitas avulsas
+function dadosRelReceitas(ano, mes) {
+    ano = String(ano);
+    const itens = [];
+    (APP.pagamentos || []).filter(p => p.ano == ano && (!mes || p.mes === mes)).forEach(p => {
+        itens.push({ iso: p.dataPgto || `${p.ano}-${p.mes}-01`, mes: p.mes, categoria: p.tipoTaxa || 'Taxas',
+            descricao: `Apto ${p.apto || '—'} · ref. ${(MESES[parseInt(p.mes)] || p.mes)}/${p.ano}`,
+            fornecedor: p.formaPagamento || '', valor: p.valor || 0, origem: 'Taxas', pago: true });
+    });
+    getExtratoConciliado(ano, mes).receitasExtrato.forEach(e => {
+        const iso = _isoDeData(e.data);
+        itens.push({ iso, mes: iso.slice(5,7), categoria: e.categoria || 'Receita Diversa', descricao: e.historico || '', fornecedor: '',
+            valor: e.valor || 0, origem: 'Extrato Bancário', pago: true });
+    });
+    getReceitasAvulsas(ano, mes).forEach(r => {
+        const iso = _isoDeData(r.data);
+        itens.push({ iso, mes: iso.slice(5,7), categoria: r.categoria || 'Receita Diversa', descricao: r.descricao || '', fornecedor: '',
+            valor: r.valor || 0, origem: 'Receita Avulsa', pago: true });
+    });
+    return _resumoMovimento(ano, mes, itens);
+}
 
-    let html = `<h4 style="margin:0.5rem 0 1rem">Despesas &ndash; ${H(periodo)}</h4>
+const _CFG_MOV = {
+    despesas: { nome: 'Despesas', titulo: 'Relatório de Despesas', rotTotal: 'Total de despesas', maior: 'Maior categoria',
+        c1: '#F87171', c2: '#DC2626', cTot: '#FCA5A5', subBg: '#FEF2F2', subCor: '#991B1B', varCor: 'var(--accent-red)', icone: 'ti-trending-down', iconeCor: 'red',
+        intro: 'Demonstrativo das despesas do condomínio no período, consolidando as contas a pagar e os débitos do extrato bancário conciliado, organizados por categoria.',
+        arquivo: 'Relatorio_Despesas', descCol: 'Descrição' },
+    receitas: { nome: 'Receitas', titulo: 'Relatório de Receitas', rotTotal: 'Total de receitas', maior: 'Maior fonte de receita',
+        c1: '#34D399', c2: '#059669', cTot: '#6EE7B7', subBg: '#ECFDF5', subCor: '#065F46', varCor: 'var(--accent)', icone: 'ti-trending-up', iconeCor: 'green',
+        intro: 'Demonstrativo das receitas do condomínio no período, consolidando os pagamentos de taxas, os créditos do extrato bancário conciliado e as receitas avulsas, organizados por categoria.',
+        arquivo: 'Relatorio_Receitas', descCol: 'Descrição' }
+};
+const _BADGE_ORIGEM = { 'Contas a Pagar': ['badge-amber','Contas'], 'Extrato Bancário': ['badge-blue','Extrato'], 'Taxas': ['badge-green','Taxas'], 'Receita Avulsa': ['badge-purple','Avulsa'] };
+
+function _htmlTelaMovimento(d, cfg, periodo) {
+    const mes = d.mes;
+    const maior = d.categorias[0];
+    const barra = (pct) => `<div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden;min-width:80px"><div style="height:100%;width:${Math.max(pct, 0.5).toFixed(1)}%;background:${cfg.varCor};border-radius:6px"></div></div>`;
+    let html = `<h4 style="margin:0.5rem 0 1rem">${cfg.nome} &ndash; ${H(periodo)}</h4>
         <div class="stats-row">
-            <div class="stat-card"><div class="stat-icon red"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(d.total)}</h4><span>Total de despesas</span></div></div>
+            <div class="stat-card"><div class="stat-icon ${cfg.iconeCor}"><i class="ti ${cfg.icone}"></i></div><div class="stat-info"><h4>${fmtMoney(d.total)}</h4><span>${cfg.rotTotal}</span></div></div>
             <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-receipt"></i></div><div class="stat-info"><h4>${d.itens.length}</h4><span>Lançamentos</span></div></div>
             ${!mes ? `<div class="stat-card"><div class="stat-icon amber"><i class="ti ti-calendar-stats"></i></div><div class="stat-info"><h4>${fmtMoney(d.mediaMensal)}</h4><span>Média mensal (${d.mesesComDespesa} ${d.mesesComDespesa === 1 ? 'mês' : 'meses'})</span></div></div>` : ''}
-            ${maior ? `<div class="stat-card"><div class="stat-icon red"><i class="ti ti-chart-pie"></i></div><div class="stat-info"><h4 style="font-size:1rem">${H(maior.categoria)}</h4><span>Maior categoria: ${fmtMoney(maior.total)}</span></div></div>` : ''}
+            ${maior ? `<div class="stat-card"><div class="stat-icon ${cfg.iconeCor}"><i class="ti ti-chart-pie"></i></div><div class="stat-info"><h4 style="font-size:1rem">${H(maior.categoria)}</h4><span>${cfg.maior}: ${fmtMoney(maior.total)}</span></div></div>` : ''}
         </div>`;
+    if (d.itens.length === 0) return html + `<div class="empty-state"><p>Nenhum lançamento de ${cfg.nome.toLowerCase()} no período.</p></div>`;
 
-    if (d.itens.length === 0) {
-        el.innerHTML = html + '<div class="empty-state"><p>Nenhuma despesa registrada no período.</p></div>';
-        return;
-    }
-
-    html += `<h4 style="margin:1rem 0 0.6rem">Despesas por categoria</h4>
+    html += `<h4 style="margin:1rem 0 0.6rem">${cfg.nome} por categoria</h4>
         <div class="table-container"><table><thead><tr><th>Categoria</th><th>Lançamentos</th><th>Participação</th><th style="text-align:right">Total</th></tr></thead><tbody>
         ${d.categorias.map(c => { const pct = d.total ? c.total / d.total * 100 : 0; return `<tr>
             <td><strong>${H(c.categoria)}</strong></td><td>${c.qtd}</td>
-            <td><div style="display:flex;align-items:center;gap:0.6rem">${barra(pct, 'var(--accent-red)')}<span style="font-size:0.8rem;color:var(--text-secondary);min-width:42px">${pct.toFixed(1)}%</span></div></td>
+            <td><div style="display:flex;align-items:center;gap:0.6rem">${barra(pct)}<span style="font-size:0.8rem;color:var(--text-secondary);min-width:42px">${pct.toFixed(1)}%</span></div></td>
             <td style="text-align:right;font-weight:700">${fmtMoney(c.total)}</td></tr>`; }).join('')}
         <tr style="background:var(--bg-sidebar)"><td colspan="3" style="color:#fff;font-weight:700">TOTAL GERAL</td><td style="text-align:right;color:#fff;font-weight:700">${fmtMoney(d.total)}</td></tr>
         </tbody></table></div>`;
@@ -6774,7 +6807,7 @@ function renderRelDespesas() {
         html += `<h4 style="margin:1.5rem 0 0.6rem">Evolução mensal</h4>
             <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:170px;padding:0.5rem 0;border-bottom:1px solid var(--border)">
             ${d.porMes.map(m => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="${MESES[parseInt(m.mes)]}: ${fmtMoney(m.total)}">
-                <div style="width:70%;max-width:34px;height:${(m.total / maxMes * 100).toFixed(1)}%;min-height:${m.total ? 3 : 0}px;background:linear-gradient(180deg,#F87171,#DC2626);border-radius:5px 5px 0 0"></div>
+                <div style="width:70%;max-width:34px;height:${(m.total / maxMes * 100).toFixed(1)}%;min-height:${m.total ? 3 : 0}px;background:linear-gradient(180deg,${cfg.c1},${cfg.c2});border-radius:5px 5px 0 0"></div>
             </div>`).join('')}
             </div>
             <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:0.68rem;color:var(--text-secondary);text-align:center;margin-top:4px">
@@ -6783,22 +6816,57 @@ function renderRelDespesas() {
     }
 
     html += `<h4 style="margin:1.5rem 0 0.6rem">Detalhamento dos lançamentos</h4>
-        <div class="table-container"><table><thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Origem</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead><tbody>
-        ${d.itens.map(i => `<tr>
+        <div class="table-container"><table><thead><tr><th>Data</th><th>Categoria</th><th>${cfg.descCol}</th><th>Origem</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+        ${d.itens.map(i => { const b = _BADGE_ORIGEM[i.origem] || ['badge-blue', i.origem]; return `<tr>
             <td>${i.iso ? fmtDate(i.iso) : '—'}</td><td>${H(i.categoria)}</td><td>${H(i.descricao)}${i.fornecedor ? `<br><small style="color:var(--text-secondary)">${H(i.fornecedor)}</small>` : ''}</td>
-            <td><span class="badge ${i.origem === 'Contas a Pagar' ? 'badge-amber' : 'badge-blue'}">${i.origem === 'Contas a Pagar' ? 'Contas' : 'Extrato'}</span></td>
-            <td>${i.pago ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-red">Pendente</span>'}</td>
-            <td style="text-align:right;font-weight:600">${fmtMoney(i.valor)}</td></tr>`).join('')}
+            <td><span class="badge ${b[0]}">${b[1]}</span></td>
+            <td>${i.pago ? `<span class="badge badge-green">${cfg.nome === 'Receitas' ? 'Recebido' : 'Pago'}</span>` : '<span class="badge badge-red">Pendente</span>'}</td>
+            <td style="text-align:right;font-weight:600">${fmtMoney(i.valor)}</td></tr>`; }).join('')}
         </tbody></table></div>`;
-    el.innerHTML = html;
+    return html;
 }
 
-function printRelDespesas(modo) {
-    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
-    const mes = document.getElementById('relDespMes')?.value || '';
-    const d = dadosRelDespesas(ano, mes);
-    if (d.itens.length === 0) { toast('Nenhuma despesa registrada no período.', 'error'); return; }
+// CSS comum dos documentos de movimento (despesas, receitas e balancete)
+function _cssDocMovimento(cfg) {
+    return `
+    .sec { margin:24px 0 10px; font-size:13px; font-weight:800; color:#1A2744; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; gap:8px; }
+    .sec::before { content:''; width:4px; height:15px; background:#F59E0B; border-radius:2px; }
+    .card.red strong { color:#DC2626; } .card.grn strong { color:#047857; }
+    .card small { display:block; font-size:10.5px; color:#64748B; margin-top:2px; font-weight:600; }
+    .cards.c4 { grid-template-columns:repeat(4,1fr); }
+    .cards.c4 strong { font-size:16px; }
+    td.rk { width:26px; color:#94A3B8; font-weight:700; }
+    td.ctr { text-align:center; } td.pct { color:#475569; font-weight:600; white-space:nowrap; }
+    .bar { height:8px; background:#EEF2F6; border-radius:6px; overflow:hidden; min-width:120px; }
+    .bar span { display:block; height:100%; background:linear-gradient(90deg,${cfg.c1},${cfg.c2}); border-radius:6px; }
+    .bar.r span { background:linear-gradient(90deg,#F87171,#DC2626); } .bar.g span { background:linear-gradient(90deg,#34D399,#059669); }
+    tr.tot td { background:#1A2744; color:#fff; font-weight:700; }
+    tr.tot td.val { color:${cfg.cTot}; }
+    tr.sub td { background:${cfg.subBg} !important; color:${cfg.subCor} !important; }
+    .chip.pend { background:#FEE2E2; color:#991B1B; }
+    .sub2 { font-size:10.5px; color:#64748B; }
+    .chart { display:grid; grid-template-columns:repeat(12,1fr); gap:6px; align-items:end; height:190px; padding:8px 10px 0; border:1px solid #E2E8F0; border-radius:10px; }
+    .chart .col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+    .chart .b { width:70%; background:linear-gradient(180deg,${cfg.c1},${cfg.c2}); border-radius:5px 5px 0 0; }
+    .chart .v { font-size:8px; color:#475569; font-weight:700; margin-bottom:3px; white-space:nowrap; }
+    .chart .m { font-size:10px; color:#64748B; font-weight:600; padding:5px 0 6px; border-top:1px solid #E2E8F0; width:100%; text-align:center; margin-top:2px; }
+    .resumo { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px; }
+    .resumo div { border:1px solid #E2E8F0; border-radius:10px; padding:9px 14px; font-size:12px; color:#475569; display:flex; justify-content:space-between; gap:8px; }
+    .resumo b { color:#1A2744; white-space:nowrap; }
+    .asss { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:52px; page-break-inside:avoid; }
+    .asss div { text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; }`;
+}
 
+function _assinaturasDoc(nomeCondo, geradoEm) {
+    return `<div class="asss blk">
+            <div>Síndico(a) / Administração Financeira<br><strong>${H(nomeCondo)}</strong></div>
+            <div>Conselho Fiscal<br><strong>${H(nomeCondo)}</strong></div>
+        </div>
+        <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
+}
+
+function _docMovimento(d, cfg, modo) {
+    const ano = d.ano, mes = d.mes;
     const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
     const nomeCondo = condo.nome || 'Condomínio';
     const agora = new Date();
@@ -6806,8 +6874,8 @@ function printRelDespesas(modo) {
     const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
     const maior = d.categorias[0];
     const pctFmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+    const ehReceita = cfg.nome === 'Receitas';
 
-    // Por categoria
     const linhasCat = d.categorias.map((c, k) => {
         const pct = d.total ? c.total / d.total * 100 : 0;
         return `<tr><td class="rk">${k+1}</td><td><strong>${H(c.categoria)}</strong></td><td class="ctr">${c.qtd}</td>
@@ -6815,11 +6883,10 @@ function printRelDespesas(modo) {
             <td class="val">${fmtMoney(c.total)}</td></tr>`;
     }).join('');
 
-    // Evolução mensal
     let mensal = '';
     if (!mes) {
         const maxMes = Math.max(...d.porMes.map(m => m.total), 1);
-        mensal = `<div class="sec blk">Evolução mensal das despesas</div>
+        mensal = `<div class="sec blk">Evolução mensal das ${cfg.nome.toLowerCase()}</div>
         <div class="chart blk">
             ${d.porMes.map(m => `<div class="col">
                 <div class="v">${m.total ? fmtMoney(m.total).replace('R$', '').trim() : ''}</div>
@@ -6829,190 +6896,247 @@ function printRelDespesas(modo) {
         </div>`;
     }
 
-    // Detalhamento agrupado por categoria
     let det = '';
     d.categorias.forEach(c => {
         const itens = d.itens.filter(i => i.categoria === c.categoria);
         det += `<tr class="grp"><td colspan="5">${H(c.categoria)}</td></tr>`;
         itens.forEach(i => {
             det += `<tr><td>${i.iso ? fmtDate(i.iso) : '—'}</td><td>${H(i.descricao)}${i.fornecedor ? `<div class="sub2">${H(i.fornecedor)}</div>` : ''}</td>
-                <td>${i.origem}</td><td>${i.pago ? '<span class="chip">Pago</span>' : '<span class="chip pend">Pendente</span>'}</td><td class="val">${fmtMoney(i.valor)}</td></tr>`;
+                <td>${i.origem}</td><td>${i.pago ? `<span class="chip">${ehReceita ? 'Recebido' : 'Pago'}</span>` : '<span class="chip pend">Pendente</span>'}</td><td class="val">${fmtMoney(i.valor)}</td></tr>`;
         });
         det += `<tr class="sub"><td colspan="4">Subtotal ${H(c.categoria)} &middot; ${itens.length} lançamento${itens.length > 1 ? 's' : ''}</td><td class="val">${fmtMoney(c.total)}</td></tr>`;
     });
 
-    const css = `
-    .sec { margin:24px 0 10px; font-size:13px; font-weight:800; color:#1A2744; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; gap:8px; }
-    .sec::before { content:''; width:4px; height:15px; background:#F59E0B; border-radius:2px; }
-    .card.red strong { color:#DC2626; }
-    .card small { display:block; font-size:10.5px; color:#64748B; margin-top:2px; font-weight:600; }
-    .cards.c4 { grid-template-columns:repeat(4,1fr); }
-    .cards.c4 strong { font-size:16px; }
-    td.rk { width:26px; color:#94A3B8; font-weight:700; }
-    td.ctr { text-align:center; } td.pct { color:#475569; font-weight:600; white-space:nowrap; }
-    .bar { height:8px; background:#EEF2F6; border-radius:6px; overflow:hidden; min-width:120px; }
-    .bar span { display:block; height:100%; background:linear-gradient(90deg,#F87171,#DC2626); border-radius:6px; }
-    tr.tot td { background:#1A2744; color:#fff; font-weight:700; }
-    tr.tot td.val { color:#FCA5A5; }
-    tr.sub td { background:#FEF2F2 !important; color:#991B1B !important; }
-    .chip.pend { background:#FEE2E2; color:#991B1B; }
-    .sub2 { font-size:10.5px; color:#64748B; }
-    .chart { display:grid; grid-template-columns:repeat(12,1fr); gap:6px; align-items:end; height:190px; padding:8px 10px 0; border:1px solid #E2E8F0; border-radius:10px; }
-    .chart .col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
-    .chart .b { width:70%; background:linear-gradient(180deg,#F87171,#DC2626); border-radius:5px 5px 0 0; min-height:0; }
-    .chart .v { font-size:8px; color:#475569; font-weight:700; margin-bottom:3px; white-space:nowrap; }
-    .chart .m { font-size:10px; color:#64748B; font-weight:600; padding:5px 0 6px; border-top:1px solid #E2E8F0; width:100%; text-align:center; margin-top:2px; }
-    .resumo { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-    .resumo div { border:1px solid #E2E8F0; border-radius:10px; padding:9px 14px; font-size:12px; color:#475569; display:flex; justify-content:space-between; }
-    .resumo b { color:#1A2744; }
-    .asss { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:52px; page-break-inside:avoid; }
-    .asss div { text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; }`;
+    const resumoOrigens = Object.entries(d.porOrigem).map(([o, v]) => `<div><span>${H(o)}</span><b>${fmtMoney(v)}</b></div>`).join('');
 
     const corpo = `
-        ${cabecalhoCondoHtml(condo, 'Relatório de Despesas', periodo)}
-        <div class="title">Relatório de Despesas &ndash; ${H(periodo)}</div>
+        ${cabecalhoCondoHtml(condo, cfg.titulo, periodo)}
+        <div class="title">${cfg.titulo} &ndash; ${H(periodo)}</div>
         <div class="gen">Gerado em ${geradoEm}</div>
-        <div class="intro">Demonstrativo das despesas do condomínio no período, consolidando as contas a pagar e os débitos do extrato bancário conciliado, organizados por categoria.</div>
+        <div class="intro">${cfg.intro}</div>
 
         <div class="cards c4">
-            <div class="card red"><span>Total de despesas</span><strong>${fmtMoney(d.total)}</strong>${d.qtdPendente ? `<small>${fmtMoney(d.totalPendente)} pendente</small>` : ''}</div>
+            <div class="card ${ehReceita ? 'grn' : 'red'}"><span>${cfg.rotTotal}</span><strong>${fmtMoney(d.total)}</strong>${d.qtdPendente ? `<small>${fmtMoney(d.totalPendente)} pendente</small>` : ''}</div>
             <div class="card"><span>Lançamentos</span><strong>${d.itens.length}</strong><small>${d.categorias.length} categoria(s)</small></div>
-            <div class="card"><span>${mes ? 'Maior lançamento' : 'Média mensal'}</span><strong>${mes ? fmtMoney(Math.max(...d.itens.map(i => i.valor))) : fmtMoney(d.mediaMensal)}</strong>${!mes ? `<small>${d.mesesComDespesa} ${d.mesesComDespesa === 1 ? 'mês' : 'meses'} com despesas</small>` : ''}</div>
-            <div class="card"><span>Maior categoria</span><strong style="font-size:13px;line-height:1.3">${H(maior.categoria)}</strong><small>${fmtMoney(maior.total)} &middot; ${pctFmt(d.total ? maior.total / d.total * 100 : 0)}</small></div>
+            <div class="card"><span>${mes ? 'Maior lançamento' : 'Média mensal'}</span><strong>${mes ? fmtMoney(Math.max(...d.itens.map(i => i.valor))) : fmtMoney(d.mediaMensal)}</strong>${!mes ? `<small>${d.mesesComDespesa} ${d.mesesComDespesa === 1 ? 'mês' : 'meses'} com lançamentos</small>` : ''}</div>
+            <div class="card"><span>${cfg.maior}</span><strong style="font-size:13px;line-height:1.3">${H(maior.categoria)}</strong><small>${fmtMoney(maior.total)} &middot; ${pctFmt(d.total ? maior.total / d.total * 100 : 0)}</small></div>
         </div>
 
-        <div class="sec blk">Despesas por categoria</div>
+        <div class="sec blk">${cfg.nome} por categoria</div>
         <table>
             <thead><tr><th>#</th><th>Categoria</th><th style="text-align:center">Lanç.</th><th>Participação</th><th style="text-align:center">%</th><th>Total</th></tr></thead>
             <tbody>${linhasCat}
                 <tr class="tot"><td colspan="5">TOTAL GERAL</td><td class="val">${fmtMoney(d.total)}</td></tr>
             </tbody>
         </table>
-        <div class="resumo blk">
-            <div><span>Contas a Pagar</span><b>${fmtMoney(d.totalContas)}</b></div>
-            <div><span>Extrato bancário conciliado</span><b>${fmtMoney(d.totalExtrato)}</b></div>
-        </div>
+        <div class="resumo blk">${resumoOrigens}</div>
 
         ${mensal}
 
         <div class="sec blk">Detalhamento dos lançamentos</div>
         <table>
-            <thead><tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Situação</th><th>Valor</th></tr></thead>
+            <thead><tr><th>Data</th><th>${cfg.descCol}</th><th>Origem</th><th>Situação</th><th>Valor</th></tr></thead>
             <tbody>${det}</tbody>
         </table>
-        <div class="total"><span>TOTAL DE DESPESAS &middot; ${d.itens.length} lançamento(s)</span><b style="color:#FCA5A5">${fmtMoney(d.total)}</b></div>
+        <div class="total"><span>${cfg.rotTotal.toUpperCase()} &middot; ${d.itens.length} lançamento(s)</span><b style="color:${cfg.cTot}">${fmtMoney(d.total)}</b></div>
         ${d.qtdPendente ? `<div class="nota">Inclui ${d.qtdPendente} conta(s) ainda pendente(s) de pagamento, no total de ${fmtMoney(d.totalPendente)}.</div>` : ''}
 
-        <div class="asss">
-            <div>Síndico(a) / Administração Financeira<br><strong>${H(nomeCondo)}</strong></div>
-            <div>Conselho Fiscal<br><strong>${H(nomeCondo)}</strong></div>
-        </div>
-        <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
+        ${_assinaturasDoc(nomeCondo, geradoEm)}`;
 
     abrirDocumentoRelatorio({
-        modo, corpo, css,
-        titulo: `Relatório de Despesas - ${periodo} - ${nomeCondo}`,
-        nomeArquivo: ['Relatorio_Despesas', slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+        modo, corpo, css: _cssDocMovimento(cfg),
+        titulo: `${cfg.titulo} - ${periodo} - ${nomeCondo}`,
+        nomeArquivo: [cfg.arquivo, slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
     });
 }
 
+function renderRelDespesas() {
+    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('relDespMes')?.value || '';
+    const el = document.getElementById('relDespContent');
+    if (el) el.innerHTML = _htmlTelaMovimento(dadosRelDespesas(ano, mes), _CFG_MOV.despesas, (mes ? MESES[parseInt(mes)] + '/' : '') + ano);
+}
+function printRelDespesas(modo) {
+    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('relDespMes')?.value || '';
+    const d = dadosRelDespesas(ano, mes);
+    if (d.itens.length === 0) { toast('Nenhuma despesa registrada no período.', 'error'); return; }
+    _docMovimento(d, _CFG_MOV.despesas, modo);
+}
+
 function renderRelReceitas() {
-    const ano = document.getElementById('relRecAno')?.value || new Date().getFullYear();
+    const ano = document.getElementById('relRecAno')?.value || String(new Date().getFullYear());
     const mes = document.getElementById('relRecMes')?.value || '';
-    let listPgtos = APP.pagamentos.filter(p => p.ano == ano);
-    if (mes) listPgtos = listPgtos.filter(p => p.mes === mes);
-    const totalPgtos = listPgtos.reduce((s,p) => s + (p.valor||0), 0);
-    const { receitasExtrato } = getExtratoConciliado(ano, mes);
-    const totalExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
-    // Receitas Avulsas
-    const listRA = getReceitasAvulsas(ano, mes);
-    const totalRA = listRA.reduce((s,r) => s + (r.valor||0), 0);
-    const totalGeral = totalPgtos + totalExtrato + totalRA;
-    const byTipo = {};
-    listPgtos.forEach(p => { byTipo[p.tipoTaxa] = (byTipo[p.tipoTaxa]||0) + (p.valor||0); });
-    receitasExtrato.forEach(e => { byTipo[e.categoria] = (byTipo[e.categoria]||0) + e.valor; });
-    listRA.forEach(r => { byTipo[r.categoria] = (byTipo[r.categoria]||0) + (r.valor||0); });
-    let html = `<h4 style="margin-bottom:1rem">Receitas - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h4>`;
-    html += `<table><thead><tr><th>Tipo / Categoria</th><th>Total</th></tr></thead><tbody>`;
-    Object.entries(byTipo).forEach(([tipo,val]) => { html += `<tr><td>${H(tipo)}</td><td><strong>${fmtMoney(val)}</strong></td></tr>`; });
-    html += `</tbody><tfoot><tr><td><strong>TOTAL GERAL</strong></td><td><strong style="color:var(--accent)">${fmtMoney(totalGeral)}</strong></td></tr></tfoot></table>`;
-    html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Pagamentos de Taxas</h4>`;
-    html += `<table><thead><tr><th>Mes</th><th>Apto</th><th>Morador</th><th>Tipo</th><th>Valor</th><th>Data Pgto</th></tr></thead><tbody>`;
-    listPgtos.forEach(p => { html += `<tr><td>${MESES[parseInt(p.mes)]||p.mes}</td><td>${H(p.apto)}</td><td>${H(p.moradorNome)}</td><td>${H(p.tipoTaxa)}</td><td>${fmtMoney(p.valor)}</td><td>${fmtDate(p.dataPgto)}</td></tr>`; });
-    if (listPgtos.length === 0) html += `<tr><td colspan="6" style="color:var(--text-light);text-align:center">Nenhum pagamento registrado</td></tr>`;
-    html += `</tbody></table>`;
-    if (receitasExtrato.length > 0) {
-        html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Extrato Bancario (Conciliado)</h4>`;
-        html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Historico</th><th>Valor</th><th>Origem</th></tr></thead><tbody>`;
-        receitasExtrato.forEach(e => { html += `<tr><td>${H(e.data)}</td><td>${H(e.categoria)}</td><td>${H(e.historico)}</td><td>${fmtMoney(e.valor)}</td><td><span class="badge badge-blue">Extrato</span></td></tr>`; });
-        html += `</tbody></table>`;
-    }
-    if (listRA.length > 0) {
-        html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Receitas Avulsas</h4>`;
-        html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Descricao</th><th>Valor</th><th>Origem</th></tr></thead><tbody>`;
-        listRA.forEach(r => { html += `<tr><td>${fmtDate(r.data)}</td><td>${H(r.categoria)}</td><td>${H(r.descricao)}</td><td>${fmtMoney(r.valor)}</td><td><span class="badge badge-green">Avulsa</span></td></tr>`; });
-        html += `</tbody></table>`;
-    }
-    document.getElementById('relRecContent').innerHTML = html;
+    const el = document.getElementById('relRecContent');
+    if (el) el.innerHTML = _htmlTelaMovimento(dadosRelReceitas(ano, mes), _CFG_MOV.receitas, (mes ? MESES[parseInt(mes)] + '/' : '') + ano);
+}
+function printRelReceitas(modo) {
+    const ano = document.getElementById('relRecAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('relRecMes')?.value || '';
+    const d = dadosRelReceitas(ano, mes);
+    if (d.itens.length === 0) { toast('Nenhuma receita registrada no período.', 'error'); return; }
+    _docMovimento(d, _CFG_MOV.receitas, modo);
+}
+
+// ===== BALANCETE / PRESTAÇÃO DE CONTAS =====
+function dadosBalancete(ano, mes) {
+    const rec = dadosRelReceitas(ano, mes), desp = dadosRelDespesas(ano, mes);
+    const resultado = rec.total - desp.total;
+    const meses = rec.porMes.map((m, k) => ({ mes: m.mes, rec: m.total, desp: desp.porMes[k].total, res: m.total - desp.porMes[k].total }));
+    let acum = 0; meses.forEach(m => { acum += m.res; m.acum = acum; });
+    return { ano: String(ano), mes, rec, desp, resultado, meses,
+        comprometimento: rec.total ? desp.total / rec.total * 100 : 0 };
 }
 
 function renderBalancete() {
-    const ano = document.getElementById('balAno')?.value || new Date().getFullYear();
+    const ano = document.getElementById('balAno')?.value || String(new Date().getFullYear());
     const mes = document.getElementById('balMes')?.value || '';
-    let pgtos = APP.pagamentos.filter(p => p.ano == ano);
-    if (mes) pgtos = pgtos.filter(p => p.mes === mes);
-    const totalPgtos = pgtos.reduce((s,p) => s + (p.valor||0), 0);
-    const { receitasExtrato, despesasExtrato } = getExtratoConciliado(ano, mes);
-    const totalRecExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
-    // Receitas Avulsas
-    const listRA = getReceitasAvulsas(ano, mes);
-    const totalRA = listRA.reduce((s,r) => s + (r.valor||0), 0);
-    const totalReceitas = totalPgtos + totalRecExtrato + totalRA;
-    let contas = APP.contas.filter(c => (c.vencimento||'').startsWith(ano));
-    if (mes) contas = contas.filter(c => (c.vencimento||'').startsWith(`${ano}-${mes}`));
-    const totalContas = contas.reduce((s,c) => s + (c.valor||0), 0);
-    const totalDespExtrato = despesasExtrato.reduce((s,e) => s + e.valor, 0);
-    const totalDespesas = totalContas + totalDespExtrato;
-    const saldo = totalReceitas - totalDespesas;
+    const b = dadosBalancete(ano, mes);
     const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const periodo = (mes ? MESES[parseInt(mes)] + '/' : 'Ano ') + ano;
+    const pos = b.resultado >= 0;
+    const linhaCat = (c, total, cor) => { const pct = total ? c.total / total * 100 : 0; return `<tr>
+        <td><strong>${H(c.categoria)}</strong></td><td>${c.qtd}</td>
+        <td><div style="display:flex;align-items:center;gap:0.6rem"><div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden;min-width:80px;flex:1"><div style="height:100%;width:${Math.max(pct,0.5).toFixed(1)}%;background:${cor};border-radius:6px"></div></div><span style="font-size:0.8rem;color:var(--text-secondary);min-width:42px">${pct.toFixed(1)}%</span></div></td>
+        <td style="text-align:right;font-weight:700">${fmtMoney(c.total)}</td></tr>`; };
+
     let html = `
-    <div style="text-align:center;margin-bottom:1.5rem;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-md)">
-        <h3 style="color:var(--primary)">${H(condo.nome||'Condominio')}</h3>
+    <div style="text-align:center;margin-bottom:1.2rem;padding:1rem;border:1px solid var(--border);border-radius:var(--radius-md)">
+        <h3 style="color:var(--primary)">${H(condo.nome||'Condomínio')}</h3>
         <p style="font-size:0.85rem;color:var(--text-secondary)">CNPJ: ${H(condo.cnpj||'-')} | ${H(condo.endereco||'')}</p>
-        <h4 style="margin-top:0.5rem">Balancete - Prestacao de Contas</h4>
-        <p style="font-size:0.85rem;color:var(--text-secondary)">${mes ? MESES[parseInt(mes)]+'/':'Ano '}${ano}</p>
+        <h4 style="margin-top:0.5rem">Balancete &ndash; Prestação de Contas</h4>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">${H(periodo)}</p>
     </div>
     <div class="stats-row">
-        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-trending-up"></i></div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Total Receitas</span></div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Total Despesas</span></div></div>
-        <div class="stat-card"><div class="stat-icon ${saldo>=0?'blue':'red'}"><i class="ti ti-coins"></i></div><div class="stat-info"><h4>${fmtMoney(saldo)}</h4><span>Saldo</span></div></div>
+        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-trending-up"></i></div><div class="stat-info"><h4>${fmtMoney(b.rec.total)}</h4><span>Total de receitas</span></div></div>
+        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(b.desp.total)}</h4><span>Total de despesas</span></div></div>
+        <div class="stat-card"><div class="stat-icon ${pos?'blue':'red'}"><i class="ti ti-scale"></i></div><div class="stat-info"><h4 style="color:${pos?'var(--accent)':'var(--accent-red)'}">${fmtMoney(b.resultado)}</h4><span>${pos?'Superávit':'Déficit'} no período</span></div></div>
+        <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-percentage"></i></div><div class="stat-info"><h4>${b.comprometimento.toFixed(1)}%</h4><span>Receitas comprometidas</span></div></div>
     </div>
-    <h4 style="margin:1.5rem 0 0.5rem;color:var(--accent)">RECEITAS</h4>
-    <table><thead><tr><th>Origem</th><th>Tipo / Categoria</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`;
-    const recByTaxa = {};
-    pgtos.forEach(p => { if (!recByTaxa[p.tipoTaxa]) recByTaxa[p.tipoTaxa] = { qtd:0, total:0 }; recByTaxa[p.tipoTaxa].qtd++; recByTaxa[p.tipoTaxa].total += (p.valor||0); });
-    Object.entries(recByTaxa).forEach(([taxa,v]) => { html += `<tr><td><span class="badge badge-green">Taxas</span></td><td>${H(taxa)}</td><td>${v.qtd}</td><td>${fmtMoney(v.total)}</td></tr>`; });
-    const recExtByCat = {};
-    receitasExtrato.forEach(e => { recExtByCat[e.categoria] = (recExtByCat[e.categoria]||0) + e.valor; });
-    Object.entries(recExtByCat).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-blue">Extrato</span></td><td>${H(cat)}</td><td>-</td><td>${fmtMoney(val)}</td></tr>`; });
-    // Receitas Avulsas
-    const raByCat = {};
-    listRA.forEach(r => { raByCat[r.categoria] = (raByCat[r.categoria]||0) + (r.valor||0); });
-    Object.entries(raByCat).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-green">Avulsa</span></td><td>${H(cat)}</td><td>-</td><td>${fmtMoney(val)}</td></tr>`; });
-    html += `<tr style="font-weight:700;background:rgba(16,185,129,0.05)"><td colspan="3">TOTAL RECEITAS</td><td style="color:var(--accent)">${fmtMoney(totalReceitas)}</td></tr></tbody></table>`;
-    html += `<h4 style="margin:1.5rem 0 0.5rem;color:var(--accent-red)">DESPESAS</h4><table><thead><tr><th>Origem</th><th>Categoria</th><th>Total</th></tr></thead><tbody>`;
-    const despByCat = {};
-    contas.forEach(c => { despByCat[c.categoria] = (despByCat[c.categoria]||0) + (c.valor||0); });
-    Object.entries(despByCat).sort((a,b) => b[1]-a[1]).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-amber">Contas</span></td><td>${H(cat)}</td><td>${fmtMoney(val)}</td></tr>`; });
-    const despExtByCat = {};
-    despesasExtrato.forEach(e => { despExtByCat[e.categoria] = (despExtByCat[e.categoria]||0) + e.valor; });
-    Object.entries(despExtByCat).sort((a,b) => b[1]-a[1]).forEach(([cat,val]) => { html += `<tr><td><span class="badge badge-blue">Extrato</span></td><td>${H(cat)}</td><td>${fmtMoney(val)}</td></tr>`; });
-    html += `<tr style="font-weight:700;background:rgba(239,68,68,0.05)"><td colspan="2">TOTAL DESPESAS</td><td style="color:var(--accent-red)">${fmtMoney(totalDespesas)}</td></tr></tbody></table>`;
-    html += `<div style="margin-top:1.5rem;padding:1rem;background:${saldo>=0?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};border-radius:var(--radius-md);text-align:center">
-        <h3 style="color:${saldo>=0?'var(--accent)':'var(--accent-red)'}">RESULTADO: ${fmtMoney(saldo)}</h3>
-        <p style="font-size:0.85rem;color:var(--text-secondary)">${saldo>=0?'Superavit':'Deficit'} no periodo</p>
+    <h4 style="margin:1.2rem 0 0.6rem;color:var(--accent)">RECEITAS</h4>
+    <div class="table-container"><table><thead><tr><th>Categoria</th><th>Lançamentos</th><th>Participação</th><th style="text-align:right">Total</th></tr></thead><tbody>
+        ${b.rec.categorias.map(c => linhaCat(c, b.rec.total, 'var(--accent)')).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">Nenhuma receita no período</td></tr>'}
+        <tr style="background:rgba(16,185,129,0.08)"><td colspan="3"><strong>TOTAL RECEITAS</strong></td><td style="text-align:right;color:var(--accent);font-weight:700">${fmtMoney(b.rec.total)}</td></tr>
+    </tbody></table></div>
+    <h4 style="margin:1.5rem 0 0.6rem;color:var(--accent-red)">DESPESAS</h4>
+    <div class="table-container"><table><thead><tr><th>Categoria</th><th>Lançamentos</th><th>Participação</th><th style="text-align:right">Total</th></tr></thead><tbody>
+        ${b.desp.categorias.map(c => linhaCat(c, b.desp.total, 'var(--accent-red)')).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">Nenhuma despesa no período</td></tr>'}
+        <tr style="background:rgba(239,68,68,0.08)"><td colspan="3"><strong>TOTAL DESPESAS</strong></td><td style="text-align:right;color:var(--accent-red);font-weight:700">${fmtMoney(b.desp.total)}</td></tr>
+    </tbody></table></div>`;
+
+    if (!mes) {
+        const max = Math.max(...b.meses.map(m => Math.max(m.rec, m.desp)), 1);
+        html += `<h4 style="margin:1.5rem 0 0.6rem">Receitas x Despesas por mês</h4>
+        <div style="display:flex;gap:1rem;font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.4rem"><span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px"></span> Receitas</span><span><span style="display:inline-block;width:10px;height:10px;background:var(--accent-red);border-radius:2px"></span> Despesas</span></div>
+        <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:170px;border-bottom:1px solid var(--border)">
+            ${b.meses.map(m => `<div style="display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100%" title="${MESES[parseInt(m.mes)]}: receitas ${fmtMoney(m.rec)} / despesas ${fmtMoney(m.desp)}">
+                <div style="width:38%;max-width:16px;height:${(m.rec/max*100).toFixed(1)}%;background:var(--accent);border-radius:4px 4px 0 0"></div>
+                <div style="width:38%;max-width:16px;height:${(m.desp/max*100).toFixed(1)}%;background:var(--accent-red);border-radius:4px 4px 0 0"></div>
+            </div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:0.68rem;color:var(--text-secondary);text-align:center;margin-top:4px">${b.meses.map(m => `<div>${MESES[parseInt(m.mes)].slice(0,3)}</div>`).join('')}</div>
+        <h4 style="margin:1.5rem 0 0.6rem">Resultado mensal</h4>
+        <div class="table-container"><table><thead><tr><th>Mês</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Resultado</th><th style="text-align:right">Acumulado</th></tr></thead><tbody>
+        ${b.meses.filter(m => m.rec || m.desp).map(m => `<tr><td>${MESES[parseInt(m.mes)]}</td>
+            <td style="text-align:right;color:var(--accent)">${fmtMoney(m.rec)}</td><td style="text-align:right;color:var(--accent-red)">${fmtMoney(m.desp)}</td>
+            <td style="text-align:right;font-weight:700;color:${m.res>=0?'var(--accent)':'var(--accent-red)'}">${fmtMoney(m.res)}</td>
+            <td style="text-align:right;font-weight:600">${fmtMoney(m.acum)}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    }
+
+    html += `<div style="margin-top:1.5rem;padding:1rem;background:${pos?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};border-radius:var(--radius-md);text-align:center">
+        <h3 style="color:${pos?'var(--accent)':'var(--accent-red)'}">RESULTADO: ${fmtMoney(b.resultado)}</h3>
+        <p style="font-size:0.85rem;color:var(--text-secondary)">${pos?'Superávit':'Déficit'} no período</p>
     </div>`;
     document.getElementById('balContent').innerHTML = html;
+}
+
+function printBalancete(modo) {
+    const ano = document.getElementById('balAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('balMes')?.value || '';
+    const b = dadosBalancete(ano, mes);
+    if (!b.rec.itens.length && !b.desp.itens.length) { toast('Nenhum lançamento no período.', 'error'); return; }
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const nomeCondo = condo.nome || 'Condomínio';
+    const agora = new Date();
+    const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
+    const pos = b.resultado >= 0;
+    const pctFmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+
+    const tabela = (d, tipo) => d.categorias.map((c, k) => {
+        const pct = d.total ? c.total / d.total * 100 : 0;
+        return `<tr><td class="rk">${k+1}</td><td><strong>${H(c.categoria)}</strong></td><td class="ctr">${c.qtd}</td>
+            <td><div class="bar ${tipo}"><span style="width:${Math.max(pct,0.6).toFixed(1)}%"></span></div></td><td class="ctr pct">${pctFmt(pct)}</td><td class="val">${fmtMoney(c.total)}</td></tr>`;
+    }).join('') || `<tr><td colspan="6" style="text-align:center;color:#94A3B8">Nenhum lançamento no período</td></tr>`;
+
+    let mensal = '';
+    if (!mes) {
+        const max = Math.max(...b.meses.map(m => Math.max(m.rec, m.desp)), 1);
+        mensal = `<div class="sec blk">Receitas x Despesas por mês</div>
+        <div class="leg blk"><span><i style="background:#059669"></i>Receitas</span><span><i style="background:#DC2626"></i>Despesas</span></div>
+        <div class="chart2 blk">${b.meses.map(m => `<div class="col"><div class="bars">
+            <div class="b g" style="height:${(m.rec/max*100).toFixed(1)}%"></div><div class="b r" style="height:${(m.desp/max*100).toFixed(1)}%"></div>
+            </div><div class="m">${MESES[parseInt(m.mes)].slice(0,3)}</div></div>`).join('')}</div>
+        <div class="sec blk">Resultado mensal</div>
+        <table><thead><tr><th>Mês</th><th style="text-align:right">Receitas</th><th style="text-align:right">Despesas</th><th style="text-align:right">Resultado</th><th>Acumulado</th></tr></thead><tbody>
+        ${b.meses.filter(m => m.rec || m.desp).map(m => `<tr><td>${MESES[parseInt(m.mes)]}</td>
+            <td style="text-align:right;color:#047857">${fmtMoney(m.rec)}</td><td style="text-align:right;color:#DC2626">${fmtMoney(m.desp)}</td>
+            <td style="text-align:right;font-weight:700;color:${m.res>=0?'#047857':'#DC2626'}">${fmtMoney(m.res)}</td><td class="val">${fmtMoney(m.acum)}</td></tr>`).join('')}
+        <tr class="tot"><td>TOTAL</td><td style="text-align:right">${fmtMoney(b.rec.total)}</td><td style="text-align:right">${fmtMoney(b.desp.total)}</td><td style="text-align:right">${fmtMoney(b.resultado)}</td><td class="val">${fmtMoney(b.resultado)}</td></tr>
+        </tbody></table>`;
+    }
+
+    const css = _cssDocMovimento(_CFG_MOV.receitas) + `
+    .card.res strong { color:${pos ? '#047857' : '#DC2626'}; }
+    .grp2 td { background:#F1F5F9; font-weight:800; color:#1A2744; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; }
+    .leg { display:flex; gap:16px; font-size:11px; color:#475569; margin:-2px 0 8px; } .leg i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+    .chart2 { display:grid; grid-template-columns:repeat(12,1fr); gap:6px; height:180px; padding:8px 10px 0; border:1px solid #E2E8F0; border-radius:10px; }
+    .chart2 .col { display:flex; flex-direction:column; height:100%; }
+    .chart2 .bars { flex:1; display:flex; align-items:flex-end; justify-content:center; gap:3px; }
+    .chart2 .b { width:38%; border-radius:4px 4px 0 0; } .chart2 .b.g { background:linear-gradient(180deg,#34D399,#059669); } .chart2 .b.r { background:linear-gradient(180deg,#F87171,#DC2626); }
+    .chart2 .m { font-size:10px; color:#64748B; font-weight:600; padding:5px 0 6px; border-top:1px solid #E2E8F0; text-align:center; }
+    .resultado { margin-top:18px; padding:16px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;
+        background:${pos ? '#ECFDF5' : '#FEF2F2'}; border:1px solid ${pos ? '#A7F3D0' : '#FECACA'}; page-break-inside:avoid; }
+    .resultado span { font-size:12px; color:#475569; } .resultado b { display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
+    .resultado strong { font-size:22px; color:${pos ? '#047857' : '#DC2626'}; }`;
+
+    const corpo = `
+        ${cabecalhoCondoHtml(condo, 'Balancete', periodo)}
+        <div class="title">Balancete &ndash; Prestação de Contas &ndash; ${H(periodo)}</div>
+        <div class="gen">Gerado em ${geradoEm}</div>
+        <div class="intro">Demonstrativo de receitas e despesas do condomínio no período, para fins de prestação de contas aos condôminos e ao Conselho Fiscal.</div>
+
+        <div class="cards c4">
+            <div class="card grn"><span>Total de receitas</span><strong>${fmtMoney(b.rec.total)}</strong><small>${b.rec.itens.length} lançamento(s)</small></div>
+            <div class="card red"><span>Total de despesas</span><strong>${fmtMoney(b.desp.total)}</strong><small>${b.desp.itens.length} lançamento(s)</small></div>
+            <div class="card res"><span>Resultado</span><strong>${fmtMoney(b.resultado)}</strong><small>${pos ? 'Superávit' : 'Déficit'} no período</small></div>
+            <div class="card"><span>Receitas comprometidas</span><strong>${pctFmt(b.comprometimento)}</strong><small>despesas ÷ receitas</small></div>
+        </div>
+
+        <div class="sec blk">Demonstrativo de receitas</div>
+        <table><thead><tr><th>#</th><th>Categoria</th><th style="text-align:center">Lanç.</th><th>Participação</th><th style="text-align:center">%</th><th>Total</th></tr></thead>
+            <tbody>${tabela(b.rec, 'g')}<tr class="tot"><td colspan="5">TOTAL DE RECEITAS</td><td class="val" style="color:#6EE7B7">${fmtMoney(b.rec.total)}</td></tr></tbody></table>
+
+        <div class="sec blk">Demonstrativo de despesas</div>
+        <table><thead><tr><th>#</th><th>Categoria</th><th style="text-align:center">Lanç.</th><th>Participação</th><th style="text-align:center">%</th><th>Total</th></tr></thead>
+            <tbody>${tabela(b.desp, 'r')}<tr class="tot"><td colspan="5">TOTAL DE DESPESAS</td><td class="val" style="color:#FCA5A5">${fmtMoney(b.desp.total)}</td></tr></tbody></table>
+        ${b.desp.qtdPendente ? `<div class="nota">As despesas incluem ${b.desp.qtdPendente} conta(s) ainda pendente(s) de pagamento, no total de ${fmtMoney(b.desp.totalPendente)}.</div>` : ''}
+
+        <div class="resultado blk">
+            <div><b>Resultado do período</b><span>Receitas ${fmtMoney(b.rec.total)} &minus; Despesas ${fmtMoney(b.desp.total)}</span></div>
+            <div style="text-align:right"><strong>${fmtMoney(b.resultado)}</strong><span style="display:block">${pos ? 'Superávit' : 'Déficit'}</span></div>
+        </div>
+
+        ${mensal}
+
+        ${_assinaturasDoc(nomeCondo, geradoEm)}`;
+
+    abrirDocumentoRelatorio({
+        modo, corpo, css,
+        titulo: `Balancete - ${periodo} - ${nomeCondo}`,
+        nomeArquivo: ['Balancete', slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+    });
 }
 
 function printReport(type) {
