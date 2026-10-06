@@ -3165,7 +3165,8 @@ function navigateTo(page) {
     // Render data for the page
     if (page === 'dashboard') renderDashboard();
     else if (page === 'moradores') renderMoradores();
-    else if (page === 'contas') renderContas();
+    else if (page === 'contas') { populateContaCategorias(); renderContas(); }
+    else if (page === 'conciliacao') renderConciliar();
     else if (page === 'pagamentos') renderPagamentos();
     else if (page === 'inadimplentes') renderInadimplentes();
     else if (page === 'orcamento') renderOrcamento();
@@ -6828,30 +6829,56 @@ function renderCategorias() {
     el.innerHTML = APP.categorias.map((c,i) => `
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
             <span style="flex:1">${H(c)}</span>
-            <button class="btn btn-danger btn-sm" onclick="removeCategoria(${i})">?</button>
+            <button class="btn btn-danger btn-sm" title="Remover categoria" onclick="removeCategoria(${i})"><i class="ti ti-trash"></i></button>
         </div>
     `).join('');
+    atualizarSelectsCategorias();
+}
+
+// Atualiza TODAS as listas de categorias abertas no sistema, sem perder o que já estava selecionado
+function atualizarSelectsCategorias() {
     populateContaCategorias();
+    const cats = APP.categorias || [];
+    document.querySelectorAll('select[id^="concCat_"]').forEach(sel => {
+        const atual = sel.value;
+        sel.innerHTML = '<option value="">Selecionar categoria...</option>'
+            + cats.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('')
+            + '<option value="Taxa Condominial">Taxa Condominial</option>'
+            + '<option value="Receita Diversa">Receita Diversa</option>';
+        if (atual) sel.value = atual;
+    });
+}
+
+async function salvarCategorias() {
+    if (!APP.firebaseReady || !APP.currentCondoId) return true;
+    try {
+        await condoRef().collection('settings').doc('categorias').set({ list: APP.categorias });
+        return true;
+    } catch (e) {
+        console.error('Categorias:', e);
+        toast('Erro ao salvar categorias: ' + e.message, 'error');
+        return false;
+    }
 }
 
 async function addCategoria() {
-    const v = document.getElementById('newCategoria').value.trim();
+    const input = document.getElementById('newCategoria');
+    const v = input.value.trim().replace(/\s+/g, ' ');
     if (!v) return;
+    const existe = APP.categorias.some(c => c.toLowerCase() === v.toLowerCase());
+    if (existe) { toast('Essa categoria já existe.', 'error'); return; }
     APP.categorias.push(v);
-    document.getElementById('newCategoria').value = '';
+    input.value = '';
     renderCategorias();
-    if (APP.firebaseReady && APP.currentCondoId) {
-        await condoRef().collection('settings').doc('categorias').set({ list: APP.categorias });
-    }
-    toast('Categoria adicionada!');
+    if (await salvarCategorias()) toast('Categoria adicionada!');
 }
 
 async function removeCategoria(i) {
+    const nome = APP.categorias[i];
+    if (!confirm(`Remover a categoria "${nome}"?\n\nLançamentos já feitos com ela não são alterados.`)) return;
     APP.categorias.splice(i, 1);
     renderCategorias();
-    if (APP.firebaseReady && APP.currentCondoId) {
-        await condoRef().collection('settings').doc('categorias').set({ list: APP.categorias });
-    }
+    if (await salvarCategorias()) toast('Categoria removida.');
 }
 
 // ===== USUÁRIOS =====
