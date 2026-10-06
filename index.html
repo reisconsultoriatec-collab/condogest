@@ -1285,6 +1285,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <button class="tab-btn active" onclick="switchTab(this,'tabImport')">Importar Extrato</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabExtrato')">Extrato Importado</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabConciliar')">Conciliar</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabConcAssist');renderConcAssistida()"><i class="ti ti-sparkles"></i> Conciliação Assistida</button>
                 </div>
 
                 <div class="tab-pane active" id="tabImport">
@@ -1381,6 +1382,32 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         </tr></thead><tbody id="tbConciliar"></tbody></table>
                     </div>
                 </div>
+
+                <!-- ABA: Conciliação Assistida (opção adicional; a aba Conciliar continua igual) -->
+                <div class="tab-pane" id="tabConcAssist">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        O sistema compara cada crédito do extrato com as taxas em aberto e sugere de qual apartamento é o pagamento.
+                        Nada é lançado sem a sua confirmação. Ao confirmar, o pagamento é registrado em <strong>Pagamentos de Taxas</strong> e o crédito fica conciliado.
+                        Créditos sem sugestão continuam disponíveis na aba <strong>Conciliar</strong>.
+                    </p>
+                    <div class="filter-bar">
+                        <select id="caAno" onchange="renderConcAssistida()"></select>
+                        <select id="caMes" onchange="renderConcAssistida()"><option value="">Todos os meses</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option><option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option><option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option></select>
+                        <button class="btn btn-success btn-sm" id="btnCaAlta" onclick="caConfirmarAltaConfianca()"><i class="ti ti-checks"></i> Confirmar todas de alta confiança</button>
+                    </div>
+                    <div id="caResumo" style="margin:0.6rem 0 1rem;font-size:0.85rem;color:var(--text-secondary)"></div>
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th>Data</th><th>Histórico</th><th>Valor</th><th>Sugestão</th><th>Forma Pgto</th><th>Ações</th>
+                        </tr></thead><tbody id="tbConcAssist"></tbody></table>
+                    </div>
+                    <h4 style="margin:1.5rem 0 0.6rem;font-size:0.95rem"><i class="ti ti-history"></i> Conciliados pela assistida</h4>
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th>Data</th><th>Histórico</th><th>Valor</th><th>Lançado em</th><th>Ações</th>
+                        </tr></thead><tbody id="tbConcAssistFeitos"></tbody></table>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1424,6 +1451,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="tabs-bar" id="boletoTabsBar">
                     <button class="tab-btn active" id="btnTabTaxasApto" onclick="switchTab(this,'tabTaxasApto')">Taxas por Apartamento</button>
                     <button class="tab-btn" id="btnTabGerarBoleto" onclick="switchTab(this,'tabGerarBoleto')">Gerar Boleto</button>
+                    <button class="tab-btn" id="btnTabLote" onclick="switchTab(this,'tabLote');loteInit()"><i class="ti ti-stack-2"></i> Cobrança em Lote</button>
                 </div>
 
                 <!-- ABA 1: Taxas por Apartamento -->
@@ -1473,6 +1501,35 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <div style="margin-top:1rem;display:flex;gap:0.5rem">
                             <button class="btn btn-fill" onclick="imprimirBoleto()"><i class="ti ti-printer"></i> Imprimir / Salvar PDF</button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ABA: Cobrança em Lote (opção adicional; Gerar Boleto continua igual) -->
+                <div class="tab-pane" id="tabLote">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Monte de uma vez a cobrança do mês para todos os apartamentos: confira a lista, desmarque quem não deve receber,
+                        gere os boletos com PIX em um único arquivo e envie a mensagem de cobrança por WhatsApp ou e-mail.
+                        Nenhum dado é alterado no sistema.
+                    </p>
+                    <div class="filter-bar">
+                        <div class="form-group" style="margin:0"><label style="font-size:0.75rem">Mês de referência</label><input type="month" id="loteMesRef" onchange="loteAjustarVenc()"></div>
+                        <div class="form-group" style="margin:0"><label style="font-size:0.75rem">Vencimento</label><input type="date" id="loteVenc"></div>
+                        <button class="btn btn-fill btn-sm" style="align-self:flex-end" onclick="montarLote()"><i class="ti ti-list-check"></i> Montar lista</button>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin:0.4rem 0 0.8rem;cursor:pointer">
+                        <input type="checkbox" id="loteAnteriores" onchange="if(APP._lote) renderLote()"> Informar débitos anteriores em aberto no boleto e na mensagem
+                    </label>
+                    <div id="loteResumo" style="margin-bottom:0.8rem"></div>
+                    <div id="loteAcoes" style="display:none;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.8rem">
+                        <button class="btn btn-outline btn-sm" onclick="gerarBoletosLote('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar boletos em PDF</button>
+                        <button class="btn btn-outline btn-sm" onclick="gerarBoletosLote('print')"><i class="ti ti-printer"></i> Imprimir boletos</button>
+                        <button class="btn btn-outline btn-sm" onclick="copiarTodasMensagensLote()"><i class="ti ti-copy"></i> Copiar todas as mensagens</button>
+                    </div>
+                    <div class="table-container">
+                        <table><thead><tr>
+                            <th style="width:30px"><input type="checkbox" id="loteTodos" checked onchange="loteMarcarTodos(this.checked)" style="accent-color:var(--primary)"></th>
+                            <th>Apto</th><th>Responsável</th><th>Taxas do mês</th><th>Valor</th><th>Anteriores</th><th>Enviar</th>
+                        </tr></thead><tbody id="tbLote"><tr><td colspan="7" class="empty-state"><p>Escolha o mês e clique em "Montar lista".</p></td></tr></tbody></table>
                     </div>
                 </div>
             </div>
@@ -3360,6 +3417,8 @@ function applyBoletoPermissions() {
     const btnTaxasApto = document.getElementById('btnTabTaxasApto');
     const tabTaxasApto = document.getElementById('tabTaxasApto');
     const btnGerarBoleto = document.getElementById('btnTabGerarBoleto');
+    const btnLote = document.getElementById('btnTabLote');
+    if (btnLote) btnLote.style.display = isGestor ? '' : 'none';
     const tabGerarBoleto = document.getElementById('tabGerarBoleto');
 
     if (!isGestor) {
@@ -5431,6 +5490,9 @@ function abrirDocumentoRelatorio(opts) {
             clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot, .blk')
                 .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
             cortes.sort(function(a, b) { return a - b; });
+            var forcadas = [];
+            clone.querySelectorAll('.quebra').forEach(function(e) { forcadas.push(e.getBoundingClientRect().top - topo); });
+            forcadas.sort(function(a, b) { return a - b; });
             var altura = Math.ceil(clone.scrollHeight);
 
             window.html2canvas(clone, {
@@ -5448,14 +5510,16 @@ function abrirDocumentoRelatorio(opts) {
                 var ini = 0, pag = 0;
                 // Se sobrar só um pedaço pequeno para a 2ª página, reduz levemente e mantém tudo em 1 página
                 var alturaMm = altura * mmPorPx;
-                if (alturaMm > uH && alturaMm <= uH * 1.12) {
+                if (forcadas.length === 0 && alturaMm > uH && alturaMm <= uH * 1.12) {
                     var f = uH / alturaMm, w = uW * f;
                     pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', mL + (uW - w) / 2, mT, w, uH);
                     ini = altura; pag = 1;
                 }
                 while (ini < altura - 1) {
                     var lim = ini + pagPx, fimPg;
-                    if (lim >= altura) fimPg = altura;
+                    var fz = forcadas.filter(function(f) { return f > ini + 20 && f <= Math.min(lim, altura); });
+                    if (fz.length) fimPg = fz[0];
+                    else if (lim >= altura) fimPg = altura;
                     else {
                         fimPg = ini;
                         for (var k = 0; k < cortes.length; k++) if (cortes[k] > ini + 20 && cortes[k] <= lim) fimPg = cortes[k];
@@ -5700,6 +5764,485 @@ function printPagamentos(modo) {
     });
 }
 
+
+// =====================================================================
+// CONCILIAÇÃO ASSISTIDA (opção adicional à conciliação manual)
+// =====================================================================
+function _r2(v) { return Math.round((v || 0) * 100) / 100; }
+function _mesCurto(m) { return (MESES[parseInt(m)] || m).slice(0, 3); }
+
+// Parcelas em aberto (inclui as "a vencer") de todos os apartamentos, de janeiro até mesAte do ano
+function _parcelasAbertas(ano, mesAte) {
+    ano = String(ano);
+    const pagos = {};
+    (APP.pagamentos || []).forEach(p => {
+        const k = [p.apto, String(p.ano), p.mes, p.tipoTaxa].join('|');
+        pagos[k] = (pagos[k] || 0) + (p.valor || 0);
+        const ku = [p.apto, 'U', p.tipoTaxa].join('|');
+        pagos[ku] = (pagos[ku] || 0) + (p.valor || 0);
+    });
+    const out = [];
+    (APP.taxasApto || []).forEach(ta => {
+        const devido = _r2((ta.valor || 0) * (ta.quantidade || 1));
+        if (devido <= 0) return;
+        const tipo = ta.tipo || 'recorrente';
+        for (let m = 1; m <= mesAte; m++) {
+            const ms = String(m).padStart(2, '0');
+            if (tipo === 'unica' && ta.mesRef !== `${ano}-${ms}`) continue;
+            if (parcelaCancelada(ta.apto, ano, ms, ta.descricao)) continue;
+            const pago = tipo === 'unica' ? (pagos[[ta.apto, 'U', ta.descricao].join('|')] || 0)
+                                          : (pagos[[ta.apto, ano, ms, ta.descricao].join('|')] || 0);
+            const aberto = _r2(devido - pago);
+            if (aberto > 0.004) out.push({ apto: ta.apto, ano, mes: ms, tipoTaxa: ta.descricao, valor: aberto });
+        }
+    });
+    return out;
+}
+
+function _formaPorHistorico(h) {
+    h = String(h || '').toUpperCase();
+    if (/DEPOSITO|DEP\b|LOTERIC/.test(h)) return 'Depósito em Conta';
+    if (/PIX/.test(h)) return 'PIX';
+    if (/TRANSF|TED|DOC\b|CREDITO|CRED\b/.test(h)) return 'Crédito em Conta';
+    return 'PIX';
+}
+
+// Sugestões para um crédito: mês completo de um apto, uma taxa isolada ou vários meses seguidos
+function _sugestoesCredito(ext) {
+    const iso = _isoDeData(ext.data);
+    if (!iso) return { iso, cands: [], conf: 'nenhuma' };
+    const ano = iso.slice(0, 4), mC = parseInt(iso.slice(5, 7));
+    const V = _r2(Math.abs(ext.valor || 0));
+    const abertas = _parcelasAbertas(ano, Math.min(12, mC + 1));
+
+    const grupos = {};
+    abertas.forEach(p => { const k = p.apto + '|' + p.mes; (grupos[k] = grupos[k] || { apto: p.apto, ano, mes: p.mes, parcelas: [] }).parcelas.push(p); });
+    const porApto = {};
+    Object.values(grupos).forEach(g => { g.total = _r2(g.parcelas.reduce((s, p) => s + p.valor, 0)); (porApto[g.apto] = porApto[g.apto] || []).push(g); });
+
+    const cands = [];
+    const add = (apto, parcelas, rotulo, prio, multi) => {
+        const key = apto + ':' + parcelas.map(p => p.mes + p.tipoTaxa).join(',');
+        if (!cands.some(c => c.key === key)) cands.push({ key, apto, parcelas, rotulo, prio, multi: !!multi });
+    };
+    Object.entries(porApto).forEach(([apto, gs]) => {
+        gs.sort((a, b) => a.mes.localeCompare(b.mes));
+        gs.forEach(g => {
+            const dist = Math.abs(parseInt(g.mes) - mC);
+            if (Math.abs(g.total - V) < 0.005) add(apto, g.parcelas, `${_mesCurto(g.mes)}/${ano} · ${g.parcelas.map(p => p.tipoTaxa).join(' + ')}`, dist);
+            else if (g.parcelas.length > 1) g.parcelas.forEach(p => {
+                if (Math.abs(p.valor - V) < 0.005) add(apto, [p], `${_mesCurto(p.mes)}/${ano} · ${p.tipoTaxa}`, dist + 0.5);
+            });
+        });
+        // Vários meses seguidos, começando pelo mais antigo em aberto
+        let soma = 0;
+        for (let k = 0; k < gs.length && k < 6; k++) {
+            soma = _r2(soma + gs[k].total);
+            if (k >= 1 && Math.abs(soma - V) < 0.005) {
+                const ps = gs.slice(0, k + 1).flatMap(g => g.parcelas);
+                add(apto, ps, `${_mesCurto(gs[0].mes)} a ${_mesCurto(gs[k].mes)}/${ano} (${k + 1} meses)`, 1, true);
+            }
+        }
+    });
+    cands.sort((a, b) => a.prio - b.prio || String(a.apto).localeCompare(String(b.apto), 'pt-BR', { numeric: true }));
+    const aptos = new Set(cands.map(c => c.apto));
+    // Alta confiança só quando há um único apartamento possível e o valor bate com um mês (não com vários meses somados)
+    const conf = cands.length === 0 ? 'nenhuma'
+        : (aptos.size === 1 && !cands[0].multi) ? 'alta'
+        : aptos.size <= 6 ? 'media' : 'baixa';
+    return { iso, cands: cands.slice(0, 40), conf };
+}
+
+function _creditosPendentesAssistida() {
+    const fAno = document.getElementById('caAno')?.value || '';
+    const fMes = document.getElementById('caMes')?.value || '';
+    return (APP.extrato || []).filter(e => {
+        if (e.conciliado || e.tipo !== 'C') return false;
+        if (/SALDO/i.test(e.historico || '')) return false;
+        const p = parseExtDate(e.data);
+        if (!p) return false;
+        if (fAno && p.ano !== fAno) return false;
+        if (fMes && p.mes !== fMes) return false;
+        return true;
+    });
+}
+
+function renderConcAssistida() {
+    const selAno = document.getElementById('caAno');
+    if (selAno && selAno.options.length === 0) {
+        const anos = [...new Set((APP.extrato || []).map(e => { const p = parseExtDate(e.data); return p ? p.ano : null; }).filter(Boolean))].sort();
+        const cur = String(new Date().getFullYear());
+        if (!anos.includes(cur)) anos.push(cur);
+        selAno.innerHTML = anos.map(a => `<option value="${a}" ${a === cur ? 'selected' : ''}>${a}</option>`).join('');
+    }
+    const tb = document.getElementById('tbConcAssist');
+    if (!tb) return;
+    const creditos = _creditosPendentesAssistida();
+    APP._caSug = {};
+    const confInfo = { alta: ['badge-green', 'Alta'], media: ['badge-amber', 'Média'], baixa: ['badge-red', 'Baixa'], nenhuma: ['badge-red', 'Sem sugestão'] };
+    const formas = ['PIX', 'Crédito em Conta', 'Depósito em Conta', 'Dinheiro', 'Cartão de Crédito'];
+    let nAlta = 0, nSug = 0;
+
+    tb.innerHTML = creditos.length ? creditos.map(e => {
+        const s = _sugestoesCredito(e);
+        APP._caSug[e.id] = s;
+        if (s.conf === 'alta') nAlta++;
+        if (s.cands.length) nSug++;
+        const ci = confInfo[s.conf];
+        const forma = _formaPorHistorico(e.historico);
+        const sugHtml = s.cands.length
+            ? `<div style="display:flex;flex-direction:column;gap:4px;min-width:240px">
+                 <span class="badge ${ci[0]}" style="align-self:flex-start">${ci[1]} confiança${s.cands.length > 1 ? ` · ${s.cands.length} opções` : ''}</span>
+                 <select id="caSel_${e.id}" style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);color:var(--text-primary)">
+                    ${s.conf !== 'alta' ? '<option value="">Escolha o apartamento...</option>' : ''}
+                    ${s.cands.map((c, i) => { const m = (APP.moradores || []).find(x => x.apto === c.apto); return `<option value="${i}">Apto ${H(c.apto)}${m ? ' (' + H(m.nome) + ')' : ''} · ${H(c.rotulo)}</option>`; }).join('')}
+                 </select></div>`
+            : `<span class="badge badge-red">Sem correspondência</span><div style="font-size:0.75rem;color:var(--text-secondary);margin-top:3px">Use a aba Conciliar</div>`;
+        return `<tr>
+            <td>${s.iso ? fmtDate(s.iso) : H(e.data)}</td>
+            <td>${H(e.historico)}</td>
+            <td style="font-weight:600;color:var(--accent);white-space:nowrap">${fmtMoney(Math.abs(e.valor))}</td>
+            <td>${sugHtml}</td>
+            <td><select id="caForma_${e.id}" style="padding:4px 8px;font-size:0.8rem;border:1px solid var(--border);border-radius:4px;background:var(--bg-card);color:var(--text-primary)">
+                ${formas.map(f => `<option value="${f}" ${f === forma ? 'selected' : ''}>${f}</option>`).join('')}</select></td>
+            <td>${s.cands.length ? `<button class="btn btn-success btn-sm" onclick="caConfirmar('${e.id}')"><i class="ti ti-check"></i> Confirmar</button>` : ''}</td>
+        </tr>`;
+    }).join('') : '<tr><td colspan="6" class="empty-state"><p>Nenhum crédito pendente no período.</p></td></tr>';
+
+    const res = document.getElementById('caResumo');
+    if (res) res.innerHTML = `<strong>${creditos.length}</strong> crédito(s) pendente(s) &middot; <span style="color:var(--accent)">${nAlta} com alta confiança</span> &middot; ${nSug - nAlta} com mais de uma opção &middot; ${creditos.length - nSug} sem sugestão`;
+    const btn = document.getElementById('btnCaAlta');
+    if (btn) btn.disabled = nAlta === 0;
+    renderConcAssistidaFeitos();
+}
+
+function renderConcAssistidaFeitos() {
+    const tb = document.getElementById('tbConcAssistFeitos');
+    if (!tb) return;
+    const fAno = document.getElementById('caAno')?.value || '';
+    const fMes = document.getElementById('caMes')?.value || '';
+    const feitos = (APP.extrato || []).filter(e => e.conciliadoAssistido && Array.isArray(e.pagamentosVinculados)).filter(e => {
+        const p = parseExtDate(e.data); if (!p) return false;
+        return (!fAno || p.ano === fAno) && (!fMes || p.mes === fMes);
+    });
+    tb.innerHTML = feitos.length ? feitos.map(e => {
+        const pgs = e.pagamentosVinculados.map(id => (APP.pagamentos || []).find(p => p.id === id)).filter(Boolean);
+        const desc = pgs.map(p => `Apto ${H(p.apto)} · ${_mesCurto(p.mes)}/${H(p.ano)} · ${H(p.tipoTaxa)} (${fmtMoney(p.valor)})`).join('<br>') || '<span style="color:var(--text-light)">Pagamentos não encontrados</span>';
+        const iso = _isoDeData(e.data);
+        return `<tr><td>${iso ? fmtDate(iso) : H(e.data)}</td><td>${H(e.historico)}</td>
+            <td style="font-weight:600;color:var(--accent)">${fmtMoney(Math.abs(e.valor))}</td>
+            <td style="font-size:0.82rem">${desc}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="caDesfazer('${e.id}')"><i class="ti ti-arrow-back-up"></i> Desfazer</button></td></tr>`;
+    }).join('') : '<tr><td colspan="5" class="empty-state"><p>Nenhuma conciliação assistida no período.</p></td></tr>';
+}
+
+async function _caExecutar(extId, idxCand, forma) {
+    const ext = (APP.extrato || []).find(e => e.id === extId);
+    const s = APP._caSug && APP._caSug[extId];
+    const cand = s && s.cands[idxCand];
+    if (!ext || !cand || ext.conciliado) return false;
+    const morador = (APP.moradores || []).find(m => m.apto === cand.apto);
+    const criados = [];
+    try {
+        for (const p of cand.parcelas) {
+            const data = {
+                ano: String(p.ano), mes: p.mes, apto: p.apto, tipoTaxa: p.tipoTaxa, valor: _r2(p.valor),
+                dataPgto: s.iso, formaPagamento: forma, moradorNome: morador?.nome || '',
+                origem: 'conciliacao_assistida', extratoId: ext.id
+            };
+            const id = await fbSave('pagamentos', null, data);
+            if (!id) throw new Error('Falha ao registrar o pagamento.');
+            criados.push(id);
+            APP.pagamentos.push({ id, ...data });
+        }
+        const upd = {
+            conciliado: true, categoriaConciliacao: 'Taxa Condominial',
+            pagamentosVinculados: criados, conciliadoAssistido: true,
+            conciliadoEm: new Date().toISOString(), conciliadoPor: APP.currentUser?.uid || ''
+        };
+        await condoRef().collection('extrato').doc(ext.id).update(upd);
+        Object.assign(ext, upd);
+        auditLog('CONCILIACAO_ASSISTIDA', { extratoId: ext.id, apto: cand.apto, valor: Math.abs(ext.valor), pagamentos: criados });
+        return true;
+    } catch (e) {
+        // Desfaz os pagamentos criados nesta tentativa, para não deixar nada pela metade
+        for (const id of criados) {
+            try { await condoRef().collection('pagamentos').doc(id).delete(); } catch (_) {}
+            APP.pagamentos = APP.pagamentos.filter(p => p.id !== id);
+        }
+        toast('Não foi possível conciliar: ' + e.message, 'error');
+        return false;
+    }
+}
+
+function _caAtualizarTelas() {
+    renderConcAssistida();
+    try { renderExtrato(); } catch (_) {}
+    try { renderPagamentos(); } catch (_) {}
+}
+
+async function caConfirmar(extId) {
+    const v = document.getElementById('caSel_' + extId)?.value;
+    if (v === '' || v === undefined) { toast('Escolha o apartamento na lista de sugestões.', 'warning'); return; }
+    const idx = parseInt(v);
+    const forma = document.getElementById('caForma_' + extId)?.value || 'PIX';
+    if (await _caExecutar(extId, idx, forma)) {
+        toast('Pagamento registrado e crédito conciliado.');
+        _caAtualizarTelas();
+    }
+}
+
+async function caConfirmarAltaConfianca() {
+    const altas = Object.entries(APP._caSug || {}).filter(([, s]) => s.conf === 'alta');
+    if (!altas.length) return;
+    if (!confirm(`Confirmar ${altas.length} crédito(s) com alta confiança?\n\nCada um será lançado em Pagamentos de Taxas com a sugestão e a forma de pagamento exibidas na tela.`)) return;
+    let ok = 0;
+    // Recalcula a cada lançamento para nunca usar a mesma parcela duas vezes
+    for (let i = 0; i < altas.length + 5; i++) {
+        renderConcAssistida();
+        const prox = Object.entries(APP._caSug || {}).find(([, s]) => s.conf === 'alta');
+        if (!prox) break;
+        const [extId] = prox;
+        const idx = parseInt(document.getElementById('caSel_' + extId)?.value || '0');
+        const forma = document.getElementById('caForma_' + extId)?.value || 'PIX';
+        if (!(await _caExecutar(extId, idx, forma))) break;
+        ok++;
+    }
+    toast(`${ok} crédito(s) conciliado(s).`);
+    _caAtualizarTelas();
+}
+
+async function caDesfazer(extId) {
+    const ext = (APP.extrato || []).find(e => e.id === extId);
+    if (!ext) return;
+    if (!confirm('Desfazer esta conciliação?\n\nOs pagamentos lançados por ela serão excluídos e o crédito voltará a ficar pendente.')) return;
+    try {
+        for (const id of (ext.pagamentosVinculados || [])) {
+            await condoRef().collection('pagamentos').doc(id).delete();
+            APP.pagamentos = APP.pagamentos.filter(p => p.id !== id);
+        }
+        const del = firebase.firestore.FieldValue.delete();
+        await condoRef().collection('extrato').doc(ext.id).update({
+            conciliado: false, categoriaConciliacao: del, pagamentosVinculados: del,
+            conciliadoAssistido: del, conciliadoEm: del, conciliadoPor: del
+        });
+        ext.conciliado = false;
+        ['categoriaConciliacao', 'pagamentosVinculados', 'conciliadoAssistido', 'conciliadoEm', 'conciliadoPor'].forEach(k => delete ext[k]);
+        auditLog('CONCILIACAO_ASSISTIDA_DESFEITA', { extratoId: ext.id });
+        toast('Conciliação desfeita.');
+        _caAtualizarTelas();
+    } catch (e) {
+        toast('Erro ao desfazer: ' + e.message, 'error');
+    }
+}
+
+// =====================================================================
+// COBRANÇA EM LOTE (opção adicional ao boleto individual)
+// =====================================================================
+function loteInit() {
+    const mr = document.getElementById('loteMesRef');
+    if (mr && !mr.value) {
+        const n = new Date();
+        mr.value = `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`;
+        loteAjustarVenc();
+    }
+}
+function loteAjustarVenc() {
+    const mr = document.getElementById('loteMesRef')?.value;
+    if (!mr) return;
+    const [a, m] = mr.split('-');
+    const ultimo = new Date(parseInt(a), parseInt(m), 0).getDate();
+    document.getElementById('loteVenc').value = `${a}-${m}-${String(Math.min(inadDiaVenc(), ultimo)).padStart(2, '0')}`;
+}
+
+function montarLote() {
+    const mr = document.getElementById('loteMesRef')?.value;
+    if (!mr) { toast('Escolha o mês de referência.', 'error'); return; }
+    const [ano, mes] = mr.split('-');
+    const venc = document.getElementById('loteVenc')?.value || '';
+    const aptos = [...new Set((APP.taxasApto || []).map(t => t.apto))].sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true }));
+    if (!aptos.length) { toast('Nenhuma taxa vinculada aos apartamentos. Use a aba "Taxas por Apartamento".', 'error'); return; }
+
+    const abertasMes = _parcelasAbertas(ano, parseInt(mes)).filter(p => p.mes === mes);
+    const mesesAnt = Array.from({ length: parseInt(mes) - 1 }, (_, k) => String(k + 1).padStart(2, '0'));
+
+    const linhas = aptos.map(apto => {
+        const itens = abertasMes.filter(p => p.apto === apto);
+        const total = _r2(itens.reduce((s, p) => s + p.valor, 0));
+        const anteriores = mesesAnt.length ? pendenciasVencidasApto(apto, ano, mesesAnt) : [];
+        const totalAnt = _r2(anteriores.reduce((s, p) => s + p.valorAberto, 0));
+        const morador = (APP.moradores || []).find(m => m.apto === apto) || {};
+        return { apto, itens, total, anteriores, totalAnt, morador, marcado: total > 0 };
+    });
+    APP._lote = { ano, mes, venc, linhas };
+    renderLote();
+}
+
+function renderLote() {
+    const L = APP._lote;
+    const tb = document.getElementById('tbLote');
+    if (!L || !tb) return;
+    const comAnt = document.getElementById('loteAnteriores')?.checked;
+    tb.innerHTML = L.linhas.map((l, i) => {
+        const tel = String(l.morador.telefone || '').replace(/\D/g, '');
+        const pago = l.total <= 0;
+        return `<tr style="${pago ? 'opacity:0.6' : ''}">
+            <td><input type="checkbox" class="lote-check" data-i="${i}" ${l.marcado ? 'checked' : ''} ${pago ? 'disabled' : ''} onchange="APP._lote.linhas[${i}].marcado=this.checked;loteResumo()" style="accent-color:var(--primary);width:16px;height:16px"></td>
+            <td><strong>${H(l.apto)}</strong></td>
+            <td>${H(l.morador.nome || '—')}</td>
+            <td style="font-size:0.82rem">${pago ? '<span class="badge badge-green">Nada a cobrar no mês</span>' : l.itens.map(p => H(p.tipoTaxa)).join('<br>')}</td>
+            <td style="font-weight:700;white-space:nowrap">${fmtMoney(l.total)}</td>
+            <td style="white-space:nowrap">${l.totalAnt > 0 ? `<span style="color:var(--accent-red);font-weight:600">${fmtMoney(l.totalAnt)}</span><div style="font-size:0.72rem;color:var(--text-secondary)">${l.anteriores.length} parcela(s)</div>` : '<span style="color:var(--text-light)">—</span>'}</td>
+            <td style="white-space:nowrap">${pago ? '' : `
+                <button class="btn btn-outline btn-sm" title="${tel ? 'Abrir WhatsApp' : 'Morador sem telefone cadastrado'}" ${tel ? '' : 'disabled'} onclick="loteWhatsApp(${i})"><i class="ti ti-brand-whatsapp"></i></button>
+                <button class="btn btn-outline btn-sm" title="${l.morador.email ? 'Enviar por e-mail' : 'Morador sem e-mail cadastrado'}" ${l.morador.email ? '' : 'disabled'} onclick="loteEmail(${i})"><i class="ti ti-mail"></i></button>
+                <button class="btn btn-outline btn-sm" title="Copiar mensagem" onclick="loteCopiar(${i})"><i class="ti ti-copy"></i></button>`}</td>
+        </tr>`;
+    }).join('');
+    document.getElementById('loteAcoes').style.display = 'flex';
+    loteResumo();
+}
+
+function loteResumo() {
+    const L = APP._lote; if (!L) return;
+    const sel = L.linhas.filter(l => l.marcado && l.total > 0);
+    const total = sel.reduce((s, l) => s + l.total, 0);
+    const pagos = L.linhas.filter(l => l.total <= 0).length;
+    document.getElementById('loteResumo').innerHTML = `
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-building"></i></div><div class="stat-info"><h4>${sel.length}</h4><span>Unidades selecionadas</span></div></div>
+            <div class="stat-card"><div class="stat-icon green"><i class="ti ti-cash"></i></div><div class="stat-info"><h4>${fmtMoney(total)}</h4><span>Total a cobrar &ndash; ${MESES[parseInt(L.mes)]}/${L.ano}</span></div></div>
+            <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-circle-check"></i></div><div class="stat-info"><h4>${pagos}</h4><span>Unidades sem valor a cobrar</span></div></div>
+        </div>`;
+}
+
+function loteMarcarTodos(v) {
+    const L = APP._lote; if (!L) return;
+    L.linhas.forEach(l => { if (l.total > 0) l.marcado = v; });
+    renderLote();
+}
+
+function _lotePix(l) {
+    const L = APP._lote;
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    if (!condo.pix || l.total <= 0) return '';
+    return gerarPixPayload({
+        chave: condo.pix,
+        // Sem acentos: o padrão PIX (BR Code) conta caracteres, e letras acentuadas podem invalidar o código em alguns bancos
+        nome: String(condo.nome || 'Condominio').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ]/g, '').substring(0, 25).trim(),
+        cidade: cidadeDoCondominio(condo) || 'SAO PAULO',
+        valor: l.total.toFixed(2),
+        txid: ('COND' + String(l.apto) + L.ano + L.mes).replace(/[^A-Za-z0-9]/g, '').substring(0, 25)
+    });
+}
+
+function _loteMensagem(l) {
+    const L = APP._lote;
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const nomeCondo = condo.nome || 'Condomínio';
+    const comAnt = document.getElementById('loteAnteriores')?.checked;
+    const pix = _lotePix(l);
+    let t = `Olá${l.morador.nome ? ', ' + l.morador.nome : ''}!\n\n`;
+    t += `Segue a cobrança do ${nomeCondo} referente a ${MESES[parseInt(L.mes)]}/${L.ano} – Apto ${l.apto}.\n\n`;
+    l.itens.forEach(p => { t += `• ${p.tipoTaxa}: ${fmtMoney(p.valor)}\n`; });
+    t += `\n*Total: ${fmtMoney(l.total)}*\n`;
+    if (L.venc) t += `Vencimento: ${fmtDate(L.venc)}\n`;
+    if (pix) t += `\nPIX copia e cola:\n${pix}\n`;
+    else if (condo.banco) t += `\nDepósito/Transferência: Banco ${condo.banco} | Ag: ${condo.agencia || '-'} | Cc: ${condo.conta || '-'}\n`;
+    if (comAnt && l.totalAnt > 0) {
+        t += `\nConsta também em aberto: ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => _mesCurto(p.mes) + '/' + p.ano).join(', ')}). Caso já tenha efetuado o pagamento, por gentileza nos envie o comprovante.\n`;
+    }
+    t += `\nQualquer dúvida, estamos à disposição.\nAdministração – ${nomeCondo}`;
+    return t;
+}
+
+function loteWhatsApp(i) {
+    const l = APP._lote.linhas[i];
+    let tel = String(l.morador.telefone || '').replace(/\D/g, '');
+    if (!tel) return;
+    if (tel.length <= 11) tel = '55' + tel;
+    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(_loteMensagem(l))}`, '_blank');
+}
+function loteEmail(i) {
+    const L = APP._lote, l = L.linhas[i];
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const assunto = `${condo.nome || 'Condomínio'} – Cobrança ${MESES[parseInt(L.mes)]}/${L.ano} – Apto ${l.apto}`;
+    window.location.href = `mailto:${encodeURIComponent(l.morador.email)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(_loteMensagem(l))}`;
+}
+function _copiarTexto(t, ok) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(() => toast(ok)).catch(() => prompt('Copie o texto:', t));
+    else prompt('Copie o texto:', t);
+}
+function loteCopiar(i) { _copiarTexto(_loteMensagem(APP._lote.linhas[i]), 'Mensagem copiada!'); }
+function copiarTodasMensagensLote() {
+    const sel = (APP._lote?.linhas || []).filter(l => l.marcado && l.total > 0);
+    if (!sel.length) { toast('Nenhuma unidade selecionada.', 'error'); return; }
+    _copiarTexto(sel.map(l => `===== APTO ${l.apto} =====\n` + _loteMensagem(l)).join('\n\n'), `${sel.length} mensagem(ns) copiada(s)!`);
+}
+
+function gerarBoletosLote(modo) {
+    const L = APP._lote;
+    const sel = (L?.linhas || []).filter(l => l.marcado && l.total > 0);
+    if (!sel.length) { toast('Nenhuma unidade selecionada.', 'error'); return; }
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const nomeCondo = condo.nome || 'Condomínio';
+    const comAnt = document.getElementById('loteAnteriores')?.checked;
+    const ref = `${MESES[parseInt(L.mes)]}/${L.ano}`;
+    const agora = new Date();
+    const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+
+    const corpo = sel.map((l, k) => {
+        const pix = _lotePix(l);
+        let qr = '';
+        if (pix) {
+            try { const q = qrcode(0, 'M'); q.addData(pix); q.make(); qr = q.createImgTag(4, 8); } catch (e) { qr = ''; }
+        }
+        return `<div class="bol ${k > 0 ? 'quebra' : ''}">
+            ${cabecalhoCondoHtml(condo, 'Boleto de Cobrança', ref)}
+            <div class="ident" style="grid-template-columns:repeat(4,1fr)">
+                <div><span>Unidade</span><b>Apto ${H(l.apto)}</b></div>
+                <div><span>Responsável</span><b>${H(l.morador.nome || '—')}</b></div>
+                <div><span>Referência</span><b>${H(ref)}</b></div>
+                <div><span>Vencimento</span><b>${L.venc ? fmtDate(L.venc) : '—'}</b></div>
+            </div>
+            <table>
+                <thead><tr><th>Descrição</th><th>Valor</th></tr></thead>
+                <tbody>${l.itens.map(p => `<tr><td>${H(p.tipoTaxa)}</td><td class="val">${fmtMoney(p.valor)}</td></tr>`).join('')}</tbody>
+            </table>
+            <div class="total"><span>TOTAL A PAGAR</span><b style="color:#FBBF24">${fmtMoney(l.total)}</b></div>
+            ${pix ? `<div class="pixbox">
+                <div class="qr">${qr}</div>
+                <div class="pixtxt">
+                    <h4>Pague via PIX</h4>
+                    <p>Escaneie o QR Code com o app do seu banco ou use o código "copia e cola":</p>
+                    <div class="cc">${H(pix)}</div>
+                    <p class="ch">Chave PIX: <strong>${H(condo.pix)}</strong></p>
+                </div>
+            </div>` : ''}
+            ${condo.banco ? `<p class="banco"><strong>Depósito/Transferência:</strong> Banco ${H(condo.banco)} | Ag: ${H(condo.agencia || '-')} | Cc: ${H(condo.conta || '-')}</p>` : ''}
+            ${comAnt && l.totalAnt > 0 ? `<div class="alerta" style="margin-top:14px"><strong>Débitos anteriores em aberto:</strong> ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => H(_mesCurto(p.mes) + '/' + p.ano)).join(', ')}). Valor não incluído no total acima. Caso já tenha efetuado o pagamento, por gentileza envie o comprovante à administração.</div>` : ''}
+            <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>
+        </div>`;
+    }).join('');
+
+    const css = `
+    .quebra { page-break-before: always; break-before: page; }
+    .bol { padding-top: 4px; }
+    .pixbox { margin-top: 16px; display: flex; gap: 18px; align-items: center; border: 2px dashed #CBD5E1; border-radius: 12px; padding: 14px 16px; background: #FAFAFA; page-break-inside: avoid; }
+    .pixbox .qr img { display: block; width: 170px; height: 170px; image-rendering: pixelated; }
+    .pixtxt h4 { margin: 0 0 4px; font-size: 14px; color: #1A2744; }
+    .pixtxt p { margin: 0 0 6px; font-size: 11.5px; color: #475569; }
+    .pixtxt .cc { font-family: Consolas, monospace; font-size: 9.5px; word-break: break-all; background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; color: #334155; }
+    .pixtxt .ch { margin-top: 6px; }
+    .banco { font-size: 12px; color: #475569; margin-top: 10px; }`;
+
+    abrirDocumentoRelatorio({
+        modo, corpo, css,
+        titulo: `Boletos ${ref} - ${nomeCondo}`,
+        nomeArquivo: ['Boletos', slugArquivo(nomeCondo), L.ano + '-' + L.mes].join('_') + '.pdf'
+    });
+}
+
 // ===== VENCIMENTO DAS PARCELAS (regra "A vencer") =====
 // Vencimento padrão: todo dia 16. Se o condomínio tiver o campo diaVencimento, ele prevalece.
 const INAD_DIA_VENCIMENTO = 16;
@@ -5897,6 +6440,9 @@ function printInadimplentes(modo) {
             clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot, .blk')
                 .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
             cortes.sort(function(a, b) { return a - b; });
+            var forcadas = [];
+            clone.querySelectorAll('.quebra').forEach(function(e) { forcadas.push(e.getBoundingClientRect().top - topo); });
+            forcadas.sort(function(a, b) { return a - b; });
             var altura = Math.ceil(clone.scrollHeight);
 
             window.html2canvas(clone, {
@@ -5914,14 +6460,16 @@ function printInadimplentes(modo) {
                 var ini = 0, pag = 0;
                 // Se sobrar só um pedaço pequeno para a 2ª página, reduz levemente e mantém tudo em 1 página
                 var alturaMm = altura * mmPorPx;
-                if (alturaMm > uH && alturaMm <= uH * 1.12) {
+                if (forcadas.length === 0 && alturaMm > uH && alturaMm <= uH * 1.12) {
                     var f = uH / alturaMm, w = uW * f;
                     pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', mL + (uW - w) / 2, mT, w, uH);
                     ini = altura; pag = 1;
                 }
                 while (ini < altura - 1) {
                     var lim = ini + pagPx, fimPg;
-                    if (lim >= altura) fimPg = altura;
+                    var fz = forcadas.filter(function(f) { return f > ini + 20 && f <= Math.min(lim, altura); });
+                    if (fz.length) fimPg = fz[0];
+                    else if (lim >= altura) fimPg = altura;
                     else {
                         fimPg = ini;
                         for (var k = 0; k < cortes.length; k++) if (cortes[k] > ini + 20 && cortes[k] <= lim) fimPg = cortes[k];
@@ -6394,8 +6942,8 @@ function previewBoleto() {
     if (pixKey) {
         const pixPayload = gerarPixPayload({
             chave: pixKey,
-            nome: (condo.nome || 'Condominio').substring(0, 25),
-            cidade: 'SAO PAULO',
+            nome: condo.nome || 'Condominio',
+            cidade: cidadeDoCondominio(condo) || 'SAO PAULO',
             valor: totalGeral.toFixed(2),
             txid: `COND${apto}${anoRef}${mesNum}`
         });
@@ -6410,6 +6958,8 @@ function previewBoleto() {
                         ${qr.createImgTag(4, 8)}
                     </div>
                     <p style="font-size:0.75rem;color:#64748B;margin-top:0.8rem">Chave PIX: <strong>${H(pixKey)}</strong></p>
+                    <p style="font-size:0.72rem;color:#475569;margin-top:0.7rem;font-weight:600">PIX copia e cola:</p>
+                    <div style="font-family:Consolas,monospace;font-size:0.68rem;word-break:break-all;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px;color:#334155;max-width:460px;margin:0.3rem auto 0;text-align:left">${H(pixPayload)}</div>
                     <p style="font-size:0.7rem;color:#94A3B8;margin-top:0.3rem">Escaneie o QR Code com o app do seu banco</p>
                 </div>`;
         } catch(e) {
@@ -6489,11 +7039,34 @@ function previewBoleto() {
 }
 
 // ===== GERADOR PIX PAYLOAD (Padrão BR Code / EMV) =====
+// Padrão BR Code exige texto ASCII: sem acentos e sem caracteres especiais
+function _pixTexto(t, max) {
+    return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, max).trim();
+}
+// Normaliza a chave PIX no formato que os bancos esperam
+function _pixChave(chave) {
+    let k = String(chave || '').trim();
+    if (!k) return '';
+    if (k.includes('@')) return k.toLowerCase();                                     // e-mail
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(k)) return k.toLowerCase(); // chave aleatória
+    const dig = k.replace(/\D/g, '');
+    if (k.startsWith('+') || /\(\d{2}\)/.test(k)) {                                   // telefone
+        return '+' + (dig.startsWith('55') && dig.length >= 12 ? dig : '55' + dig);
+    }
+    if (/^[\d.\-\/\s]+$/.test(k) && (dig.length === 11 || dig.length === 14)) return dig; // CPF ou CNPJ
+    return k;
+}
+
 function gerarPixPayload({ chave, nome, cidade, valor, txid }) {
     function tlv(id, val) {
         const len = String(val.length).padStart(2, '0');
         return id + len + val;
     }
+    chave = _pixChave(chave);
+    nome = _pixTexto(nome, 25) || 'CONDOMINIO';
+    cidade = (_pixTexto(cidade, 15) || 'SAO PAULO').toUpperCase();
+    txid = String(txid || '').replace(/[^A-Za-z0-9]/g, '').substring(0, 25) || '***';
 
     // Merchant Account Information (PIX)
     const mai = tlv('00', 'br.gov.bcb.pix') + tlv('01', chave);
@@ -6510,10 +7083,8 @@ function gerarPixPayload({ chave, nome, cidade, valor, txid }) {
     payload += tlv('59', nome.substring(0, 25));         // Merchant Name
     payload += tlv('60', cidade.substring(0, 15));       // Merchant City
 
-    // Additional Data
-    if (txid) {
-        payload += tlv('62', tlv('05', txid.substring(0, 25)));
-    }
+    // Additional Data (identificador da cobrança; '***' quando não há)
+    payload += tlv('62', tlv('05', txid));
 
     // CRC16 placeholder
     payload += '6304';
@@ -6689,6 +7260,8 @@ function getExtratoConciliado(ano, mes) {
         else return;
         if (eAno !== String(ano)) return;
         if (mes && eMes !== mes) return;
+        // Crédito conciliado pela Conciliação Assistida já foi lançado em Pagamentos de Taxas
+        if (e.tipo !== 'D' && Array.isArray(e.pagamentosVinculados) && e.pagamentosVinculados.length) return;
         const item = { data: e.data, categoria: e.categoriaConciliacao||'Outros', historico: e.historico||'', valor: Math.abs(e.valor||0), tipo: e.tipo, mesNome: MESES[parseInt(eMes)]||eMes };
         if (e.tipo === 'D') despesasExtrato.push(item);
         else receitasExtrato.push(item);
