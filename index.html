@@ -1600,6 +1600,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <label id="wrapInadExcluidas" class="access-item" style="display:none;cursor:pointer;white-space:nowrap">
                         <input type="checkbox" id="filterInadExcluidas" onchange="renderInadimplentes()"> Mostrar excluídas
                     </label>
+                    <label class="access-item" style="cursor:pointer;white-space:nowrap" title="Não exibe as parcelas que ainda estão dentro do prazo de pagamento">
+                        <input type="checkbox" id="filterInadSemAVencer" onchange="renderInadimplentes()"> Ocultar parcelas a vencer
+                    </label>
                 </div>
                 <div id="inadResumo" style="margin-bottom:1rem"></div>
                 <div class="table-container">
@@ -5296,7 +5299,9 @@ function renderInadimplentes() {
         if (e) { i.exclusao = e; excluidas.push(i); } else ativos.push(i);
     });
     inadimplentes.length = 0;
-    inadimplentes.push(...ativos);
+    // Opção "Ocultar parcelas a vencer": mostra só o que já venceu
+    const semAVencer = !!document.getElementById('filterInadSemAVencer')?.checked;
+    inadimplentes.push(...(semAVencer ? ativos.filter(i => !inadAVencer(i)) : ativos));
     renderInadExcluidas(mostrarExcl ? excluidas : null);
 
     // Resumo
@@ -5311,7 +5316,7 @@ function renderInadimplentes() {
     // Guardar para o relatório impresso
     APP._inadLista = inadimplentes.slice();
     APP._inadResumo = { totalAberto, aptosUnicos, parcelas: inadimplentes.length };
-    APP._inadFiltro = { ano, mes, apto: filterApto, taxa: filterTaxa };
+    APP._inadFiltro = { ano, mes, apto: filterApto, taxa: filterTaxa, semAVencer };
 
     const resumoEl = document.getElementById('inadResumo');
     if (resumoEl) {
@@ -6293,6 +6298,7 @@ function printInadimplentes(modo) {
     const filtros = [];
     if (f.apto) filtros.push('Apartamento: ' + f.apto);
     if (f.taxa) filtros.push('Tipo de taxa: ' + f.taxa);
+    if (f.semAVencer) filtros.push('Somente parcelas vencidas (parcelas a vencer não incluídas)');
 
     // Tabela agrupada por apartamento (sem a coluna Associar/Ações)
     let rows = '';
