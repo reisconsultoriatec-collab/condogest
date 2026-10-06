@@ -1586,8 +1586,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
-                    <button class="btn btn-outline btn-sm" onclick="printReport('relDespesas')"><i class="ti ti-printer"></i> Imprimir</button>
-                    <button class="btn btn-outline btn-sm" onclick="exportPDF('pg-relDespesas','Relatório de Despesas')"><i class="ti ti-file-type-pdf"></i> Exportar PDF</button>
+                    <button class="btn btn-outline btn-sm" onclick="printRelDespesas('print')"><i class="ti ti-printer"></i> Imprimir</button>
+                    <button class="btn btn-outline btn-sm" onclick="printRelDespesas('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
                 </div>
                 <div id="relDespContent"></div>
             </div>
@@ -5372,6 +5372,7 @@ function abrirDocumentoRelatorio(opts) {
     .toolbar button.pri { background:#1A2744; border-color:#1A2744; color:#fff; }
     .toolbar button:disabled { opacity:.6; cursor:wait; }
     @media print { body { padding:0; max-width:none; } .toolbar { display:none !important; } }
+    ${opts.css || ''}
 </style></head><body>
     <div class="toolbar">
         <span id="tbStatus">${modo === 'pdf' ? 'Gerando PDF...' : 'Documento pronto'}</span>
@@ -5421,7 +5422,7 @@ function abrirDocumentoRelatorio(opts) {
             // Pontos onde a página pode ser quebrada sem cortar linhas ou blocos
             var topo = clone.getBoundingClientRect().top;
             var cortes = [];
-            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot')
+            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot, .blk')
                 .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
             cortes.sort(function(a, b) { return a - b; });
             var altura = Math.ceil(clone.scrollHeight);
@@ -5887,7 +5888,7 @@ function printInadimplentes(modo) {
             // Pontos onde a página pode ser quebrada sem cortar linhas ou blocos
             var topo = clone.getBoundingClientRect().top;
             var cortes = [];
-            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot')
+            clone.querySelectorAll('tr, .hdr, .title, .gen, .ident, .intro, .declara, .alerta, .filtros, .cards, .total, .nota, .msg, .fecho, .ass, .foot, .blk')
                 .forEach(function(e) { cortes.push(e.getBoundingClientRect().bottom - topo); });
             cortes.sort(function(a, b) { return a - b; });
             var altura = Math.ceil(clone.scrollHeight);
@@ -6689,34 +6690,230 @@ function getExtratoConciliado(ano, mes) {
     return { despesasExtrato, receitasExtrato };
 }
 
+// ===== RELATÓRIO DE DESPESAS =====
+// Consolida Contas a Pagar + débitos do extrato bancário conciliado
+function dadosRelDespesas(ano, mes) {
+    ano = String(ano);
+    const itens = [];
+    (APP.contas || []).forEach(c => {
+        const v = c.vencimento || '';
+        if (!v.startsWith(ano)) return;
+        if (mes && !v.startsWith(`${ano}-${mes}`)) return;
+        itens.push({
+            iso: v.slice(0,10), mes: v.slice(5,7), categoria: c.categoria || 'Outros',
+            descricao: c.descricao || '', fornecedor: c.fornecedor || c.fornecedorNome || '',
+            valor: c.valor || 0, origem: 'Contas a Pagar', pago: c.status === 'pago'
+        });
+    });
+    getExtratoConciliado(ano, mes).despesasExtrato.forEach(e => {
+        let iso = '';
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(e.data)) iso = `${e.data.slice(6,10)}-${e.data.slice(3,5)}-${e.data.slice(0,2)}`;
+        else if (/^\d{4}-\d{2}-\d{2}/.test(e.data)) iso = e.data.slice(0,10);
+        else if (/^\d{8}$/.test(e.data)) iso = `${e.data.slice(0,4)}-${e.data.slice(4,6)}-${e.data.slice(6,8)}`;
+        itens.push({
+            iso, mes: iso.slice(5,7), categoria: e.categoria || 'Outros', descricao: e.historico || '', fornecedor: '',
+            valor: e.valor || 0, origem: 'Extrato Bancário', pago: true
+        });
+    });
+    itens.sort((a,b) => a.iso.localeCompare(b.iso));
+
+    const total = itens.reduce((s,i) => s + i.valor, 0);
+    const porCat = {};
+    itens.forEach(i => {
+        const c = porCat[i.categoria] || (porCat[i.categoria] = { categoria: i.categoria, total: 0, qtd: 0 });
+        c.total += i.valor; c.qtd++;
+    });
+    const categorias = Object.values(porCat).sort((a,b) => b.total - a.total);
+    const porMes = Array.from({ length: 12 }, (_, k) => ({ mes: String(k+1).padStart(2,'0'), total: 0 }));
+    itens.forEach(i => { const m = parseInt(i.mes); if (m >= 1 && m <= 12) porMes[m-1].total += i.valor; });
+    const mesesComDespesa = porMes.filter(m => m.total > 0).length;
+    const totalPendente = itens.filter(i => !i.pago).reduce((s,i) => s + i.valor, 0);
+    const qtdPendente = itens.filter(i => !i.pago).length;
+    return {
+        ano, mes, itens, total, categorias, porMes, mesesComDespesa, totalPendente, qtdPendente,
+        mediaMensal: mesesComDespesa ? total / mesesComDespesa : 0,
+        totalContas: itens.filter(i => i.origem === 'Contas a Pagar').reduce((s,i) => s + i.valor, 0),
+        totalExtrato: itens.filter(i => i.origem !== 'Contas a Pagar').reduce((s,i) => s + i.valor, 0)
+    };
+}
+
 function renderRelDespesas() {
-    const ano = document.getElementById('relDespAno')?.value || new Date().getFullYear();
+    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
     const mes = document.getElementById('relDespMes')?.value || '';
-    let listContas = APP.contas.filter(c => (c.vencimento||'').startsWith(ano));
-    if (mes) listContas = listContas.filter(c => (c.vencimento||'').startsWith(`${ano}-${mes}`));
-    const totalContas = listContas.reduce((s,c) => s + (c.valor||0), 0);
-    const { despesasExtrato } = getExtratoConciliado(ano, mes);
-    const totalExtrato = despesasExtrato.reduce((s,e) => s + e.valor, 0);
-    const totalGeral = totalContas + totalExtrato;
-    const byCat = {};
-    listContas.forEach(c => { byCat[c.categoria] = (byCat[c.categoria]||0) + (c.valor||0); });
-    despesasExtrato.forEach(e => { byCat[e.categoria] = (byCat[e.categoria]||0) + e.valor; });
-    let html = `<h4 style="margin-bottom:1rem">Despesas - ${mes ? MESES[parseInt(mes)]+'/':''}${ano}</h4>`;
-    html += `<table><thead><tr><th>Categoria</th><th>Total</th></tr></thead><tbody>`;
-    Object.entries(byCat).sort((a,b) => b[1]-a[1]).forEach(([cat,val]) => { html += `<tr><td>${H(cat)}</td><td><strong>${fmtMoney(val)}</strong></td></tr>`; });
-    html += `</tbody><tfoot><tr><td><strong>TOTAL GERAL</strong></td><td><strong style="color:var(--accent-red)">${fmtMoney(totalGeral)}</strong></td></tr></tfoot></table>`;
-    html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Contas a Pagar</h4>`;
-    html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Descricao</th><th>Valor</th><th>Status</th></tr></thead><tbody>`;
-    listContas.forEach(c => { html += `<tr><td>${fmtDate(c.vencimento)}</td><td>${H(c.categoria)}</td><td>${H(c.descricao)}</td><td>${fmtMoney(c.valor)}</td><td>${c.status==='pago'?'Pago':'Pendente'}</td></tr>`; });
-    if (listContas.length === 0) html += `<tr><td colspan="5" style="color:var(--text-light);text-align:center">Nenhuma conta registrada</td></tr>`;
-    html += `</tbody></table>`;
-    if (despesasExtrato.length > 0) {
-        html += `<h4 style="margin:1.5rem 0 1rem">Detalhamento - Extrato Bancario (Conciliado)</h4>`;
-        html += `<table><thead><tr><th>Data</th><th>Categoria</th><th>Historico</th><th>Valor</th><th>Origem</th></tr></thead><tbody>`;
-        despesasExtrato.forEach(e => { html += `<tr><td>${H(e.data)}</td><td>${H(e.categoria)}</td><td>${H(e.historico)}</td><td>${fmtMoney(e.valor)}</td><td><span class="badge badge-blue">Extrato</span></td></tr>`; });
-        html += `</tbody></table>`;
+    const d = dadosRelDespesas(ano, mes);
+    const el = document.getElementById('relDespContent');
+    if (!el) return;
+    const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
+    const maior = d.categorias[0];
+    const barra = (pct, cor) => `<div style="height:8px;background:var(--border);border-radius:6px;overflow:hidden;min-width:80px"><div style="height:100%;width:${Math.max(pct, 0.5).toFixed(1)}%;background:${cor};border-radius:6px"></div></div>`;
+
+    let html = `<h4 style="margin:0.5rem 0 1rem">Despesas &ndash; ${H(periodo)}</h4>
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-icon red"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(d.total)}</h4><span>Total de despesas</span></div></div>
+            <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-receipt"></i></div><div class="stat-info"><h4>${d.itens.length}</h4><span>Lançamentos</span></div></div>
+            ${!mes ? `<div class="stat-card"><div class="stat-icon amber"><i class="ti ti-calendar-stats"></i></div><div class="stat-info"><h4>${fmtMoney(d.mediaMensal)}</h4><span>Média mensal (${d.mesesComDespesa} ${d.mesesComDespesa === 1 ? 'mês' : 'meses'})</span></div></div>` : ''}
+            ${maior ? `<div class="stat-card"><div class="stat-icon red"><i class="ti ti-chart-pie"></i></div><div class="stat-info"><h4 style="font-size:1rem">${H(maior.categoria)}</h4><span>Maior categoria: ${fmtMoney(maior.total)}</span></div></div>` : ''}
+        </div>`;
+
+    if (d.itens.length === 0) {
+        el.innerHTML = html + '<div class="empty-state"><p>Nenhuma despesa registrada no período.</p></div>';
+        return;
     }
-    document.getElementById('relDespContent').innerHTML = html;
+
+    html += `<h4 style="margin:1rem 0 0.6rem">Despesas por categoria</h4>
+        <div class="table-container"><table><thead><tr><th>Categoria</th><th>Lançamentos</th><th>Participação</th><th style="text-align:right">Total</th></tr></thead><tbody>
+        ${d.categorias.map(c => { const pct = d.total ? c.total / d.total * 100 : 0; return `<tr>
+            <td><strong>${H(c.categoria)}</strong></td><td>${c.qtd}</td>
+            <td><div style="display:flex;align-items:center;gap:0.6rem">${barra(pct, 'var(--accent-red)')}<span style="font-size:0.8rem;color:var(--text-secondary);min-width:42px">${pct.toFixed(1)}%</span></div></td>
+            <td style="text-align:right;font-weight:700">${fmtMoney(c.total)}</td></tr>`; }).join('')}
+        <tr style="background:var(--bg-sidebar)"><td colspan="3" style="color:#fff;font-weight:700">TOTAL GERAL</td><td style="text-align:right;color:#fff;font-weight:700">${fmtMoney(d.total)}</td></tr>
+        </tbody></table></div>`;
+
+    if (!mes) {
+        const maxMes = Math.max(...d.porMes.map(m => m.total), 1);
+        html += `<h4 style="margin:1.5rem 0 0.6rem">Evolução mensal</h4>
+            <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;align-items:end;height:170px;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+            ${d.porMes.map(m => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%" title="${MESES[parseInt(m.mes)]}: ${fmtMoney(m.total)}">
+                <div style="width:70%;max-width:34px;height:${(m.total / maxMes * 100).toFixed(1)}%;min-height:${m.total ? 3 : 0}px;background:linear-gradient(180deg,#F87171,#DC2626);border-radius:5px 5px 0 0"></div>
+            </div>`).join('')}
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;font-size:0.68rem;color:var(--text-secondary);text-align:center;margin-top:4px">
+                ${d.porMes.map(m => `<div>${MESES[parseInt(m.mes)].slice(0,3)}</div>`).join('')}
+            </div>`;
+    }
+
+    html += `<h4 style="margin:1.5rem 0 0.6rem">Detalhamento dos lançamentos</h4>
+        <div class="table-container"><table><thead><tr><th>Data</th><th>Categoria</th><th>Descrição</th><th>Origem</th><th>Situação</th><th style="text-align:right">Valor</th></tr></thead><tbody>
+        ${d.itens.map(i => `<tr>
+            <td>${i.iso ? fmtDate(i.iso) : '—'}</td><td>${H(i.categoria)}</td><td>${H(i.descricao)}${i.fornecedor ? `<br><small style="color:var(--text-secondary)">${H(i.fornecedor)}</small>` : ''}</td>
+            <td><span class="badge ${i.origem === 'Contas a Pagar' ? 'badge-amber' : 'badge-blue'}">${i.origem === 'Contas a Pagar' ? 'Contas' : 'Extrato'}</span></td>
+            <td>${i.pago ? '<span class="badge badge-green">Pago</span>' : '<span class="badge badge-red">Pendente</span>'}</td>
+            <td style="text-align:right;font-weight:600">${fmtMoney(i.valor)}</td></tr>`).join('')}
+        </tbody></table></div>`;
+    el.innerHTML = html;
+}
+
+function printRelDespesas(modo) {
+    const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
+    const mes = document.getElementById('relDespMes')?.value || '';
+    const d = dadosRelDespesas(ano, mes);
+    if (d.itens.length === 0) { toast('Nenhuma despesa registrada no período.', 'error'); return; }
+
+    const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
+    const nomeCondo = condo.nome || 'Condomínio';
+    const agora = new Date();
+    const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
+    const maior = d.categorias[0];
+    const pctFmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+
+    // Por categoria
+    const linhasCat = d.categorias.map((c, k) => {
+        const pct = d.total ? c.total / d.total * 100 : 0;
+        return `<tr><td class="rk">${k+1}</td><td><strong>${H(c.categoria)}</strong></td><td class="ctr">${c.qtd}</td>
+            <td><div class="bar"><span style="width:${Math.max(pct, 0.6).toFixed(1)}%"></span></div></td><td class="ctr pct">${pctFmt(pct)}</td>
+            <td class="val">${fmtMoney(c.total)}</td></tr>`;
+    }).join('');
+
+    // Evolução mensal
+    let mensal = '';
+    if (!mes) {
+        const maxMes = Math.max(...d.porMes.map(m => m.total), 1);
+        mensal = `<div class="sec blk">Evolução mensal das despesas</div>
+        <div class="chart blk">
+            ${d.porMes.map(m => `<div class="col">
+                <div class="v">${m.total ? fmtMoney(m.total).replace('R$', '').trim() : ''}</div>
+                <div class="b" style="height:${(m.total / maxMes * 100).toFixed(1)}%"></div>
+                <div class="m">${MESES[parseInt(m.mes)].slice(0,3)}</div>
+            </div>`).join('')}
+        </div>`;
+    }
+
+    // Detalhamento agrupado por categoria
+    let det = '';
+    d.categorias.forEach(c => {
+        const itens = d.itens.filter(i => i.categoria === c.categoria);
+        det += `<tr class="grp"><td colspan="5">${H(c.categoria)}</td></tr>`;
+        itens.forEach(i => {
+            det += `<tr><td>${i.iso ? fmtDate(i.iso) : '—'}</td><td>${H(i.descricao)}${i.fornecedor ? `<div class="sub2">${H(i.fornecedor)}</div>` : ''}</td>
+                <td>${i.origem}</td><td>${i.pago ? '<span class="chip">Pago</span>' : '<span class="chip pend">Pendente</span>'}</td><td class="val">${fmtMoney(i.valor)}</td></tr>`;
+        });
+        det += `<tr class="sub"><td colspan="4">Subtotal ${H(c.categoria)} &middot; ${itens.length} lançamento${itens.length > 1 ? 's' : ''}</td><td class="val">${fmtMoney(c.total)}</td></tr>`;
+    });
+
+    const css = `
+    .sec { margin:24px 0 10px; font-size:13px; font-weight:800; color:#1A2744; text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; gap:8px; }
+    .sec::before { content:''; width:4px; height:15px; background:#F59E0B; border-radius:2px; }
+    .card.red strong { color:#DC2626; }
+    .card small { display:block; font-size:10.5px; color:#64748B; margin-top:2px; font-weight:600; }
+    .cards.c4 { grid-template-columns:repeat(4,1fr); }
+    .cards.c4 strong { font-size:16px; }
+    td.rk { width:26px; color:#94A3B8; font-weight:700; }
+    td.ctr { text-align:center; } td.pct { color:#475569; font-weight:600; white-space:nowrap; }
+    .bar { height:8px; background:#EEF2F6; border-radius:6px; overflow:hidden; min-width:120px; }
+    .bar span { display:block; height:100%; background:linear-gradient(90deg,#F87171,#DC2626); border-radius:6px; }
+    tr.tot td { background:#1A2744; color:#fff; font-weight:700; }
+    tr.tot td.val { color:#FCA5A5; }
+    tr.sub td { background:#FEF2F2 !important; color:#991B1B !important; }
+    .chip.pend { background:#FEE2E2; color:#991B1B; }
+    .sub2 { font-size:10.5px; color:#64748B; }
+    .chart { display:grid; grid-template-columns:repeat(12,1fr); gap:6px; align-items:end; height:190px; padding:8px 10px 0; border:1px solid #E2E8F0; border-radius:10px; }
+    .chart .col { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+    .chart .b { width:70%; background:linear-gradient(180deg,#F87171,#DC2626); border-radius:5px 5px 0 0; min-height:0; }
+    .chart .v { font-size:8px; color:#475569; font-weight:700; margin-bottom:3px; white-space:nowrap; }
+    .chart .m { font-size:10px; color:#64748B; font-weight:600; padding:5px 0 6px; border-top:1px solid #E2E8F0; width:100%; text-align:center; margin-top:2px; }
+    .resumo { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .resumo div { border:1px solid #E2E8F0; border-radius:10px; padding:9px 14px; font-size:12px; color:#475569; display:flex; justify-content:space-between; }
+    .resumo b { color:#1A2744; }
+    .asss { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:52px; page-break-inside:avoid; }
+    .asss div { text-align:center; border-top:1px solid #94A3B8; padding-top:6px; font-size:11.5px; color:#475569; }`;
+
+    const corpo = `
+        ${cabecalhoCondoHtml(condo, 'Relatório de Despesas', periodo)}
+        <div class="title">Relatório de Despesas &ndash; ${H(periodo)}</div>
+        <div class="gen">Gerado em ${geradoEm}</div>
+        <div class="intro">Demonstrativo das despesas do condomínio no período, consolidando as contas a pagar e os débitos do extrato bancário conciliado, organizados por categoria.</div>
+
+        <div class="cards c4">
+            <div class="card red"><span>Total de despesas</span><strong>${fmtMoney(d.total)}</strong>${d.qtdPendente ? `<small>${fmtMoney(d.totalPendente)} pendente</small>` : ''}</div>
+            <div class="card"><span>Lançamentos</span><strong>${d.itens.length}</strong><small>${d.categorias.length} categoria(s)</small></div>
+            <div class="card"><span>${mes ? 'Maior lançamento' : 'Média mensal'}</span><strong>${mes ? fmtMoney(Math.max(...d.itens.map(i => i.valor))) : fmtMoney(d.mediaMensal)}</strong>${!mes ? `<small>${d.mesesComDespesa} ${d.mesesComDespesa === 1 ? 'mês' : 'meses'} com despesas</small>` : ''}</div>
+            <div class="card"><span>Maior categoria</span><strong style="font-size:13px;line-height:1.3">${H(maior.categoria)}</strong><small>${fmtMoney(maior.total)} &middot; ${pctFmt(d.total ? maior.total / d.total * 100 : 0)}</small></div>
+        </div>
+
+        <div class="sec blk">Despesas por categoria</div>
+        <table>
+            <thead><tr><th>#</th><th>Categoria</th><th style="text-align:center">Lanç.</th><th>Participação</th><th style="text-align:center">%</th><th>Total</th></tr></thead>
+            <tbody>${linhasCat}
+                <tr class="tot"><td colspan="5">TOTAL GERAL</td><td class="val">${fmtMoney(d.total)}</td></tr>
+            </tbody>
+        </table>
+        <div class="resumo blk">
+            <div><span>Contas a Pagar</span><b>${fmtMoney(d.totalContas)}</b></div>
+            <div><span>Extrato bancário conciliado</span><b>${fmtMoney(d.totalExtrato)}</b></div>
+        </div>
+
+        ${mensal}
+
+        <div class="sec blk">Detalhamento dos lançamentos</div>
+        <table>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Situação</th><th>Valor</th></tr></thead>
+            <tbody>${det}</tbody>
+        </table>
+        <div class="total"><span>TOTAL DE DESPESAS &middot; ${d.itens.length} lançamento(s)</span><b style="color:#FCA5A5">${fmtMoney(d.total)}</b></div>
+        ${d.qtdPendente ? `<div class="nota">Inclui ${d.qtdPendente} conta(s) ainda pendente(s) de pagamento, no total de ${fmtMoney(d.totalPendente)}.</div>` : ''}
+
+        <div class="asss">
+            <div>Síndico(a) / Administração Financeira<br><strong>${H(nomeCondo)}</strong></div>
+            <div>Conselho Fiscal<br><strong>${H(nomeCondo)}</strong></div>
+        </div>
+        <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>`;
+
+    abrirDocumentoRelatorio({
+        modo, corpo, css,
+        titulo: `Relatório de Despesas - ${periodo} - ${nomeCondo}`,
+        nomeArquivo: ['Relatorio_Despesas', slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+    });
 }
 
 function renderRelReceitas() {
