@@ -3721,13 +3721,18 @@ async function loadAllData() {
         renderUsuarios();
 
         // Load condominios
-        const condoSnap = await APP.db.collection('condominios').orderBy('nome').get();
+        // Usuário restrito a condomínios específicos: busca cada um pelo ID
+        // (compatível com as regras de segurança, que não liberam a lista completa para ele)
+        const permitidos = APP.userProfile.condosPermitidos || [];
         APP.condominios = [];
-        condoSnap.forEach(d => APP.condominios.push({ id: d.id, ...d.data() }));
-
-        // Filter by user permissions
-        if (APP.userProfile.perfil !== 'admin' && APP.userProfile.condosPermitidos && APP.userProfile.condosPermitidos.length > 0) {
-            APP.condominios = APP.condominios.filter(c => APP.userProfile.condosPermitidos.includes(c.id));
+        if (APP.userProfile.perfil !== 'admin' && permitidos.length > 0) {
+            const docs = await Promise.all(permitidos.map(id =>
+                APP.db.collection('condominios').doc(id).get().catch(() => null)));
+            docs.forEach(d => { if (d && d.exists) APP.condominios.push({ id: d.id, ...d.data() }); });
+            APP.condominios.sort((a,b) => String(a.nome||'').localeCompare(String(b.nome||'')));
+        } else {
+            const condoSnap = await APP.db.collection('condominios').orderBy('nome').get();
+            condoSnap.forEach(d => APP.condominios.push({ id: d.id, ...d.data() }));
         }
 
         renderCondoSelect();
