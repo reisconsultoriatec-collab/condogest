@@ -1644,6 +1644,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <option value="09">Setembro</option><option value="10">Outubro</option>
                         <option value="11">Novembro</option><option value="12">Dezembro</option>
                     </select>
+                    <select id="relDespCat" onchange="renderRelDespesas()" style="min-width:220px"><option value="">Todas as categorias</option></select>
                     <button class="btn btn-outline btn-sm" onclick="printRelDespesas('print')"><i class="ti ti-printer"></i> Imprimir</button>
                     <button class="btn btn-outline btn-sm" onclick="printRelDespesas('pdf')"><i class="ti ti-file-type-pdf"></i> Salvar PDF</button>
                 </div>
@@ -3152,6 +3153,19 @@ function toggleSection(sectionName) {
     localStorage.setItem('condogest_menu_state', JSON.stringify(states));
 }
 
+// A cada login, todas as seções do menu começam fechadas (exceto "Principal", onde fica o Dashboard).
+// O usuário abre a seção que quiser; ao navegar, a seção da tela aberta se expande sozinha.
+function recolherMenusAoEntrar() {
+    const states = {};
+    document.querySelectorAll('.nav-section[data-section]').forEach(sec => {
+        const nome = sec.getAttribute('data-section');
+        const fechar = nome !== 'principal';
+        sec.classList.toggle('collapsed', fechar);
+        states[nome] = fechar;
+    });
+    localStorage.setItem('condogest_menu_state', JSON.stringify(states));
+}
+
 function restoreMenuState() {
     const states = JSON.parse(localStorage.getItem('condogest_menu_state') || '{}');
     Object.entries(states).forEach(([name, collapsed]) => {
@@ -3405,6 +3419,7 @@ function enterApp() {
 
     // Sempre iniciar no Dashboard
     navigateTo('dashboard');
+    recolherMenusAoEntrar();
 
     loadAllData();
 }
@@ -7492,6 +7507,7 @@ function _docMovimento(d, cfg, modo) {
         <div class="title">${cfg.titulo} &ndash; ${H(periodo)}</div>
         <div class="gen">Gerado em ${geradoEm}</div>
         <div class="intro">${cfg.intro}</div>
+        ${d.filtroCategoria ? `<div class="filtros">Filtro aplicado: categoria <strong>${H(d.filtroCategoria)}</strong></div>` : ''}
 
         <div class="cards c4">
             <div class="card ${ehReceita ? 'grn' : 'red'}"><span>${cfg.rotTotal}</span><strong>${fmtMoney(d.total)}</strong>${d.qtdPendente ? `<small>${fmtMoney(d.totalPendente)} pendente</small>` : ''}</div>
@@ -7523,22 +7539,45 @@ function _docMovimento(d, cfg, modo) {
 
     abrirDocumentoRelatorio({
         modo, corpo, css: _cssDocMovimento(cfg),
-        titulo: `${cfg.titulo} - ${periodo} - ${nomeCondo}`,
-        nomeArquivo: [cfg.arquivo, slugArquivo(nomeCondo), ano + (mes ? '-' + mes : '')].join('_') + '.pdf'
+        titulo: `${cfg.titulo} - ${periodo}${d.filtroCategoria ? ' - ' + d.filtroCategoria : ''} - ${nomeCondo}`,
+        nomeArquivo: [cfg.arquivo, slugArquivo(nomeCondo), ano + (mes ? '-' + mes : ''), d.filtroCategoria ? slugArquivo(d.filtroCategoria) : ''].filter(Boolean).join('_') + '.pdf'
     });
+}
+
+// Filtro por categoria do Relatório de Despesas
+function _despesasFiltradas(ano, mes) {
+    const base = dadosRelDespesas(ano, mes);
+    const sel = document.getElementById('relDespCat');
+    if (sel) {
+        const atual = sel.value;
+        const cats = [...new Set([...base.categorias.map(c => c.categoria), ...(APP.categorias || [])])]
+            .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        if (atual && !cats.includes(atual)) cats.push(atual);
+        sel.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(c => `<option value="${H(c)}">${H(c)}</option>`).join('');
+        sel.value = atual;
+    }
+    const cat = sel ? sel.value : '';
+    if (!cat) return base;
+    const d = _resumoMovimento(ano, mes, base.itens.filter(i => i.categoria === cat));
+    d.totalContas = d.porOrigem['Contas a Pagar'] || 0;
+    d.totalExtrato = d.porOrigem['Extrato Bancário'] || 0;
+    d.filtroCategoria = cat;
+    return d;
 }
 
 function renderRelDespesas() {
     const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
     const mes = document.getElementById('relDespMes')?.value || '';
+    const d = _despesasFiltradas(ano, mes);
     const el = document.getElementById('relDespContent');
-    if (el) el.innerHTML = _htmlTelaMovimento(dadosRelDespesas(ano, mes), _CFG_MOV.despesas, (mes ? MESES[parseInt(mes)] + '/' : '') + ano);
+    const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
+    if (el) el.innerHTML = _htmlTelaMovimento(d, _CFG_MOV.despesas, periodo + (d.filtroCategoria ? ' · ' + d.filtroCategoria : ''));
 }
 function printRelDespesas(modo) {
     const ano = document.getElementById('relDespAno')?.value || String(new Date().getFullYear());
     const mes = document.getElementById('relDespMes')?.value || '';
-    const d = dadosRelDespesas(ano, mes);
-    if (d.itens.length === 0) { toast('Nenhuma despesa registrada no período.', 'error'); return; }
+    const d = _despesasFiltradas(ano, mes);
+    if (d.itens.length === 0) { toast(d.filtroCategoria ? 'Nenhuma despesa desta categoria no período.' : 'Nenhuma despesa registrada no período.', 'error'); return; }
     _docMovimento(d, _CFG_MOV.despesas, modo);
 }
 
