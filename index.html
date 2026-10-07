@@ -1955,6 +1955,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     <button class="tab-btn active" onclick="switchTab(this,'tabFirebase')">Firebase</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabCategorias')">Categorias</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabGeral')">Geral</button>
+                    <button class="tab-btn" onclick="switchTab(this,'tabEncargos');renderEncargosConfig()"><i class="ti ti-percentage"></i> Multa e Juros</button>
                 </div>
 
                 <div class="tab-pane active" id="tabFirebase">
@@ -2017,6 +2018,41 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                                 <option value="dark">Escuro</option>
                             </select>
                         </div>
+                    </div>
+                </div>
+
+                <!-- ABA: Multa e Juros por atraso -->
+                <div class="tab-pane" id="tabEncargos">
+                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                        Encargos cobrados sobre parcelas pagas após o vencimento. São calculados automaticamente no dia da consulta ou do pagamento
+                        e não alteram o valor das taxas cadastradas. Desligando a cobrança, o sistema volta a funcionar exatamente como antes.
+                    </p>
+                    <label style="display:flex;align-items:center;gap:0.6rem;font-weight:600;margin-bottom:1rem;cursor:pointer">
+                        <input type="checkbox" id="encAtivo" onchange="simularEncargos()" style="width:18px;height:18px;accent-color:var(--primary)"> Cobrar multa e juros por atraso neste condomínio
+                    </label>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Multa (%)</label><input type="number" id="encMulta" step="0.01" min="0" max="2" value="2" oninput="simularEncargos()"></div>
+                        <div class="form-group"><label>Juros ao mês (%)</label><input type="number" id="encJuros" step="0.01" min="0" value="1" oninput="simularEncargos()"></div>
+                        <div class="form-group"><label>Carência (dias após o vencimento)</label><input type="number" id="encCarencia" min="0" value="0" oninput="simularEncargos()"></div>
+                        <div class="form-group"><label>Aplicar a parcelas que vencerem a partir de</label><input type="date" id="encAPartir"></div>
+                    </div>
+                    <label style="display:flex;align-items:center;gap:0.6rem;font-size:0.88rem;margin:0.4rem 0 1rem;cursor:pointer">
+                        <input type="checkbox" id="encAntigos"> Cobrar também das parcelas que venceram antes dessa data
+                    </label>
+                    <div id="encSimulacao" style="padding:0.8rem 1rem;border:1px dashed var(--border);border-radius:var(--radius-md);font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem"></div>
+                    <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:1rem">
+                        Multa aplicada uma única vez sobre o valor da parcela. Juros proporcionais aos dias de atraso (1% ao mês = 1/30 por dia).
+                        Referência legal usual: Código Civil, art. 1.336, §1º (multa de até 2%). Confira a convenção do condomínio.
+                    </p>
+                    <button class="btn btn-fill" onclick="salvarEncargosConfig()"><i class="ti ti-device-floppy"></i> Salvar configuração</button>
+
+                    <h4 style="margin:1.8rem 0 0.6rem;font-size:0.95rem;display:flex;align-items:center;gap:0.6rem">
+                        <i class="ti ti-shield-check"></i> Isenções de multa e juros
+                        <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="abrirIsencaoEncargos()"><i class="ti ti-plus"></i> Nova isenção por apartamento</button>
+                    </h4>
+                    <div class="table-container">
+                        <table><thead><tr><th>Apto</th><th>Abrangência</th><th>Isenta</th><th>Motivo</th><th>Registrado por</th><th></th></tr></thead>
+                        <tbody id="tbEncIsencoes"></tbody></table>
                     </div>
                 </div>
             </div>
@@ -2225,6 +2261,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                     </select>
                 </div>
             </div>
+            <div id="pgtoEncargosBox" style="display:none;margin-top:1rem"></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeModal('modalPagamento')">Cancelar</button>
@@ -2266,6 +2303,39 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 </div>
 
 <!-- Modal Usuário -->
+<div class="modal-overlay" id="modalIsencaoEnc">
+    <div class="modal-box" style="max-width:540px">
+        <div class="modal-header">
+            <h3><i class="ti ti-shield-check" style="color:var(--accent)"></i> Isentar multa e juros</h3>
+            <button class="modal-close" onclick="closeModal('modalIsencaoEnc')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="isenAno"><input type="hidden" id="isenMes"><input type="hidden" id="isenTaxa">
+            <div class="form-group"><label>Apartamento *</label><select id="isenApto"></select></div>
+            <div class="form-group" style="margin-top:0.8rem"><label>Abrangência</label>
+                <select id="isenTipo" onchange="document.getElementById('isenPeriodo').style.display=this.value==='periodo'?'grid':'none'">
+                    <option value="parcela">Somente esta parcela</option>
+                    <option value="periodo">Todas as parcelas de um período</option>
+                </select>
+                <div id="isenParcelaInfo" style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px"></div>
+            </div>
+            <div id="isenPeriodo" class="form-grid" style="display:none;margin-top:0.8rem">
+                <div class="form-group"><label>De (mês)</label><input type="month" id="isenDe"></div>
+                <div class="form-group"><label>Até (mês)</label><input type="month" id="isenAte"></div>
+            </div>
+            <div style="display:flex;gap:1.2rem;margin:0.9rem 0">
+                <label style="display:flex;gap:0.4rem;align-items:center;cursor:pointer"><input type="checkbox" id="isenMulta" checked> Isentar multa</label>
+                <label style="display:flex;gap:0.4rem;align-items:center;cursor:pointer"><input type="checkbox" id="isenJuros" checked> Isentar juros</label>
+            </div>
+            <div class="form-group"><label>Motivo *</label><textarea id="isenMotivo" placeholder="Ex.: boleto entregue com atraso / acordo aprovado pelo síndico"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeModal('modalIsencaoEnc')">Cancelar</button>
+            <button class="btn btn-fill" onclick="salvarIsencaoEncargos()"><i class="ti ti-check"></i> Registrar isenção</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="modalInadExcluir">
     <div class="modal-box" style="max-width:520px">
         <div class="modal-header">
@@ -2371,6 +2441,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">Permissões Especiais</label>
                 <div class="access-grid" id="accessGridEspecial">
                     <label class="access-item"><input type="checkbox" value="inadExcluir"> Excluir/restaurar taxas em Inadimplentes</label>
+                    <label class="access-item"><input type="checkbox" value="encargosIsentar"> Isentar multa e juros</label>
                 </div>
                 <small style="color:var(--text-secondary);font-size:0.75rem">Administradores sempre possuem as permissões especiais.</small>
             </div>
@@ -3125,7 +3196,10 @@ function toast(msg, type = 'success') {
 }
 
 // ===== MODAL =====
-function openModal(id) { document.getElementById(id).classList.add('show'); }
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+    if (id === 'modalPagamento') setTimeout(() => { try { atualizarEncargosPagamento(); } catch (_) {} }, 150);
+}
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
 // ===== TABS =====
@@ -3957,6 +4031,9 @@ async function loadCondoData() {
 
         // Exclusões do painel de inadimplentes
         await loadInadExclusoes();
+
+        // Multa e juros: configuração e isenções
+        await loadEncargos();
 
         // Load categorias from settings
         const catDoc = await APP.db.collection('condominios').doc(cid).collection('settings').doc('categorias').get();
@@ -5097,7 +5174,7 @@ function renderPagamentos() {
             <td><strong>${H(p.apto)}</strong></td>
             <td>${H(p.moradorNome||'-')}</td>
             <td><span class="badge badge-blue">${H(p.tipoTaxa)}</span></td>
-            <td><strong>${fmtMoney(p.valor)}</strong></td>
+            <td><strong>${fmtMoney(p.valor)}</strong>${((p.multa||0)+(p.juros||0)) > 0 ? `<div style="font-size:0.72rem;color:var(--accent)">+ ${fmtMoney((p.multa||0)+(p.juros||0))} multa/juros</div>` : (p.encargosIsentos ? '<div style="font-size:0.72rem;color:var(--text-secondary)">encargos isentos</div>' : '')}</td>
             <td>${fmtDate(p.dataPgto)}</td>
             <td>${p.formaPagamento ? H(p.formaPagamento) : '<span style="color:var(--text-light)">—</span>'}</td>
             <td>
@@ -5181,6 +5258,21 @@ async function savePagamento() {
 
     const moradorObj = APP.moradores.find(m => m.apto === apto);
     const data = { ano, mes, apto, tipoTaxa, valor, dataPgto, formaPagamento, moradorNome: moradorObj?.nome || '' };
+
+    // Multa e juros (somente quando a cobrança está ligada no condomínio)
+    if (_encCfg().ativo) {
+        const enc = APP._pgtoEnc;
+        const isentar = document.querySelector('input[name="pgtoEncOpc"]:checked')?.value === 'isentar';
+        if (enc && enc.total > 0 && isentar) {
+            const motivo = (document.getElementById('pgtoEncMotivo')?.value || '').trim();
+            if (motivo.length < 3) { toast('Informe o motivo da isenção de multa e juros.', 'error'); return; }
+            if (!podeIsentarEncargos()) { toast('Você não tem permissão para isentar multa e juros.', 'error'); return; }
+            Object.assign(data, { multa: 0, juros: 0, encargosIsentos: true, motivoIsencaoEncargos: motivo,
+                multaDispensada: enc.multa, jurosDispensados: enc.juros });
+        } else {
+            Object.assign(data, { multa: enc ? enc.multa : 0, juros: enc ? enc.juros : 0, encargosIsentos: false });
+        }
+    }
 
     const id = document.getElementById('pgtoEditId').value;
     const res = await fbSave('pagamentos', id || null, data);
@@ -5304,6 +5396,12 @@ function renderInadimplentes() {
     inadimplentes.push(...(semAVencer ? ativos.filter(i => !inadAVencer(i)) : ativos));
     renderInadExcluidas(mostrarExcl ? excluidas : null);
 
+    // Multa e juros de cada parcela (zero quando a cobrança está desligada)
+    const encAtivo = _encCfg().ativo;
+    const podeIsentar = encAtivo && podeIsentarEncargos();
+    inadimplentes.forEach(i => { i.enc = calcEncargos({ apto: i.apto, ano: i.ano, mes: i.mes, tipoTaxa: i.tipoTaxaClean, valor: i.valorAberto }); });
+    const totalEncargos = _r2(inadimplentes.reduce((s,i) => s + (i.enc ? i.enc.total : 0), 0));
+
     // Resumo
     const totalAberto = inadimplentes.reduce((s,i) => s + i.valorAberto, 0);
     const aptosUnicos = [...new Set(inadimplentes.map(i => i.apto))].length;
@@ -5315,14 +5413,14 @@ function renderInadimplentes() {
 
     // Guardar para o relatório impresso
     APP._inadLista = inadimplentes.slice();
-    APP._inadResumo = { totalAberto, aptosUnicos, parcelas: inadimplentes.length };
+    APP._inadResumo = { totalAberto, aptosUnicos, parcelas: inadimplentes.length, totalEncargos, encAtivo };
     APP._inadFiltro = { ano, mes, apto: filterApto, taxa: filterTaxa, semAVencer };
 
     const resumoEl = document.getElementById('inadResumo');
     if (resumoEl) {
         resumoEl.innerHTML = `
         <div class="stats-row" style="margin-bottom:0">
-            <div class="stat-card"><div class="stat-icon red"><i class="ti ti-currency-real"></i></div><div class="stat-info"><h4>${fmtMoney(totalAberto)}</h4><span>Total em Aberto</span></div></div>
+            <div class="stat-card"><div class="stat-icon red"><i class="ti ti-currency-real"></i></div><div class="stat-info"><h4>${fmtMoney(totalAberto)}</h4><span>Total em Aberto</span>${totalEncargos > 0 ? `<span style="display:block;font-size:0.75rem;color:var(--accent-red);font-weight:600">Atualizado: ${fmtMoney(totalAberto + totalEncargos)}</span>` : ''}</div></div>
             <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-home-exclamation"></i></div><div class="stat-info"><h4>${aptosUnicos}</h4><span>Aptos Inadimplentes</span></div></div>
             <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-file-alert"></i></div><div class="stat-info"><h4>${inadimplentes.length}</h4><span>Parcelas em Aberto</span></div></div>
             ${maiorAptoEntry ? `<div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-octagon"></i></div><div class="stat-info"><h4>Apto ${H(maiorAptoEntry[0])}</h4><span>Maior devedor: ${fmtMoney(maiorAptoEntry[1])}</span></div></div>` : ''}
@@ -5341,16 +5439,19 @@ function renderInadimplentes() {
     let aptoAtual = '';
     let subtotal = 0;
     let countApto = 0;
+    let subEnc = 0;
+    const atualTxt = (v, e) => e > 0 ? `<div style="font-size:0.75rem;font-weight:600;opacity:0.85">Atualizado: ${fmtMoney(v + e)}</div>` : '';
 
     inadimplentes.forEach((i, idx) => {
         if (i.apto !== aptoAtual && aptoAtual !== '') {
             html += `<tr style="background:rgba(239,68,68,0.06);font-weight:600">
                 <td colspan="4" style="text-align:right;padding:0.5rem 0.8rem">Subtotal Apto ${H(aptoAtual)} (${countApto} parcelas):</td>
-                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}</td>
+                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}${atualTxt(subtotal, subEnc)}</td>
                 <td></td>
             </tr>`;
             subtotal = 0;
             countApto = 0;
+            subEnc = 0;
         }
 
         if (i.apto !== aptoAtual) {
@@ -5364,15 +5465,21 @@ function renderInadimplentes() {
 
         subtotal += i.valorAberto;
         countApto++;
+        subEnc += i.enc ? i.enc.total : 0;
+        const e = i.enc || {};
+        const encHtml = e.total > 0
+            ? `<div style="font-size:0.74rem;color:var(--text-secondary);font-weight:500;margin-top:2px">+ multa ${fmtMoney(e.multa)} + juros ${fmtMoney(e.juros)} (${e.dias} dias)<br><strong style="color:var(--accent-red)">= ${fmtMoney(i.valorAberto + e.total)}</strong></div>`
+            : ((e.isentoMulta || e.isentoJuros) && e.aplicavel ? `<div style="font-size:0.74rem;color:var(--accent);font-weight:500;margin-top:2px"><i class="ti ti-shield-check"></i> Encargos isentos</div>` : '');
 
         html += `<tr>
             <td><strong>${H(i.apto)}</strong></td>
             <td>${H(i.ano)}</td>
             <td>${MESES[parseInt(i.mes)]||i.mes}${inadAVencer(i) ? ` <span class="badge badge-amber" title="Vence em ${inadDataVenc(i).toLocaleDateString('pt-BR')}">A vencer</span>` : ''}</td>
             <td>${H(i.tipoTaxa)}</td>
-            <td style="color:${inadAVencer(i) ? 'var(--text-secondary)' : 'var(--accent-red)'};font-weight:600">${fmtMoney(i.valorAberto)}</td>
+            <td style="color:${inadAVencer(i) ? 'var(--text-secondary)' : 'var(--accent-red)'};font-weight:600">${fmtMoney(i.valorAberto)}${encHtml}</td>
             <td style="white-space:nowrap">
                 <button class="btn btn-outline btn-sm" onclick="associarInadimplente('${H(i.apto)}','${i.ano}','${i.mes}','${H(i.tipoTaxaClean)}')"><i class="ti ti-link"></i> Associar</button>
+                ${podeIsentar && e.aplicavel ? `<button class="btn btn-outline btn-sm" title="Isentar multa e juros desta parcela" onclick="abrirIsencaoEncargos(${idx})"><i class="ti ti-shield-check"></i></button>` : ''}
                 ${podeExcluir ? `<button class="btn btn-danger btn-sm" title="Excluir parcela" onclick="excluirInadimplente(${idx})"><i class="ti ti-trash"></i></button>` : ''}
             </td>
         </tr>`;
@@ -5381,7 +5488,7 @@ function renderInadimplentes() {
         if (idx === inadimplentes.length - 1) {
             html += `<tr style="background:rgba(239,68,68,0.06);font-weight:600">
                 <td colspan="4" style="text-align:right;padding:0.5rem 0.8rem">Subtotal Apto ${H(aptoAtual)} (${countApto} parcelas):</td>
-                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}</td>
+                <td style="padding:0.5rem 0.8rem;color:var(--accent-red)">${fmtMoney(subtotal)}${atualTxt(subtotal, subEnc)}</td>
                 <td></td>
             </tr>`;
         }
@@ -5390,7 +5497,7 @@ function renderInadimplentes() {
     // Total geral
     html += `<tr style="background:var(--bg-sidebar);color:#fff;font-weight:700">
         <td colspan="4" style="text-align:right;padding:0.7rem 0.8rem;font-size:0.95rem;color:#fff">TOTAL GERAL (${inadimplentes.length} parcelas / ${aptosUnicos} aptos):</td>
-        <td style="padding:0.7rem 0.8rem;font-size:1.05rem;color:#fff">${fmtMoney(totalAberto)}</td>
+        <td style="padding:0.7rem 0.8rem;font-size:1.05rem;color:#fff">${fmtMoney(totalAberto)}${atualTxt(totalAberto, totalEncargos)}</td>
         <td></td>
     </tr>`;
 
@@ -5850,6 +5957,13 @@ function _sugestoesCredito(ext) {
         gs.forEach(g => {
             const dist = Math.abs(parseInt(g.mes) - mC);
             if (Math.abs(g.total - V) < 0.005) add(apto, g.parcelas, `${_mesCurto(g.mes)}/${ano} · ${g.parcelas.map(p => p.tipoTaxa).join(' + ')}`, dist);
+            else if (_encCfg().ativo) {
+                // Pagamento com multa e juros calculados até a data do crédito
+                const comEnc = g.parcelas.map(p => ({ ...p, enc: calcEncargos(p, iso) }));
+                const totEnc = _r2(comEnc.reduce((s, p) => s + p.valor + p.enc.total, 0));
+                if (comEnc.some(p => p.enc.total > 0) && Math.abs(totEnc - V) < 0.05)
+                    add(apto, comEnc, `${_mesCurto(g.mes)}/${ano} · ${g.parcelas.map(p => p.tipoTaxa).join(' + ')} + multa/juros`, dist);
+            }
             else if (g.parcelas.length > 1) g.parcelas.forEach(p => {
                 if (Math.abs(p.valor - V) < 0.005) add(apto, [p], `${_mesCurto(p.mes)}/${ano} · ${p.tipoTaxa}`, dist + 0.5);
             });
@@ -5970,6 +6084,7 @@ async function _caExecutar(extId, idxCand, forma) {
                 dataPgto: s.iso, formaPagamento: forma, moradorNome: morador?.nome || '',
                 origem: 'conciliacao_assistida', extratoId: ext.id
             };
+            if (p.enc && p.enc.total > 0) Object.assign(data, { multa: p.enc.multa, juros: p.enc.juros, encargosIsentos: false });
             const id = await fbSave('pagamentos', null, data);
             if (!id) throw new Error('Falha ao registrar o pagamento.');
             criados.push(id);
@@ -6091,8 +6206,9 @@ function montarLote() {
         const total = _r2(itens.reduce((s, p) => s + p.valor, 0));
         const anteriores = mesesAnt.length ? pendenciasVencidasApto(apto, ano, mesesAnt) : [];
         const totalAnt = _r2(anteriores.reduce((s, p) => s + p.valorAberto, 0));
+        const encAnt = _r2(anteriores.reduce((s, p) => s + calcEncargos({ apto, ano: p.ano, mes: p.mes, tipoTaxa: p.tipoTaxa, valor: p.valorAberto }).total, 0));
         const morador = (APP.moradores || []).find(m => m.apto === apto) || {};
-        return { apto, itens, total, anteriores, totalAnt, morador, marcado: total > 0 };
+        return { apto, itens, total, anteriores, totalAnt, encAnt, morador, marcado: total > 0 };
     });
     APP._lote = { ano, mes, venc, linhas };
     renderLote();
@@ -6112,7 +6228,7 @@ function renderLote() {
             <td>${H(l.morador.nome || '—')}</td>
             <td style="font-size:0.82rem">${pago ? '<span class="badge badge-green">Nada a cobrar no mês</span>' : l.itens.map(p => H(p.tipoTaxa)).join('<br>')}</td>
             <td style="font-weight:700;white-space:nowrap">${fmtMoney(l.total)}</td>
-            <td style="white-space:nowrap">${l.totalAnt > 0 ? `<span style="color:var(--accent-red);font-weight:600">${fmtMoney(l.totalAnt)}</span><div style="font-size:0.72rem;color:var(--text-secondary)">${l.anteriores.length} parcela(s)</div>` : '<span style="color:var(--text-light)">—</span>'}</td>
+            <td style="white-space:nowrap">${l.totalAnt > 0 ? `<span style="color:var(--accent-red);font-weight:600">${fmtMoney(l.totalAnt)}</span><div style="font-size:0.72rem;color:var(--text-secondary)">${l.anteriores.length} parcela(s)${l.encAnt > 0 ? ` · atualizado ${fmtMoney(l.totalAnt + l.encAnt)}` : ''}</div>` : '<span style="color:var(--text-light)">—</span>'}</td>
             <td style="white-space:nowrap">${pago ? '' : `
                 <button class="btn btn-outline btn-sm" title="${tel ? 'Abrir WhatsApp' : 'Morador sem telefone cadastrado'}" ${tel ? '' : 'disabled'} onclick="loteWhatsApp(${i})"><i class="ti ti-brand-whatsapp"></i></button>
                 <button class="btn btn-outline btn-sm" title="${l.morador.email ? 'Enviar por e-mail' : 'Morador sem e-mail cadastrado'}" ${l.morador.email ? '' : 'disabled'} onclick="loteEmail(${i})"><i class="ti ti-mail"></i></button>
@@ -6170,7 +6286,7 @@ function _loteMensagem(l) {
     if (pix) t += `\nPIX copia e cola:\n${pix}\n`;
     else if (condo.banco) t += `\nDepósito/Transferência: Banco ${condo.banco} | Ag: ${condo.agencia || '-'} | Cc: ${condo.conta || '-'}\n`;
     if (comAnt && l.totalAnt > 0) {
-        t += `\nConsta também em aberto: ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => _mesCurto(p.mes) + '/' + p.ano).join(', ')}). Caso já tenha efetuado o pagamento, por gentileza nos envie o comprovante.\n`;
+        t += `\nConsta também em aberto: ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => _mesCurto(p.mes) + '/' + p.ano).join(', ')})${l.encAnt > 0 ? `, que atualizado com multa e juros até hoje soma ${fmtMoney(l.totalAnt + l.encAnt)}` : ''}. Caso já tenha efetuado o pagamento, por gentileza nos envie o comprovante.\n`;
     }
     t += `\nQualquer dúvida, estamos à disposição.\nAdministração – ${nomeCondo}`;
     return t;
@@ -6240,7 +6356,7 @@ function gerarBoletosLote(modo) {
                 </div>
             </div>` : ''}
             ${condo.banco ? `<p class="banco"><strong>Depósito/Transferência:</strong> Banco ${H(condo.banco)} | Ag: ${H(condo.agencia || '-')} | Cc: ${H(condo.conta || '-')}</p>` : ''}
-            ${comAnt && l.totalAnt > 0 ? `<div class="alerta" style="margin-top:14px"><strong>Débitos anteriores em aberto:</strong> ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => H(_mesCurto(p.mes) + '/' + p.ano)).join(', ')}). Valor não incluído no total acima. Caso já tenha efetuado o pagamento, por gentileza envie o comprovante à administração.</div>` : ''}
+            ${comAnt && l.totalAnt > 0 ? `<div class="alerta" style="margin-top:14px"><strong>Débitos anteriores em aberto:</strong> ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => H(_mesCurto(p.mes) + '/' + p.ano)).join(', ')})${l.encAnt > 0 ? `; atualizado com multa e juros até ${agora.toLocaleDateString('pt-BR')}: <strong>${fmtMoney(l.totalAnt + l.encAnt)}</strong>` : ''}. Valor não incluído no total acima. Caso já tenha efetuado o pagamento, por gentileza envie o comprovante à administração.</div>` : ''}
             <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>
         </div>`;
     }).join('');
@@ -6262,6 +6378,276 @@ function gerarBoletosLote(modo) {
         nomeArquivo: ['Boletos', slugArquivo(nomeCondo), L.ano + '-' + L.mes].join('_') + '.pdf'
     });
 }
+
+
+// =====================================================================
+// MULTA E JUROS POR ATRASO
+// Calculados na hora (não alteram taxas nem pagamentos já existentes)
+// =====================================================================
+function _encCfg() {
+    const c = APP.encargosCfg || {};
+    return {
+        ativo: !!c.ativo,
+        multaPct: Math.max(0, parseFloat(c.multaPct) || 0),
+        jurosPctMes: Math.max(0, parseFloat(c.jurosPctMes) || 0),
+        carenciaDias: Math.max(0, parseInt(c.carenciaDias) || 0),
+        aplicarApartirDe: c.aplicarApartirDe || '',
+        cobrarAntigos: !!c.cobrarAntigos
+    };
+}
+function _dataLocal(iso) {
+    const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3])) : null;
+}
+function _isoLocal(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function podeIsentarEncargos() {
+    const p = APP.userProfile;
+    if (!p) return false;
+    if (p.perfil === 'admin' || p.perfil === 'sindico') return true;
+    return (p.permissoes || []).includes('encargosIsentar');
+}
+
+// Isenções vigentes para uma parcela (por parcela ou por período do apartamento)
+function _encIsencao(apto, ano, mes, tipoTaxa) {
+    let multa = false, juros = false; const motivos = [];
+    const ref = `${ano}-${String(mes).padStart(2, '0')}`;
+    (APP.encargosIsencoes || []).forEach(z => {
+        if (String(z.apto) !== String(apto)) return;
+        if (z.tipo === 'parcela') {
+            if (String(z.ano) !== String(ano) || z.mes !== String(mes).padStart(2, '0') || z.tipoTaxa !== tipoTaxa) return;
+        } else if ((z.de && ref < z.de) || (z.ate && ref > z.ate)) return;
+        if (z.isentarMulta) multa = true;
+        if (z.isentarJuros) juros = true;
+        if (z.motivo) motivos.push(z.motivo);
+    });
+    return { multa, juros, motivo: motivos.join('; ') };
+}
+
+// item: { apto, ano, mes, tipoTaxa, valor }  |  dataRef: 'AAAA-MM-DD' (padrão: hoje)
+function calcEncargos(item, dataRef) {
+    const zero = { multa: 0, juros: 0, total: 0, dias: 0, aplicavel: false };
+    const cfg = _encCfg();
+    if (!cfg.ativo || !item || !(item.valor > 0)) return zero;
+    const venc = inadDataVenc(item);
+    if (!venc || isNaN(venc)) return zero;
+    const ref = (dataRef && _dataLocal(dataRef)) || new Date();
+    ref.setHours(0, 0, 0, 0);
+    const dias = Math.floor((ref - venc) / 86400000);
+    if (dias <= 0 || dias <= cfg.carenciaDias) return zero;
+    if (!cfg.cobrarAntigos && cfg.aplicarApartirDe && _isoLocal(venc) < cfg.aplicarApartirDe) return zero;
+    const is = _encIsencao(item.apto, item.ano, item.mes, item.tipoTaxa);
+    const multa = is.multa ? 0 : _r2(item.valor * cfg.multaPct / 100);
+    const juros = is.juros ? 0 : _r2(item.valor * cfg.jurosPctMes / 100 / 30 * dias);
+    return { multa, juros, total: _r2(multa + juros), dias, aplicavel: true,
+             isentoMulta: is.multa, isentoJuros: is.juros, motivoIsencao: is.motivo };
+}
+
+async function loadEncargos() {
+    APP.encargosCfg = null; APP.encargosIsencoes = [];
+    if (!APP.firebaseReady || !APP.currentCondoId) return;
+    try {
+        const d = await condoRef().collection('settings').doc('encargos').get();
+        if (d.exists) APP.encargosCfg = d.data();
+    } catch (e) { console.warn('Encargos (configuração):', e.message); }
+    try {
+        const snap = await condoRef().collection('encargos_isencoes').get();
+        snap.forEach(d => APP.encargosIsencoes.push({ id: d.id, ...d.data() }));
+    } catch (e) { console.warn('Encargos (isenções):', e.message); }
+}
+
+// ----- Configuração -----
+function renderEncargosConfig() {
+    const c = _encCfg();
+    const hoje = _isoLocal(new Date());
+    document.getElementById('encAtivo').checked = c.ativo;
+    document.getElementById('encMulta').value = APP.encargosCfg ? c.multaPct : 2;
+    document.getElementById('encJuros').value = APP.encargosCfg ? c.jurosPctMes : 1;
+    document.getElementById('encCarencia').value = c.carenciaDias;
+    document.getElementById('encAPartir').value = c.aplicarApartirDe || hoje;
+    document.getElementById('encAntigos').checked = c.cobrarAntigos;
+    simularEncargos();
+    renderIsencoesEncargos();
+}
+
+function simularEncargos() {
+    const multa = parseFloat(document.getElementById('encMulta').value) || 0;
+    const juros = parseFloat(document.getElementById('encJuros').value) || 0;
+    const car = parseInt(document.getElementById('encCarencia').value) || 0;
+    const ativo = document.getElementById('encAtivo').checked;
+    const v = 500, dias = 10;
+    const m = _r2(v * multa / 100), j = _r2(v * juros / 100 / 30 * dias);
+    document.getElementById('encSimulacao').innerHTML = (ativo ? '' : '<strong>Cobrança desligada.</strong> ') +
+        `Exemplo: parcela de ${fmtMoney(v)} paga com ${dias} dias de atraso &rarr; multa ${fmtMoney(m)} + juros ${fmtMoney(j)} = <strong>${fmtMoney(v + m + j)}</strong>` +
+        (car ? `<br>Com carência de ${car} dia(s): pagamentos até o ${car}º dia após o vencimento não têm encargos.` : '') +
+        (multa > 2 ? '<br><span style="color:var(--accent-red)">Atenção: o Código Civil limita a multa condominial a 2%.</span>' : '');
+}
+
+async function salvarEncargosConfig() {
+    const p = APP.userProfile;
+    if (!p || !(p.perfil === 'admin' || p.perfil === 'sindico')) { toast('Somente administrador ou síndico podem alterar esta configuração.', 'error'); return; }
+    const cfg = {
+        ativo: document.getElementById('encAtivo').checked,
+        multaPct: parseFloat(document.getElementById('encMulta').value) || 0,
+        jurosPctMes: parseFloat(document.getElementById('encJuros').value) || 0,
+        carenciaDias: parseInt(document.getElementById('encCarencia').value) || 0,
+        aplicarApartirDe: document.getElementById('encAPartir').value || _isoLocal(new Date()),
+        cobrarAntigos: document.getElementById('encAntigos').checked,
+        atualizadoEm: new Date().toISOString(),
+        atualizadoPor: APP.userProfile?.nome || APP.currentUser?.email || ''
+    };
+    if (cfg.multaPct > 2 && !confirm('A multa informada é maior que 2%, limite usual do Código Civil para condomínios. Salvar mesmo assim?')) return;
+    try {
+        await condoRef().collection('settings').doc('encargos').set(cfg);
+        APP.encargosCfg = cfg;
+        auditLog('ENCARGOS_CONFIG', cfg);
+        toast(cfg.ativo ? 'Multa e juros ativados.' : 'Configuração salva (cobrança desligada).');
+        simularEncargos();
+        try { renderInadimplentes(); } catch (_) {}
+    } catch (e) { toast('Erro ao salvar: ' + e.message, 'error'); }
+}
+
+// ----- Isenções -----
+function renderIsencoesEncargos() {
+    const tb = document.getElementById('tbEncIsencoes');
+    if (!tb) return;
+    const lista = [...(APP.encargosIsencoes || [])].sort((a, b) => String(b.em || '').localeCompare(String(a.em || '')));
+    const podeRemover = podeIsentarEncargos();
+    tb.innerHTML = lista.length ? lista.map(z => `<tr>
+        <td><strong>${H(z.apto)}</strong></td>
+        <td>${z.tipo === 'parcela' ? `Parcela ${H(_mesCurto(z.mes))}/${H(z.ano)} &middot; ${H(z.tipoTaxa)}` : `Período ${z.de ? H(_mesCurto(z.de.slice(5)) + '/' + z.de.slice(0, 4)) : 'início'} a ${z.ate ? H(_mesCurto(z.ate.slice(5)) + '/' + z.ate.slice(0, 4)) : 'sem fim'}`}</td>
+        <td>${[z.isentarMulta ? 'Multa' : '', z.isentarJuros ? 'Juros' : ''].filter(Boolean).join(' e ')}</td>
+        <td style="max-width:260px">${H(z.motivo)}</td>
+        <td style="font-size:0.8rem">${H(z.porNome || '')}<br><span style="color:var(--text-secondary)">${z.em ? new Date(z.em).toLocaleString('pt-BR') : ''}</span></td>
+        <td>${podeRemover ? `<button class="btn btn-outline btn-sm" onclick="removerIsencaoEncargos('${z.id}')"><i class="ti ti-arrow-back-up"></i> Desfazer</button>` : ''}</td>
+    </tr>`).join('') : '<tr><td colspan="6" class="empty-state"><p>Nenhuma isenção registrada.</p></td></tr>';
+}
+
+// idx: índice da parcela no painel de Inadimplentes (isenção da parcela); sem idx: isenção por período
+function abrirIsencaoEncargos(idx) {
+    if (!podeIsentarEncargos()) { toast('Você não tem permissão para isentar multa e juros.', 'error'); return; }
+    const aptos = [...new Set((APP.taxasApto || []).map(t => t.apto))].sort((a, b) => String(a).localeCompare(String(b), 'pt-BR', { numeric: true }));
+    const selA = document.getElementById('isenApto');
+    selA.innerHTML = aptos.map(a => `<option value="${H(a)}">${H(a)}</option>`).join('');
+    const tipo = document.getElementById('isenTipo');
+    const info = document.getElementById('isenParcelaInfo');
+    const i = (idx !== undefined && idx !== null) ? (APP._inadLista || [])[idx] : null;
+    document.getElementById('isenMotivo').value = '';
+    document.getElementById('isenMulta').checked = true;
+    document.getElementById('isenJuros').checked = true;
+    const hoje = new Date();
+    document.getElementById('isenDe').value = `${hoje.getFullYear()}-01`;
+    document.getElementById('isenAte').value = `${hoje.getFullYear()}-12`;
+    if (i) {
+        selA.value = i.apto; selA.disabled = true;
+        document.getElementById('isenAno').value = i.ano;
+        document.getElementById('isenMes').value = i.mes;
+        document.getElementById('isenTaxa').value = i.tipoTaxaClean;
+        tipo.value = 'parcela'; tipo.disabled = false;
+        tipo.querySelector('option[value="parcela"]').disabled = false;
+        info.innerHTML = `Parcela: <strong>${H(MESES[parseInt(i.mes)])}/${H(i.ano)} &middot; ${H(i.tipoTaxa)}</strong>` +
+            (i.enc && i.enc.total ? ` &middot; encargos atuais ${fmtMoney(i.enc.total)}` : '');
+    } else {
+        selA.disabled = false;
+        document.getElementById('isenAno').value = '';
+        tipo.value = 'periodo';
+        tipo.querySelector('option[value="parcela"]').disabled = true;
+        info.innerHTML = '';
+    }
+    tipo.onchange();
+    openModal('modalIsencaoEnc');
+}
+
+async function salvarIsencaoEncargos() {
+    if (!podeIsentarEncargos()) { toast('Você não tem permissão para isentar multa e juros.', 'error'); return; }
+    const tipo = document.getElementById('isenTipo').value;
+    const motivo = document.getElementById('isenMotivo').value.trim();
+    const isentarMulta = document.getElementById('isenMulta').checked;
+    const isentarJuros = document.getElementById('isenJuros').checked;
+    if (!isentarMulta && !isentarJuros) { toast('Marque multa, juros ou ambos.', 'error'); return; }
+    if (motivo.length < 5) { toast('Informe o motivo da isenção.', 'error'); return; }
+    const data = { tipo, apto: document.getElementById('isenApto').value, isentarMulta, isentarJuros, motivo,
+        por: APP.currentUser?.uid || '', porNome: APP.userProfile?.nome || APP.currentUser?.email || '', em: new Date().toISOString() };
+    if (tipo === 'parcela') {
+        Object.assign(data, { ano: document.getElementById('isenAno').value, mes: document.getElementById('isenMes').value, tipoTaxa: document.getElementById('isenTaxa').value });
+        if (!data.ano) { toast('Abra a isenção de parcela pelo painel de Inadimplentes.', 'error'); return; }
+    } else {
+        Object.assign(data, { de: document.getElementById('isenDe').value || '', ate: document.getElementById('isenAte').value || '' });
+        if (data.de && data.ate && data.de > data.ate) { toast('O mês inicial deve ser anterior ao final.', 'error'); return; }
+    }
+    const id = await fbSave('encargos_isencoes', null, data);
+    if (!id) return;
+    (APP.encargosIsencoes = APP.encargosIsencoes || []).push({ id, ...data });
+    auditLog('ENCARGOS_ISENCAO', data);
+    closeModal('modalIsencaoEnc');
+    toast('Isenção registrada.');
+    renderIsencoesEncargos();
+    try { renderInadimplentes(); } catch (_) {}
+}
+
+async function removerIsencaoEncargos(id) {
+    if (!podeIsentarEncargos()) return;
+    if (!confirm('Desfazer esta isenção? A multa e os juros voltam a ser cobrados.')) return;
+    await fbDelete('encargos_isencoes', id);
+    APP.encargosIsencoes = (APP.encargosIsencoes || []).filter(z => z.id !== id);
+    auditLog('ENCARGOS_ISENCAO_DESFEITA', { id });
+    renderIsencoesEncargos();
+    try { renderInadimplentes(); } catch (_) {}
+}
+
+// ----- Lançamento de pagamento com atraso -----
+function atualizarEncargosPagamento() {
+    const box = document.getElementById('pgtoEncargosBox');
+    if (!box) return;
+    APP._pgtoEnc = null;
+    if (!_encCfg().ativo) { box.style.display = 'none'; return; }
+    const item = {
+        apto: document.getElementById('pgtoApto').value,
+        ano: document.getElementById('pgtoAno').value,
+        mes: document.getElementById('pgtoMes').value,
+        tipoTaxa: document.getElementById('pgtoTipoTaxa').value,
+        valor: parseFloat(document.getElementById('pgtoValor').value) || 0
+    };
+    const data = document.getElementById('pgtoData').value;
+    if (!item.apto || !item.ano || !item.mes || !item.tipoTaxa || !item.valor || !data) { box.style.display = 'none'; return; }
+    const enc = calcEncargos(item, data);
+    if (!enc.aplicavel) { box.style.display = 'none'; return; }
+    APP._pgtoEnc = enc;
+    const cfg = _encCfg();
+    const opcAnterior = document.querySelector('input[name="pgtoEncOpc"]:checked')?.value || 'cobrar';
+    const motivoAnterior = document.getElementById('pgtoEncMotivo')?.value || '';
+    box.style.display = 'block';
+    if (enc.total <= 0) {
+        box.innerHTML = `<div style="padding:0.7rem 0.9rem;border-radius:10px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);font-size:0.84rem">
+            <i class="ti ti-shield-check" style="color:var(--accent)"></i> Pagamento com ${enc.dias} dia(s) de atraso, mas esta parcela tem <strong>isenção de multa e juros</strong>${enc.motivoIsencao ? ': ' + H(enc.motivoIsencao) : ''}.</div>`;
+        return;
+    }
+    const podeIsentar = podeIsentarEncargos();
+    box.innerHTML = `<div style="padding:0.8rem 0.95rem;border-radius:10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.35);font-size:0.85rem">
+        <div style="font-weight:700;margin-bottom:0.4rem"><i class="ti ti-clock-exclamation" style="color:#D97706"></i> Pagamento com ${enc.dias} dia(s) de atraso</div>
+        <div>Valor da parcela: <strong>${fmtMoney(item.valor)}</strong></div>
+        <div>Multa (${String(cfg.multaPct).replace('.', ',')}%): <strong>${fmtMoney(enc.multa)}</strong>${enc.isentoMulta ? ' (isenta)' : ''}</div>
+        <div>Juros (${String(cfg.jurosPctMes).replace('.', ',')}% a.m. &times; ${enc.dias} dias): <strong>${fmtMoney(enc.juros)}</strong>${enc.isentoJuros ? ' (isentos)' : ''}</div>
+        <div style="margin-top:0.3rem;font-size:0.95rem">Total com encargos: <strong>${fmtMoney(item.valor + enc.total)}</strong></div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.6rem">
+            <label style="display:flex;gap:0.35rem;align-items:center;cursor:pointer"><input type="radio" name="pgtoEncOpc" value="cobrar" ${opcAnterior !== 'isentar' ? 'checked' : ''} onchange="atualizarEncargosPagamento()"> Receber com multa e juros</label>
+            ${podeIsentar ? `<label style="display:flex;gap:0.35rem;align-items:center;cursor:pointer"><input type="radio" name="pgtoEncOpc" value="isentar" ${opcAnterior === 'isentar' ? 'checked' : ''} onchange="atualizarEncargosPagamento()"> Receber sem encargos (isentar)</label>` : ''}
+        </div>
+        ${podeIsentar && opcAnterior === 'isentar' ? `<input type="text" id="pgtoEncMotivo" placeholder="Motivo da isenção *" value="${H(motivoAnterior)}" style="margin-top:0.5rem;width:100%;padding:0.5rem 0.7rem;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary)">` : ''}
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.5rem">O campo "Valor Pago" continua sendo o valor da parcela; a multa e os juros são registrados à parte e aparecem no Relatório de Receitas como "Multas e Juros".</div>
+    </div>`;
+}
+(function () {
+    document.addEventListener('DOMContentLoaded', () => {
+        const m = document.getElementById('modalPagamento');
+        if (!m) return;
+        const ids = ['pgtoAno', 'pgtoMes', 'pgtoApto', 'pgtoTipoTaxa', 'pgtoValor', 'pgtoData'];
+        const h = ev => { if (ids.includes(ev.target.id)) atualizarEncargosPagamento(); };
+        m.addEventListener('change', h);
+        m.addEventListener('input', h);
+    });
+})();
 
 // ===== VENCIMENTO DAS PARCELAS (regra "A vencer") =====
 // Vencimento padrão: todo dia 16. Se o condomínio tiver o campo diaVencimento, ele prevalece.
@@ -6304,20 +6690,28 @@ function printInadimplentes(modo) {
     let rows = '';
     let aptoAtual = null, subtotal = 0, count = 0;
     let totalAVencer = 0, qtdAVencer = 0;
+    const comEnc = !!(r.encAtivo && r.totalEncargos > 0);
+    let subM = 0, subJ = 0, totM = 0, totJ = 0;
+    const NC = comEnc ? 7 : 4;
     const fechaGrupo = () => {
-        rows += `<tr class="sub"><td colspan="3">Subtotal Apto ${H(aptoAtual)} &middot; ${count} parcela${count>1?'s':''}</td><td class="val">${fmtMoney(subtotal)}</td></tr>`;
+        rows += comEnc
+            ? `<tr class="sub"><td colspan="3">Subtotal Apto ${H(aptoAtual)} &middot; ${count} parcela${count>1?'s':''}</td><td class="val">${fmtMoney(subtotal)}</td><td class="val">${fmtMoney(subM)}</td><td class="val">${fmtMoney(subJ)}</td><td class="val">${fmtMoney(subtotal + subM + subJ)}</td></tr>`
+            : `<tr class="sub"><td colspan="3">Subtotal Apto ${H(aptoAtual)} &middot; ${count} parcela${count>1?'s':''}</td><td class="val">${fmtMoney(subtotal)}</td></tr>`;
     };
     lista.forEach(i => {
         if (i.apto !== aptoAtual) {
             if (aptoAtual !== null) fechaGrupo();
-            aptoAtual = i.apto; subtotal = 0; count = 0;
-            rows += `<tr class="grp"><td colspan="4">Apartamento ${H(i.apto)}</td></tr>`;
+            aptoAtual = i.apto; subtotal = 0; count = 0; subM = 0; subJ = 0;
+            rows += `<tr class="grp"><td colspan="${NC}">Apartamento ${H(i.apto)}</td></tr>`;
         }
         subtotal += i.valorAberto; count++;
         const av = inadAVencer(i);
         if (av) { totalAVencer += i.valorAberto; qtdAVencer++; }
         const dv = inadDataVenc(i).toLocaleDateString('pt-BR');
-        rows += `<tr${av ? ' class="avencer"' : ''}><td>${H(i.ano)}</td><td>${MESES[parseInt(i.mes)]||H(i.mes)}${av ? ` <span class="chip">A vencer &middot; ${dv}</span>` : ''}</td><td>${H(i.tipoTaxa)}</td><td class="val">${fmtMoney(i.valorAberto)}</td></tr>`;
+        const em = i.enc ? i.enc.multa : 0, ej = i.enc ? i.enc.juros : 0;
+        subM += em; subJ += ej; totM += em; totJ += ej;
+        const isen = i.enc && i.enc.aplicavel && (i.enc.isentoMulta || i.enc.isentoJuros) ? ' <span class="chip">Isento</span>' : '';
+        rows += `<tr${av ? ' class="avencer"' : ''}><td>${H(i.ano)}</td><td>${MESES[parseInt(i.mes)]||H(i.mes)}${av ? ` <span class="chip">A vencer &middot; ${dv}</span>` : ''}${isen}</td><td>${H(i.tipoTaxa)}</td><td class="val">${fmtMoney(i.valorAberto)}</td>${comEnc ? `<td class="val">${fmtMoney(em)}</td><td class="val">${fmtMoney(ej)}</td><td class="val">${fmtMoney(i.valorAberto + em + ej)}</td>` : ''}</tr>`;
     });
     fechaGrupo();
 
@@ -6396,16 +6790,17 @@ function printInadimplentes(modo) {
     ${filtros.length ? `<div class="filtros">Filtros aplicados: ${H(filtros.join(' · '))}</div>` : ''}
 
     <div class="cards">
-        <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong>${qtdAVencer ? `<small>Inclui ${fmtMoney(totalAVencer)} a vencer</small>` : ''}</div>
+        <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong>${qtdAVencer ? `<small>Inclui ${fmtMoney(totalAVencer)} a vencer</small>` : ''}${comEnc ? `<small style="color:#991B1B">Atualizado com multa e juros: ${fmtMoney((r.totalAberto||0) + r.totalEncargos)}</small>` : ''}</div>
         <div class="card"><span>Parcelas em aberto</span><strong>${r.parcelas||lista.length}</strong>${qtdAVencer ? `<small>${qtdAVencer} a vencer</small>` : ''}</div>
         <div class="card"><span>Unidades</span><strong>${r.aptosUnicos||0}</strong></div>
     </div>
 
     <table>
-        <thead><tr><th>Ano</th><th>Mês</th><th>Tipo de Taxa</th><th>Valor em Aberto</th></tr></thead>
+        <thead><tr><th>Ano</th><th>Mês</th><th>Tipo de Taxa</th>${comEnc ? '<th style="text-align:right">Valor Original</th><th style="text-align:right">Multa</th><th style="text-align:right">Juros</th><th>Atualizado</th>' : '<th>Valor em Aberto</th>'}</tr></thead>
         <tbody>${rows}</tbody>
     </table>
-    <div class="total"><span>TOTAL GERAL &middot; ${r.parcelas||lista.length} parcela(s) &middot; ${r.aptosUnicos||0} unidade(s)</span><b>${fmtMoney(r.totalAberto||0)}</b></div>
+    <div class="total"><span>TOTAL GERAL &middot; ${r.parcelas||lista.length} parcela(s) &middot; ${r.aptosUnicos||0} unidade(s)${comEnc ? ` &middot; original ${fmtMoney(r.totalAberto||0)} + multa ${fmtMoney(totM)} + juros ${fmtMoney(totJ)}` : ''}</span><b>${fmtMoney((r.totalAberto||0) + (comEnc ? r.totalEncargos : 0))}</b></div>
+    ${comEnc ? `<div class="nota">Valores atualizados até ${agora.toLocaleDateString('pt-BR')}: multa de ${String(_encCfg().multaPct).replace('.', ',')}% sobre o valor da parcela e juros de ${String(_encCfg().jurosPctMes).replace('.', ',')}% ao mês, proporcionais aos dias de atraso, conforme a convenção do condomínio.</div>` : ''}
     ${qtdAVencer ? `<div class="nota">Parcelas marcadas como <strong>"A vencer"</strong> ainda estão dentro do prazo de pagamento (vencimento todo dia ${inadDiaVenc()}) e estão incluídas no total acima.</div>` : ''}
 
     <div class="msg">
@@ -7353,6 +7748,10 @@ function dadosRelReceitas(ano, mes) {
         itens.push({ iso: p.dataPgto || `${p.ano}-${p.mes}-01`, mes: p.mes, categoria: p.tipoTaxa || 'Taxas',
             descricao: `Apto ${p.apto || '—'} · ref. ${(MESES[parseInt(p.mes)] || p.mes)}/${p.ano}`,
             fornecedor: p.formaPagamento || '', valor: p.valor || 0, origem: 'Taxas', pago: true });
+        const enc = _r2((p.multa || 0) + (p.juros || 0));
+        if (enc > 0) itens.push({ iso: p.dataPgto || `${p.ano}-${p.mes}-01`, mes: p.mes, categoria: 'Multas e Juros',
+            descricao: `Apto ${p.apto || '—'} · atraso ref. ${(MESES[parseInt(p.mes)] || p.mes)}/${p.ano}`,
+            fornecedor: `Multa ${fmtMoney(p.multa || 0)} · Juros ${fmtMoney(p.juros || 0)}`, valor: enc, origem: 'Taxas', pago: true });
     });
     getExtratoConciliado(ano, mes).receitasExtrato.forEach(e => {
         const iso = _isoDeData(e.data);
