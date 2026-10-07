@@ -6690,6 +6690,7 @@ function printInadimplentes(modo) {
     let rows = '';
     let aptoAtual = null, subtotal = 0, count = 0;
     let totalAVencer = 0, qtdAVencer = 0;
+    const aptosLista = [...new Set(lista.map(i => i.apto))].sort((x, y) => String(x).localeCompare(String(y), 'pt-BR', { numeric: true }));
     const comEnc = !!(r.encAtivo && r.totalEncargos > 0);
     let subM = 0, subJ = 0, totM = 0, totJ = 0;
     const NC = comEnc ? 7 : 4;
@@ -6742,6 +6743,8 @@ function printInadimplentes(modo) {
     .card span { display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#64748B; font-weight:600; }
     .card strong { display:block; font-size:18px; margin-top:3px; color:#1A2744; }
     .card.red strong { color:#DC2626; }
+    .card.apto { background:#1A2744; border-color:#1A2744; }
+    .card.apto span { color:#CBD5E1; } .card.apto strong { color:#FBBF24; } .card.apto small { color:#CBD5E1; }
     table { width:100%; border-collapse:collapse; }
     thead th { text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#fff; background:#1A2744; padding:8px 10px; font-weight:600; }
     thead th:first-child { border-radius:6px 0 0 6px; } thead th:last-child { border-radius:0 6px 6px 0; text-align:right; }
@@ -6789,7 +6792,8 @@ function printInadimplentes(modo) {
     <div class="intro">Seguem abaixo os valores que se encontram em aberto junto ao condomínio. Solicitamos que sejam verificados e analisados para a devida quitação.</div>
     ${filtros.length ? `<div class="filtros">Filtros aplicados: ${H(filtros.join(' · '))}</div>` : ''}
 
-    <div class="cards">
+    <div class="cards" style="grid-template-columns:repeat(4,1fr)">
+        <div class="card apto"><span>${aptosLista.length === 1 ? 'Apartamento' : 'Apartamentos'}</span><strong>${aptosLista.length === 1 ? 'Apto ' + H(aptosLista[0]) : (aptosLista.length <= 4 ? aptosLista.map(a => H(a)).join(', ') : 'Diversos')}</strong>${aptosLista.length > 1 ? `<small>${aptosLista.length} unidades</small>` : ''}</div>
         <div class="card red"><span>Total em aberto</span><strong>${fmtMoney(r.totalAberto||0)}</strong>${qtdAVencer ? `<small>Inclui ${fmtMoney(totalAVencer)} a vencer</small>` : ''}${comEnc ? `<small style="color:#991B1B">Atualizado com multa e juros: ${fmtMoney((r.totalAberto||0) + r.totalEncargos)}</small>` : ''}</div>
         <div class="card"><span>Parcelas em aberto</span><strong>${r.parcelas||lista.length}</strong>${qtdAVencer ? `<small>${qtdAVencer} a vencer</small>` : ''}</div>
         <div class="card"><span>Unidades</span><strong>${r.aptosUnicos||0}</strong></div>
