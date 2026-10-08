@@ -3942,10 +3942,11 @@ async function loadAllData() {
     }
 
     try {
-        // Carregar usuários SEMPRE (independente do condomínio)
-        const usrSnap = await APP.db.collection('user_profiles').get();
-        APP.usuarios = []; usrSnap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
-        renderUsuarios();
+        // Lista de usuários (independente do condomínio).
+        // Vai com try/catch próprio de propósito: só gestor tem permissão de
+        // ler esta coleção, e antes uma recusa aqui abortava TODO o
+        // carregamento — o morador não via nem o condomínio dele.
+        await recarregarUsuarios();
 
         // Load condominios
         // Usuário restrito a condomínios específicos: busca cada um pelo ID
@@ -8387,15 +8388,19 @@ async function recarregarUsuarios() {
     try {
         const snap = await APP.db.collection('user_profiles').get();
         APP.usuarios = []; snap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
-        renderUsuarios();
     } catch (e) {
-        console.warn('Usuários:', e.message);
+        // Perfis sem acesso à tela de Usuários simplesmente não leem a lista.
+        // Não é erro: é a regra do Firestore funcionando.
+        console.warn('Usuários (sem permissão de leitura):', e.message);
+        APP.usuarios = [];
     }
+    renderUsuarios();
 }
 
 function renderUsuarios() {
     const tb = document.getElementById('tbUsuarios');
-    if (APP.usuarios.length === 0) {
+    if (!tb) return;
+    if (!APP.usuarios || APP.usuarios.length === 0) {
         tb.innerHTML = '<tr><td colspan="7" class="empty-state"><p>Nenhum usuário</p></td></tr>';
         return;
     }
@@ -8467,6 +8472,10 @@ async function approveUser(userId) {
     try {
         await APP.db.collection('user_profiles').doc(userId).update({
             aprovado: true,
+            // O status continuava 'pendente' depois da aprovação, o que deixava
+            // a coluna Status da lista mentindo e o campo inutilizável como
+            // critério de acesso.
+            status: 'ativo',
             aprovadoPor: APP.currentUser.uid,
             aprovadoEm: new Date().toISOString()
         });

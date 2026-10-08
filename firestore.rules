@@ -41,10 +41,17 @@ service cloud.firestore {
     function status() { return perfilDoc().get('status', 'ativo'); }
     function papel()  { return perfilDoc().get('perfil', 'usuario'); }
     function meuApto() { return perfilDoc().get('apartamentoVinculado', ''); }
+    // Padrão true: perfis antigos, criados antes deste campo existir, não
+    // podem ser trancados para fora.
+    function aprovado() { return perfilDoc().get('aprovado', true) == true; }
 
-    // Conta válida: existe, não está inativa e não está pendente de aprovação
+    // Conta válida: existe, está aprovada e não foi desativada.
+    // ATENÇÃO: quem decide o acesso é 'aprovado', NÃO 'status'. O approveUser()
+    // do app marca aprovado=true e deixa o status como estava ('pendente'),
+    // então checar status aqui trancaria todo usuário aprovado pelo fluxo
+    // normal de cadastro.
     function ativo() {
-      return temPerfil() && status() != 'inativo' && status() != 'pendente';
+      return temPerfil() && status() != 'inativo' && aprovado();
     }
 
     function admin()   { return ativo() && papel() == 'admin'; }
@@ -61,9 +68,11 @@ service cloud.firestore {
 
     // ---------- Perfis de usuário ----------
     match /user_profiles/{uid} {
-      // Cada um lê o próprio perfil; admin lê todos (tela de Usuários)
-      allow get: if logado() && (request.auth.uid == uid || admin());
-      allow list: if admin();
+      // Cada um lê o próprio perfil. A lista completa é da tela de Usuários,
+      // que o app mostra para admin e síndico — se aqui só admin pudesse
+      // listar, a tela quebraria para o síndico.
+      allow get: if logado() && (request.auth.uid == uid || gestor());
+      allow list: if gestor();
 
       // Primeiro login: o app cria o próprio perfil, sempre pendente e sem
       // poderes. Quem promove é o admin.
