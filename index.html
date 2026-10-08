@@ -598,6 +598,57 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 .chart-container { position: relative; height: 300px; width: 100%; }
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.2rem; }
 
+/* ===== DASHBOARD ===== */
+/* Bloco de destaque: o saldo é o número que o síndico procura primeiro,
+   então ele ganha tamanho próprio em vez de disputar com os outros. */
+.dash-hero { display: grid; grid-template-columns: minmax(260px, 1.1fr) repeat(3, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 0.9rem; }
+.hero-card { background: var(--gradient-primary); color: #fff; border-radius: var(--radius-lg); padding: 1.3rem 1.5rem; display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; position: relative; overflow: hidden; }
+.hero-card::after { content: ''; position: absolute; right: -40px; top: -40px; width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+.hero-card .hero-rot { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; color: rgba(255,255,255,0.65); }
+.hero-card .hero-num { font-family: var(--font-display); font-size: 2.3rem; font-weight: 800; line-height: 1.1; letter-spacing: -1px; }
+.hero-card .hero-pe { font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 0.2rem; }
+.hero-card .hero-pe b { color: #fff; font-weight: 600; }
+
+.metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.3rem; transition: var(--transition); }
+.metric-card:hover { border-color: var(--primary-light); transform: translateY(-2px); }
+.metric-top { display: flex; align-items: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+.metric-top i { font-size: 0.95rem; }
+.metric-num { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; color: var(--text-primary); }
+.metric-pe { font-size: 0.74rem; color: var(--text-light); display: flex; align-items: center; gap: 0.25rem; }
+.delta { font-weight: 700; display: inline-flex; align-items: center; gap: 2px; }
+.delta.sobe { color: #0ca30c; }
+.delta.desce { color: #d03b3b; }
+.delta.neutro { color: var(--text-light); }
+
+/* Faixa compacta: contadores operacionais, que são leitura de relance */
+.kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.7rem; margin-bottom: 1.1rem; }
+.kpi-mini { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0.7rem 0.9rem; display: flex; align-items: center; gap: 0.65rem; }
+.kpi-mini .kpi-ic { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; flex-shrink: 0; }
+.kpi-mini .kpi-ic.azul { background: rgba(42,120,214,0.12); color: #2a78d6; }
+.kpi-mini .kpi-ic.laranja { background: rgba(235,104,52,0.12); color: #eb6834; }
+.kpi-mini .kpi-ic.verde { background: rgba(12,163,12,0.12); color: #0ca30c; }
+.kpi-mini .kpi-ic.vermelho { background: rgba(208,59,59,0.12); color: #d03b3b; }
+.kpi-mini b { font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; display: block; line-height: 1.15; color: var(--text-primary); }
+.kpi-mini span { font-size: 0.72rem; color: var(--text-secondary); }
+
+/* Cartões de gráfico */
+.chart-card { padding-top: 1.1rem; }
+.chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.9rem; }
+.chart-head h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+.chart-sub, .chart-legend { font-size: 0.75rem; color: var(--text-secondary); margin: 0.2rem 0 0; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: center; }
+.chart-legend .lg { display: inline-flex; align-items: center; gap: 0.35rem; }
+.chart-legend .pt { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.chart-tag { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); background: var(--bg-main); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; white-space: nowrap; flex-shrink: 0; }
+
+@media (max-width: 1100px) { .dash-hero { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) {
+    .dash-hero { grid-template-columns: 1fr; gap: 0.7rem; }
+    .hero-card .hero-num { font-size: 1.9rem; }
+    .kpi-strip { grid-template-columns: 1fr 1fr; }
+    .chart-head { flex-direction: column; gap: 0.4rem; }
+}
+
 /* ACCESS CONTROL CHECKBOXES */
 .access-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.5rem; }
 .access-item {
@@ -1175,24 +1226,48 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     <div class="page-content">
         <!-- ============ DASHBOARD ============ -->
         <section class="page-section active" id="pg-dashboard">
-            <div class="stats-row" id="dashStats"></div>
-            <div class="stats-row" id="dashStatsExtra" style="margin-top:0.5rem"></div>
+            <div class="dash-hero" id="dashHero"></div>
+            <div class="kpi-strip" id="dashStatsExtra"></div>
             <div class="dash-extra-row" id="dashAlerts"></div>
             <div class="charts-grid">
-                <div class="card">
-                    <div class="card-title"><i class="ti ti-chart-bar"></i> Receitas vs Despesas (Mensal)</div>
+                <div class="card chart-card">
+                    <div class="chart-head">
+                        <div>
+                            <h3>Receitas e despesas</h3>
+                            <p id="legendaRecDesp" class="chart-legend"></p>
+                        </div>
+                        <span class="chart-tag" id="tagAnoRecDesp"></span>
+                    </div>
                     <div class="chart-container"><canvas id="chartRecDesp"></canvas></div>
                 </div>
-                <div class="card">
-                    <div class="card-title"><i class="ti ti-home-exclamation"></i> Inadimplência por Apartamento</div>
+                <div class="card chart-card">
+                    <div class="chart-head">
+                        <div>
+                            <h3>Inadimplência por mês</h3>
+                            <p class="chart-sub">Valor em aberto no mês, sem identificação de unidade</p>
+                        </div>
+                        <span class="chart-tag" id="tagInad"></span>
+                    </div>
                     <div class="chart-container"><canvas id="chartInadimplencia"></canvas></div>
                 </div>
-                <div class="card">
-                    <div class="card-title"><i class="ti ti-list-details"></i> Despesas por Categoria</div>
+                <div class="card chart-card">
+                    <div class="chart-head">
+                        <div>
+                            <h3>Despesas por categoria</h3>
+                            <p class="chart-sub">Da maior para a menor, no ano</p>
+                        </div>
+                        <span class="chart-tag" id="tagDespCat"></span>
+                    </div>
                     <div class="chart-container"><canvas id="chartDespCat"></canvas></div>
                 </div>
-                <div class="card">
-                    <div class="card-title"><i class="ti ti-coins"></i> Previsão Orçamentária vs Realizado</div>
+                <div class="card chart-card">
+                    <div class="chart-head">
+                        <div>
+                            <h3>Orçamento: previsto e realizado</h3>
+                            <p id="legendaOrc" class="chart-legend"></p>
+                        </div>
+                        <span class="chart-tag" id="tagOrc"></span>
+                    </div>
                     <div class="chart-container"><canvas id="chartOrcamento"></canvas></div>
                 </div>
             </div>
@@ -3267,7 +3342,14 @@ function toggleTheme() {
 function setTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('condogest_theme', t);
-    document.getElementById('cfgTema').value = t;
+    const sel = document.getElementById('cfgTema');
+    if (sel) sel.value = t;
+    // Os gráficos são desenhados em canvas: as cores não acompanham o CSS
+    // sozinhas. Sem isto, no tema escuro os textos dos eixos ficavam
+    // praticamente ilegíveis.
+    if (typeof renderCharts === 'function' && APP.charts && Object.keys(APP.charts).length) {
+        try { renderCharts(); } catch (e) { console.warn('Gráficos (tema):', e.message); }
+    }
 }
 
 // ===== NAVIGATION =====
@@ -8822,66 +8904,136 @@ async function saveUsuario() {
 }
 
 // ===== DASHBOARD =====
-function renderDashboard() {
-    // Stats - incluir extrato conciliado
-    const totalMoradores = APP.moradores.length;
-    const totalPgtosRec = APP.pagamentos.reduce((s,p) => s + (p.valor||0), 0);
-    const totalContasDesp = APP.contas.reduce((s,c) => s + (c.valor||0), 0);
+// ===== DASHBOARD: auxiliares =====
 
-    // Extrato conciliado (todos os meses, ano corrente)
-    const curYear = new Date().getFullYear();
-    const { receitasExtrato, despesasExtrato } = typeof getExtratoConciliado === 'function' ? getExtratoConciliado(curYear, '') : { receitasExtrato:[], despesasExtrato:[] };
-    const totalRecExtrato = receitasExtrato.reduce((s,e) => s + e.valor, 0);
-    const totalDespExtrato = despesasExtrato.reduce((s,e) => s + e.valor, 0);
-
-    // Receitas Avulsas
-    const totalRA = (APP.receitasAvulsas||[]).filter(r => (r.data||'').startsWith(String(curYear))).reduce((s,r) => s + (r.valor||0), 0);
-
-    const totalReceitas = totalPgtosRec + totalRecExtrato + totalRA;
-    const totalDespesas = totalContasDesp + totalDespExtrato;
-
-    // Count inadimplentes usando taxasApto
-    const curMonth = String(new Date().getMonth() + 1).padStart(2, '0');
-    let inadCount = 0;
-    (APP.taxasApto||[]).forEach(ta => {
-        if (parcelaCancelada(ta.apto, curYear, curMonth, ta.descricao)) return;
-        const totalDevido = (ta.valor||0) * (ta.quantidade||1);
-        const totalPago = APP.pagamentos.filter(p =>
-            p.ano == curYear && p.mes === curMonth &&
-            p.apto === ta.apto && p.tipoTaxa === ta.descricao
-        ).reduce((s,p) => s + (p.valor||0), 0);
-        if (totalPago < totalDevido) inadCount++;
+// Inadimplência de um mês: quantas unidades e quanto em aberto.
+// Devolve só os totais — nenhuma identificação de apartamento sai daqui,
+// porque isso alimenta o painel, que é tela de visão geral.
+function inadimplenciaDoMes(ano, mes) {
+    let unidades = 0, valor = 0;
+    const porApto = {};
+    (APP.taxasApto || []).forEach(ta => {
+        if (parcelaCancelada(ta.apto, ano, mes, ta.descricao)) return;
+        const devido = (ta.valor || 0) * (ta.quantidade || 1);
+        const pago = APP.pagamentos.filter(p =>
+            p.ano == ano && p.mes === mes && p.apto === ta.apto && p.tipoTaxa === ta.descricao
+        ).reduce((s, p) => s + (p.valor || 0), 0);
+        if (pago < devido) {
+            valor += devido - pago;
+            porApto[ta.apto] = true;
+        }
     });
+    unidades = Object.keys(porApto).length;
+    return { unidades, valor: _r2(valor) };
+}
 
-    document.getElementById('dashStats').innerHTML = `
-        <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-home-2"></i></div><div class="stat-info"><h4>${totalMoradores}</h4><span>Moradores</span></div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="ti ti-trending-up"></i></div><div class="stat-info"><h4>${fmtMoney(totalReceitas)}</h4><span>Receitas</span></div></div>
-        <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-trending-down"></i></div><div class="stat-info"><h4>${fmtMoney(totalDespesas)}</h4><span>Despesas</span></div></div>
-        <div class="stat-card"><div class="stat-icon red"><i class="ti ti-alert-triangle"></i></div><div class="stat-info"><h4>${inadCount}</h4><span>Inadimplentes</span></div></div>
-    `;
+// Texto curto de variação contra o período anterior.
+// inverter=true para indicadores em que subir é ruim (inadimplência).
+function textoVariacao(atual, anterior, inverter) {
+    if (anterior === null || anterior === undefined) return '';
+    if (anterior === 0 && atual === 0) return '<span class="delta neutro">sem mudança</span>';
+    if (anterior === 0) return `<span class="delta ${inverter ? 'desce' : 'sobe'}">novo</span>`;
+    const pct = ((atual - anterior) / Math.abs(anterior)) * 100;
+    if (Math.abs(pct) < 0.5) return '<span class="delta neutro">estável</span>';
+    const subiu = pct > 0;
+    const bom = inverter ? !subiu : subiu;
+    const seta = subiu ? 'ti-arrow-up-right' : 'ti-arrow-down-right';
+    return `<span class="delta ${bom ? 'sobe' : 'desce'}"><i class="ti ${seta}"></i>${Math.abs(pct).toFixed(0)}%</span> vs. mês anterior`;
+}
 
-    // === Dashboard Extra KPIs (Onda 2) ===
-    const chamadosAbertos = (APP.ocorrencias||[]).filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
-    const hoje = new Date().toISOString().split('T')[0];
-    const meAtual = hoje.slice(0,7);
-    const reservasMes = (APP.reservas||[]).filter(r => (r.data||'').startsWith(meAtual) && r.status !== 'cancelada').length;
-    const comunicadosRecentes = (APP.comunicados||[]).filter(c => {
-        if (!c.data) return false;
-        const diff = (new Date() - new Date(c.data+'T00:00:00')) / (1000*60*60*24);
-        return diff <= 30;
-    }).length;
+// A variação vai em linha própria: amontoada junto do rodapé ela quebrava
+// no meio e sobrava um separador solto no fim da linha.
+function cartaoMetrica(icone, rotulo, numero, pe, variacao) {
+    return `<div class="metric-card">
+        <span class="metric-top"><i class="ti ${icone}"></i>${rotulo}</span>
+        <span class="metric-num">${numero}</span>
+        <span class="metric-pe">${pe || ''}</span>
+        ${variacao ? `<span class="metric-pe">${variacao}</span>` : ''}
+    </div>`;
+}
+
+function miniKpi(cor, icone, numero, rotulo) {
+    return `<div class="kpi-mini">
+        <div class="kpi-ic ${cor}"><i class="ti ${icone}"></i></div>
+        <div><b>${numero}</b><span>${rotulo}</span></div>
+    </div>`;
+}
+
+function renderDashboard() {
+    const anoAtual = new Date().getFullYear();
+    const mesAtual = new Date().getMonth() + 1;
+
+    // ----- Receitas e despesas do ano -----
+    const totalPgtosRec = APP.pagamentos.reduce((s, p) => s + (p.valor || 0), 0);
+    const totalContasDesp = APP.contas.reduce((s, c) => s + (c.valor || 0), 0);
+    const { receitasExtrato, despesasExtrato } = typeof getExtratoConciliado === 'function'
+        ? getExtratoConciliado(anoAtual, '') : { receitasExtrato: [], despesasExtrato: [] };
+    const totalRA = (APP.receitasAvulsas || [])
+        .filter(r => (r.data || '').startsWith(String(anoAtual)))
+        .reduce((s, r) => s + (r.valor || 0), 0);
+
+    const totalReceitas = totalPgtosRec + receitasExtrato.reduce((s, e) => s + e.valor, 0) + totalRA;
+    const totalDespesas = totalContasDesp + despesasExtrato.reduce((s, e) => s + e.valor, 0);
     const saldo = totalReceitas - totalDespesas;
-    const saldoColor = saldo >= 0 ? 'green' : 'red';
-    const saldoIcon = saldo >= 0 ? 'ti-arrow-up-circle' : 'ti-arrow-down-circle';
 
-    const dashExtra = document.getElementById('dashStatsExtra');
-    if (dashExtra) {
-        dashExtra.innerHTML = `
-            <div class="stat-card"><div class="stat-icon ${saldoColor}"><i class="ti ${saldoIcon}"></i></div><div class="stat-info"><h4>${fmtMoney(Math.abs(saldo))}</h4><span>Saldo ${saldo>=0?'Positivo':'Negativo'}</span></div></div>
-            <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-tool"></i></div><div class="stat-info"><h4>${chamadosAbertos}</h4><span>Chamados Abertos</span></div></div>
-            <div class="stat-card"><div class="stat-icon blue"><i class="ti ti-calendar-event"></i></div><div class="stat-info"><h4>${reservasMes}</h4><span>Reservas (mês)</span></div></div>
-            <div class="stat-card"><div class="stat-icon green"><i class="ti ti-speakerphone"></i></div><div class="stat-info"><h4>${comunicadosRecentes}</h4><span>Comunicados (30d)</span></div></div>
+    // ----- Inadimplência: unidades e valor em aberto no mês corrente -----
+    const inadMes = inadimplenciaDoMes(anoAtual, String(mesAtual).padStart(2, '0'));
+    const inadMesAnterior = mesAtual > 1
+        ? inadimplenciaDoMes(anoAtual, String(mesAtual - 1).padStart(2, '0'))
+        : null;
+
+    // ----- Variação do resultado do mês contra o mês anterior -----
+    const resultadoDoMes = m => {
+        const ms = String(m).padStart(2, '0');
+        const rec = APP.pagamentos.filter(p => p.ano == anoAtual && p.mes === ms)
+            .reduce((s, p) => s + (p.valor || 0), 0)
+            + (APP.receitasAvulsas || []).filter(r => (r.data || '').startsWith(`${anoAtual}-${ms}`))
+                .reduce((s, r) => s + (r.valor || 0), 0);
+        const desp = APP.contas.filter(c => (c.vencimento || '').startsWith(`${anoAtual}-${ms}`))
+            .reduce((s, c) => s + (c.valor || 0), 0);
+        return rec - desp;
+    };
+    const resMes = resultadoDoMes(mesAtual);
+
+    const hero = document.getElementById('dashHero');
+    if (hero) {
+        hero.innerHTML = `
+            <div class="hero-card">
+                <span class="hero-rot">Saldo de ${anoAtual}</span>
+                <span class="hero-num">${fmtMoney(saldo)}</span>
+                <span class="hero-pe">${fmtMoney(totalReceitas)} recebidos &middot; <b>${fmtMoney(totalDespesas)}</b> em despesas</span>
+            </div>
+            ${cartaoMetrica('ti-trending-up', 'Receitas no ano', fmtMoney(totalReceitas),
+                `${APP.pagamentos.filter(p => p.ano == anoAtual).length} pagamento(s) registrados`)}
+            ${cartaoMetrica('ti-trending-down', 'Despesas no ano', fmtMoney(totalDespesas),
+                `${APP.contas.length} lançamento(s) em contas`)}
+            ${cartaoMetrica('ti-alert-triangle', 'Inadimplência do mês', fmtMoney(inadMes.valor),
+                inadMes.unidades === 0 ? 'Nenhuma unidade em aberto' : `${inadMes.unidades} unidade(s) em aberto`,
+                inadMesAnterior ? textoVariacao(inadMes.valor, inadMesAnterior.valor, true) : '')}
         `;
+    }
+
+    // ----- Faixa de contadores operacionais -----
+    const chamadosAbertos = (APP.ocorrencias || []).filter(o => o.status === 'aberto' || o.status === 'em_andamento').length;
+    const hoje = new Date().toISOString().split('T')[0];
+    const meAtual = hoje.slice(0, 7);
+    const reservasMes = (APP.reservas || []).filter(r => (r.data || '').startsWith(meAtual) && r.status !== 'cancelada').length;
+    const comunicadosRecentes = (APP.comunicados || []).filter(c => {
+        if (!c.data) return false;
+        return (new Date() - new Date(c.data + 'T00:00:00')) / 86400000 <= 30;
+    }).length;
+
+    const strip = document.getElementById('dashStatsExtra');
+    if (strip) {
+        // Só contadores aqui: são leitura de relance. Valor com variação
+        // junto não cabia na largura e quebrava no meio da frase.
+        strip.innerHTML = [
+            miniKpi('azul', 'ti-home-2', APP.moradores.length, 'Moradores'),
+            miniKpi(resMes >= 0 ? 'verde' : 'vermelho', 'ti-wallet', fmtMoney(resMes), 'Resultado do mês'),
+            miniKpi('laranja', 'ti-tool', chamadosAbertos, 'Chamados abertos'),
+            miniKpi('azul', 'ti-calendar-event', reservasMes, 'Reservas no mês'),
+            miniKpi('verde', 'ti-speakerphone', comunicadosRecentes, 'Comunicados (30d)')
+        ].join('');
     }
 
     // === Alertas do Dashboard ===
@@ -8962,40 +9114,80 @@ function getExtratoByMonth(ano) {
     return { recByMonth, despByMonth };
 }
 
+// Paleta dos gráficos. Validada para daltonismo (protanopia, deuteranopia e
+// tritanopia) e para contraste contra a superfície do cartão, nos dois temas.
+// Não troque um hex isolado sem revalidar o conjunto.
+const VIZ = {
+    claro: { azul: '#2a78d6', vermelho: '#e34948', laranja: '#eb6834', grade: 'rgba(100,116,139,0.14)', texto: '#64748B', tinta: '#1E293B' },
+    escuro: { azul: '#3987e5', vermelho: '#e66767', laranja: '#d95926', grade: 'rgba(148,163,184,0.16)', texto: '#94A3B8', tinta: '#F1F5F9' }
+};
+function viz() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? VIZ.escuro : VIZ.claro;
+}
+const _compacto = v => Math.abs(v) >= 1000
+    ? (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil'
+    : v.toLocaleString('pt-BR');
+
+// Base comum: grade discreta, sem legenda interna (a legenda vai no cabeçalho
+// do cartão, em texto, para a identidade não depender só da cor) e tooltip
+// em reais.
+function vizBase(c, extra) {
+    return Object.assign({
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 500 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: c.tinta, titleColor: '#fff', bodyColor: '#fff',
+                padding: 10, cornerRadius: 8, displayColors: true, boxPadding: 4,
+                callbacks: { label: ctx => ` ${ctx.dataset.label || ctx.label}: ${fmtMoney(ctx.parsed.y ?? ctx.parsed.x ?? ctx.parsed)}` }
+            }
+        },
+        scales: {
+            x: { grid: { display: false }, border: { display: false },
+                 ticks: { color: c.texto, font: { size: 11 } } },
+            y: { beginAtZero: true, grid: { color: c.grade, drawTicks: false }, border: { display: false },
+                 ticks: { color: c.texto, font: { size: 11 }, padding: 8, callback: v => _compacto(v) } }
+        }
+    }, extra || {});
+}
+
+function pontoLegenda(cor, rotulo) {
+    return `<span class="lg"><span class="pt" style="background:${cor}"></span>${rotulo}</span>`;
+}
+
 function renderCharts() {
-    // Destroy existing charts
     Object.values(APP.charts).forEach(c => c.destroy && c.destroy());
     APP.charts = {};
 
-    const mesesLabels = MESES.slice(1);
+    const c = viz();
+    const mesesLabels = MESES.slice(1).map(m => m.slice(0, 3));
+    const curYear = new Date().getFullYear();
+    const mesAtual = new Date().getMonth() + 1;
+    const txt = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
 
-    // Chart 1: Receitas vs Despesas (Pagamentos + Contas + Extrato Conciliado)
+    // ---------- 1. Receitas e despesas por mês ----------
     const recByMonth = new Array(12).fill(0);
     const despByMonth = new Array(12).fill(0);
-    const curYear = new Date().getFullYear();
-
     APP.pagamentos.filter(p => p.ano == curYear).forEach(p => {
         const mi = parseInt(p.mes) - 1;
-        if (mi >= 0 && mi < 12) recByMonth[mi] += (p.valor||0);
+        if (mi >= 0 && mi < 12) recByMonth[mi] += (p.valor || 0);
     });
-    APP.contas.filter(c => (c.vencimento||'').startsWith(String(curYear))).forEach(c => {
-        const mi = parseInt((c.vencimento||'').split('-')[1]) - 1;
-        if (mi >= 0 && mi < 12) despByMonth[mi] += (c.valor||0);
+    APP.contas.filter(x => (x.vencimento || '').startsWith(String(curYear))).forEach(x => {
+        const mi = parseInt((x.vencimento || '').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) despByMonth[mi] += (x.valor || 0);
     });
-
-    // Somar extrato conciliado por mes
     const ext = getExtratoByMonth(curYear);
-    for (let i = 0; i < 12; i++) {
-        recByMonth[i] += ext.recByMonth[i];
-        despByMonth[i] += ext.despByMonth[i];
-    }
-
-    // Somar receitas avulsas por mes
-    (APP.receitasAvulsas||[]).filter(r => (r.data||'').startsWith(String(curYear))).forEach(r => {
-        const mi = parseInt((r.data||'').split('-')[1]) - 1;
-        if (mi >= 0 && mi < 12) recByMonth[mi] += (r.valor||0);
+    for (let i = 0; i < 12; i++) { recByMonth[i] += ext.recByMonth[i]; despByMonth[i] += ext.despByMonth[i]; }
+    (APP.receitasAvulsas || []).filter(r => (r.data || '').startsWith(String(curYear))).forEach(r => {
+        const mi = parseInt((r.data || '').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) recByMonth[mi] += (r.valor || 0);
     });
 
+    txt('legendaRecDesp', pontoLegenda(c.azul, 'Receitas') + pontoLegenda(c.vermelho, 'Despesas'));
+    txt('tagAnoRecDesp', String(curYear));
     const ctx1 = document.getElementById('chartRecDesp')?.getContext('2d');
     if (ctx1) {
         APP.charts.recDesp = new Chart(ctx1, {
@@ -9003,79 +9195,112 @@ function renderCharts() {
             data: {
                 labels: mesesLabels,
                 datasets: [
-                    { label: 'Receitas', data: recByMonth, backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 4 },
-                    { label: 'Despesas', data: despByMonth, backgroundColor: 'rgba(239,68,68,0.7)', borderRadius: 4 }
+                    { label: 'Receitas', data: recByMonth, backgroundColor: c.azul, borderRadius: 4, borderSkipped: false, maxBarThickness: 16 },
+                    { label: 'Despesas', data: despByMonth, backgroundColor: c.vermelho, borderRadius: 4, borderSkipped: false, maxBarThickness: 16 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+            options: vizBase(c, { barPercentage: 0.78, categoryPercentage: 0.7 })
         });
     }
 
-    // Chart 2: Inadimplência por Apto (usando taxasApto)
-    const inadByApto = {};
-    const mesAtual = new Date().getMonth() + 1;
-    (APP.taxasApto||[]).forEach(ta => {
-        let count = 0;
-        for (let ms = 1; ms <= mesAtual; ms++) {
-            const msStr = String(ms).padStart(2,'0');
-            if (parcelaCancelada(ta.apto, curYear, msStr, ta.descricao)) continue;
-            const totalDevido = (ta.valor||0) * (ta.quantidade||1);
-            const totalPago = APP.pagamentos.filter(p =>
-                p.ano == curYear && p.mes === msStr &&
-                p.apto === ta.apto && p.tipoTaxa === ta.descricao
-            ).reduce((s,p) => s + (p.valor||0), 0);
-            if (totalPago < totalDevido) count++;
-        }
-        if (count > 0) inadByApto[ta.apto] = (inadByApto[ta.apto]||0) + count;
-    });
+    // ---------- 2. Inadimplência por mês ----------
+    // Substitui o antigo gráfico por apartamento: o painel mostra o total em
+    // aberto mês a mês, sem identificar unidade. A contagem de unidades
+    // aparece só no tooltip, e também sem dizer quais são.
+    const inadValor = [], inadQtd = [];
+    for (let m = 1; m <= 12; m++) {
+        if (m > mesAtual) { inadValor.push(null); inadQtd.push(null); continue; }
+        const r = inadimplenciaDoMes(curYear, String(m).padStart(2, '0'));
+        inadValor.push(r.valor);
+        inadQtd.push(r.unidades);
+    }
+    const totalAberto = inadValor.reduce((s, v) => s + (v || 0), 0);
+    txt('tagInad', totalAberto > 0 ? `${fmtMoney(totalAberto)} no ano` : 'Em dia');
 
     const ctx2 = document.getElementById('chartInadimplencia')?.getContext('2d');
     if (ctx2) {
-        const labels2 = Object.keys(inadByApto).slice(0, 15);
         APP.charts.inad = new Chart(ctx2, {
             type: 'bar',
             data: {
-                labels: labels2,
-                datasets: [{ label: 'Meses em aberto', data: labels2.map(a => inadByApto[a]), backgroundColor: 'rgba(245,158,11,0.7)', borderRadius: 4 }]
+                labels: mesesLabels,
+                datasets: [{ label: 'Em aberto', data: inadValor, backgroundColor: c.laranja,
+                             borderRadius: 4, borderSkipped: false, maxBarThickness: 26 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } } }
+            options: vizBase(c, {
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: c.tinta, titleColor: '#fff', bodyColor: '#fff',
+                        padding: 10, cornerRadius: 8, displayColors: false,
+                        callbacks: {
+                            label: ctx => {
+                                const q = inadQtd[ctx.dataIndex];
+                                return [` Em aberto: ${fmtMoney(ctx.parsed.y || 0)}`,
+                                        ` ${q} unidade(s)`];
+                            }
+                        }
+                    }
+                }
+            })
         });
     }
 
-    // Chart 3: Despesas por Categoria (Contas + Extrato Conciliado)
+    // ---------- 3. Despesas por categoria ----------
+    // Barras horizontais ordenadas no lugar da rosca: comparar fatias de um
+    // disco é impreciso, e com muitas categorias a rosca vira um arco-íris.
     const despByCat = {};
-    APP.contas.forEach(c => { despByCat[c.categoria] = (despByCat[c.categoria]||0) + (c.valor||0); });
-    // Incluir débitos do extrato conciliado
-    (APP.extrato||[]).filter(e => e.conciliado && e.tipo === 'D').forEach(e => {
+    APP.contas.forEach(x => { despByCat[x.categoria || 'Sem categoria'] = (despByCat[x.categoria || 'Sem categoria'] || 0) + (x.valor || 0); });
+    (APP.extrato || []).filter(e => e.conciliado && e.tipo === 'D').forEach(e => {
         const cat = e.categoriaConciliacao || 'Outros';
-        despByCat[cat] = (despByCat[cat]||0) + Math.abs(e.valor||0);
+        despByCat[cat] = (despByCat[cat] || 0) + Math.abs(e.valor || 0);
     });
+    let cats = Object.entries(despByCat).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    if (cats.length > 8) {
+        // "Demais categorias" e não "Outras": muitos condomínios já têm uma
+        // categoria chamada "Outros", e as duas lado a lado confundem.
+        const resto = cats.slice(7).reduce((s, [, v]) => s + v, 0);
+        cats = cats.slice(0, 7).concat([['Demais categorias', resto]]);
+    }
+    txt('tagDespCat', cats.length ? `${cats.length} categoria(s)` : '');
+
     const ctx3 = document.getElementById('chartDespCat')?.getContext('2d');
     if (ctx3) {
-        const catLabels = Object.keys(despByCat);
-        const colors3 = ['#0E7490','#F59E0B','#10B981','#EF4444','#8B5CF6','#EC4899','#14B8A6','#F97316','#6366F1','#84CC16','#06B6D4'];
         APP.charts.despCat = new Chart(ctx3, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
-                labels: catLabels,
-                datasets: [{ data: catLabels.map(c => despByCat[c]), backgroundColor: colors3.slice(0, catLabels.length) }]
+                labels: cats.map(([k]) => k),
+                datasets: [{ label: 'Despesas', data: cats.map(([, v]) => v), backgroundColor: c.azul,
+                             borderRadius: 4, borderSkipped: false, maxBarThickness: 18 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+            options: vizBase(c, {
+                indexAxis: 'y',
+                scales: {
+                    x: { beginAtZero: true, grid: { color: c.grade, drawTicks: false }, border: { display: false },
+                         ticks: { color: c.texto, font: { size: 11 }, callback: v => _compacto(v) } },
+                    y: { grid: { display: false }, border: { display: false },
+                         ticks: { color: c.texto, font: { size: 11 }, autoSkip: false } }
+                }
+            })
         });
     }
 
-    // Chart 4: Orçamento Previsto vs Realizado
+    // ---------- 4. Orçamento previsto x realizado ----------
     const orcByMonth = new Array(12).fill(0);
     const realByMonth = new Array(12).fill(0);
     APP.orcamento.filter(o => o.ano == curYear).forEach(o => {
         const mi = parseInt(o.mes) - 1;
-        if (mi >= 0 && mi < 12) orcByMonth[mi] += (o.valor||0);
+        if (mi >= 0 && mi < 12) orcByMonth[mi] += (o.valor || 0);
     });
-    APP.contas.filter(c => c.status === 'pago' && (c.vencimento||'').startsWith(String(curYear))).forEach(c => {
-        const mi = parseInt((c.vencimento||'').split('-')[1]) - 1;
-        if (mi >= 0 && mi < 12) realByMonth[mi] += (c.valor||0);
+    APP.contas.filter(x => x.status === 'pago' && (x.vencimento || '').startsWith(String(curYear))).forEach(x => {
+        const mi = parseInt((x.vencimento || '').split('-')[1]) - 1;
+        if (mi >= 0 && mi < 12) realByMonth[mi] += (x.valor || 0);
     });
+    // Mês que ainda não chegou não tem realizado: deixar em branco em vez de
+    // zero, senão a linha despenca até o fundo e parece queda de gasto.
+    for (let m = mesAtual; m < 12; m++) realByMonth[m] = null;
 
+    txt('legendaOrc', pontoLegenda(c.azul, 'Previsto') + pontoLegenda(c.laranja, 'Realizado'));
+    txt('tagOrc', String(curYear));
     const ctx4 = document.getElementById('chartOrcamento')?.getContext('2d');
     if (ctx4) {
         APP.charts.orc = new Chart(ctx4, {
@@ -9083,11 +9308,15 @@ function renderCharts() {
             data: {
                 labels: mesesLabels,
                 datasets: [
-                    { label: 'Previsto', data: orcByMonth, borderColor: '#0E7490', backgroundColor: 'rgba(14,116,144,0.1)', fill: true, tension: 0.3 },
-                    { label: 'Realizado', data: realByMonth, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.3 }
+                    { label: 'Previsto', data: orcByMonth, borderColor: c.azul, backgroundColor: 'transparent',
+                      borderWidth: 2, tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+                      pointBackgroundColor: c.azul, pointBorderColor: '#fff', pointBorderWidth: 2 },
+                    { label: 'Realizado', data: realByMonth, borderColor: c.laranja, backgroundColor: 'transparent',
+                      borderWidth: 2, borderDash: [5, 4], tension: 0.35, pointRadius: 0, pointHoverRadius: 5,
+                      pointBackgroundColor: c.laranja, pointBorderColor: '#fff', pointBorderWidth: 2 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+            options: vizBase(c)
         });
     }
 }
