@@ -1517,7 +1517,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <button class="btn btn-fill btn-sm" style="align-self:flex-end" onclick="montarLote()"><i class="ti ti-list-check"></i> Montar lista</button>
                     </div>
                     <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.85rem;margin:0.4rem 0 0.8rem;cursor:pointer">
-                        <input type="checkbox" id="loteAnteriores" onchange="if(APP._lote) renderLote()"> Informar débitos anteriores em aberto no boleto e na mensagem
+                        <input type="checkbox" id="loteAnteriores" onchange="if(APP._lote) renderLote()"> Incluir débitos anteriores em aberto no boleto (discriminados com multa e juros, somados no total e no PIX) e informar na mensagem
                     </label>
                     <div id="loteResumo" style="margin-bottom:0.8rem"></div>
                     <div id="loteAcoes" style="display:none;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.8rem">
@@ -6205,8 +6205,11 @@ function montarLote() {
         const itens = abertasMes.filter(p => p.apto === apto);
         const total = _r2(itens.reduce((s, p) => s + p.valor, 0));
         const anteriores = mesesAnt.length ? pendenciasVencidasApto(apto, ano, mesesAnt) : [];
+        // Guarda o cálculo de multa/juros de cada parcela (e não só o somatório),
+        // para o boleto poder discriminar linha por linha
+        anteriores.forEach(p => { p.enc = calcEncargos({ apto, ano: p.ano, mes: p.mes, tipoTaxa: p.tipoTaxa, valor: p.valorAberto }); });
         const totalAnt = _r2(anteriores.reduce((s, p) => s + p.valorAberto, 0));
-        const encAnt = _r2(anteriores.reduce((s, p) => s + calcEncargos({ apto, ano: p.ano, mes: p.mes, tipoTaxa: p.tipoTaxa, valor: p.valorAberto }).total, 0));
+        const encAnt = _r2(anteriores.reduce((s, p) => s + p.enc.total, 0));
         const morador = (APP.moradores || []).find(m => m.apto === apto) || {};
         return { apto, itens, total, anteriores, totalAnt, encAnt, morador, marcado: total > 0 };
     });
@@ -6258,16 +6261,23 @@ function loteMarcarTodos(v) {
     renderLote();
 }
 
-function _lotePix(l) {
+// Total do mês + débitos anteriores já atualizados com multa e juros
+function _loteTotalComAnteriores(l) { return _r2(l.total + l.totalAnt + l.encAnt); }
+
+// incluirAnteriores: usado somente pelo boleto impresso, quando os débitos
+// anteriores são discriminados e somados no TOTAL A PAGAR.
+// Sem o parâmetro (mensagens de WhatsApp/e-mail), o PIX continua só com o mês.
+function _lotePix(l, incluirAnteriores) {
     const L = APP._lote;
     const condo = APP.condominios.find(c => c.id === APP.currentCondoId) || {};
-    if (!condo.pix || l.total <= 0) return '';
+    const valorPix = incluirAnteriores ? _loteTotalComAnteriores(l) : l.total;
+    if (!condo.pix || valorPix <= 0) return '';
     return gerarPixPayload({
         chave: condo.pix,
         // Sem acentos: o padrão PIX (BR Code) conta caracteres, e letras acentuadas podem invalidar o código em alguns bancos
         nome: String(condo.nome || 'Condominio').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9 ]/g, '').substring(0, 25).trim(),
         cidade: cidadeDoCondominio(condo) || 'SAO PAULO',
-        valor: l.total.toFixed(2),
+        valor: valorPix.toFixed(2),
         txid: ('COND' + String(l.apto) + L.ano + L.mes).replace(/[^A-Za-z0-9]/g, '').substring(0, 25)
     });
 }
@@ -6327,8 +6337,24 @@ function gerarBoletosLote(modo) {
     const agora = new Date();
     const geradoEm = `${agora.toLocaleDateString('pt-BR')} às ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
 
+    const cfgEnc = _encCfg();
+    const pctTxt = v => String(v).replace('.', ',');
+
     const corpo = sel.map((l, k) => {
-        const pix = _lotePix(l);
+        // Discrimina os débitos anteriores no próprio boleto, linha por linha
+        const comAntLinha = comAnt && l.anteriores.length > 0;
+        const totalBoleto = comAntLinha ? _loteTotalComAnteriores(l) : l.total;
+        const linhasAnt = !comAntLinha ? '' : (
+            `<tr class="grp"><td colspan="2">Débitos anteriores em aberto</td></tr>` +
+            l.anteriores.map(p => {
+                const e = p.enc || { multa: 0, juros: 0, dias: 0 };
+                let r = `<tr><td>${H(p.tipoTaxa)} em atraso <span class="refant">(${H(_mesCurto(p.mes) + '/' + p.ano)})</span></td><td class="val">${fmtMoney(p.valorAberto)}</td></tr>`;
+                if (e.multa > 0) r += `<tr class="enc"><td>+ Multa (${pctTxt(cfgEnc.multaPct)}%)</td><td class="val">${fmtMoney(e.multa)}</td></tr>`;
+                if (e.juros > 0) r += `<tr class="enc"><td>+ Juros (${pctTxt(cfgEnc.jurosPctMes)}% a.m. &middot; ${e.dias} dia${e.dias === 1 ? '' : 's'} de atraso)</td><td class="val">${fmtMoney(e.juros)}</td></tr>`;
+                return r;
+            }).join('')
+        );
+        const pix = _lotePix(l, comAntLinha);
         let qr = '';
         if (pix) {
             try { const q = qrcode(0, 'M'); q.addData(pix); q.make(); qr = q.createImgTag(4, 8); } catch (e) { qr = ''; }
@@ -6343,9 +6369,9 @@ function gerarBoletosLote(modo) {
             </div>
             <table>
                 <thead><tr><th>Descrição</th><th>Valor</th></tr></thead>
-                <tbody>${l.itens.map(p => `<tr><td>${H(p.tipoTaxa)}</td><td class="val">${fmtMoney(p.valor)}</td></tr>`).join('')}</tbody>
+                <tbody>${comAntLinha ? `<tr class="grp"><td colspan="2">Referência do mês &ndash; ${H(ref)}</td></tr>` : ''}${l.itens.map(p => `<tr><td>${H(p.tipoTaxa)}</td><td class="val">${fmtMoney(p.valor)}</td></tr>`).join('')}${linhasAnt}</tbody>
             </table>
-            <div class="total"><span>TOTAL A PAGAR</span><b style="color:#FBBF24">${fmtMoney(l.total)}</b></div>
+            <div class="total"><span>TOTAL A PAGAR</span><b style="color:#FBBF24">${fmtMoney(totalBoleto)}</b></div>
             ${pix ? `<div class="pixbox">
                 <div class="qr">${qr}</div>
                 <div class="pixtxt">
@@ -6356,7 +6382,7 @@ function gerarBoletosLote(modo) {
                 </div>
             </div>` : ''}
             ${condo.banco ? `<p class="banco"><strong>Depósito/Transferência:</strong> Banco ${H(condo.banco)} | Ag: ${H(condo.agencia || '-')} | Cc: ${H(condo.conta || '-')}</p>` : ''}
-            ${comAnt && l.totalAnt > 0 ? `<div class="alerta" style="margin-top:14px"><strong>Débitos anteriores em aberto:</strong> ${fmtMoney(l.totalAnt)} (${l.anteriores.map(p => H(_mesCurto(p.mes) + '/' + p.ano)).join(', ')})${l.encAnt > 0 ? `; atualizado com multa e juros até ${agora.toLocaleDateString('pt-BR')}: <strong>${fmtMoney(l.totalAnt + l.encAnt)}</strong>` : ''}. Valor não incluído no total acima. Caso já tenha efetuado o pagamento, por gentileza envie o comprovante à administração.</div>` : ''}
+            ${comAntLinha ? `<div class="alerta" style="margin-top:14px"><strong>Débitos anteriores:</strong> este boleto inclui ${l.anteriores.length} parcela(s) em atraso de ${l.anteriores.map(p => H(_mesCurto(p.mes) + '/' + p.ano)).join(', ')}, no valor original de ${fmtMoney(l.totalAnt)}${l.encAnt > 0 ? `, acrescido de ${fmtMoney(l.encAnt)} de multa e juros calculados até ${agora.toLocaleDateString('pt-BR')}` : ''}. Os encargos são calculados por dia de atraso, portanto o valor pode variar caso o pagamento seja feito em outra data. Caso já tenha efetuado o pagamento de alguma dessas parcelas, por gentileza envie o comprovante à administração antes de pagar.</div>` : ''}
             <div class="foot"><span>Documento gerado pelo CondoGest<br><strong style="color:#64748B">Reis Consultoria e Tecnologia</strong></span><span>${geradoEm}</span></div>
         </div>`;
     }).join('');
@@ -6370,7 +6396,12 @@ function gerarBoletosLote(modo) {
     .pixtxt p { margin: 0 0 6px; font-size: 11.5px; color: #475569; }
     .pixtxt .cc { font-family: Consolas, monospace; font-size: 9.5px; word-break: break-all; background: #fff; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 8px; color: #334155; }
     .pixtxt .ch { margin-top: 6px; }
-    .banco { font-size: 12px; color: #475569; margin-top: 10px; }`;
+    .banco { font-size: 12px; color: #475569; margin-top: 10px; }
+    .bol tr.grp td { background: #EEF2F7; color: #1A2744; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: none; }
+    .bol .refant { color: #B91C1C; font-weight: 600; }
+    .bol tr.enc td { background: #FFFBEB; color: #92400E; font-size: 11.5px; padding-top: 5px; padding-bottom: 5px; border-bottom: 1px solid #FDE68A; }
+    .bol tr.enc td:first-child { padding-left: 26px; }
+    .bol tr.enc td.val { font-weight: 600; }`;
 
     abrirDocumentoRelatorio({
         modo, corpo, css,
