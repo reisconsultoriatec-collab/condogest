@@ -66,6 +66,15 @@ service cloud.firestore {
       return morador() && meuApto() != '';
     }
 
+    // Permissão de VER uma tela, conforme a matriz montada pelo administrador
+    // no cadastro do usuário. O app grava a coluna "Ver" da matriz no campo
+    // 'permissoes', que é o que se lê aqui. Gestor vê tudo.
+    // Isso é o que permite liberar, por exemplo, o Relatório de Despesas a um
+    // morador sem abrir a tela de Contas a Pagar junto.
+    function veTela(tela) {
+      return ativo() && (gestor() || perfilDoc().get('permissoes', []).hasAny([tela]));
+    }
+
     // ---------- Perfis de usuário ----------
     match /user_profiles/{uid} {
       // Cada um lê o próprio perfil. A lista completa é da tela de Usuários,
@@ -91,15 +100,35 @@ service cloud.firestore {
       allow read: if ativo();
       allow create, update, delete: if gestor();
 
-      // ===== Coleções que o morador NÃO pode ver =====
-      // Contas a pagar, extrato bancário, orçamento, receitas avulsas,
-      // responsáveis legais e fornecedores são dados de gestão.
-      match /contas/{doc}           { allow read, write: if equipe(); }
-      match /extrato/{doc}          { allow read, write: if equipe(); }
-      match /orcamento/{doc}        { allow read, write: if equipe(); }
-      match /receitas_avulsas/{doc} { allow read, write: if equipe(); }
-      match /responsaveis/{doc}     { allow read, write: if equipe(); }
-      match /fornecedores/{doc}     { allow read, write: if equipe(); }
+      // ===== Coleções do condomínio inteiro (não são por apartamento) =====
+      // A LEITURA segue a matriz: libera quem tem "Ver" em alguma tela que
+      // dependa daquela coleção. Um relatório lê a mesma coleção da tela de
+      // lançamento, por isso cada regra lista mais de uma tela.
+      // A ESCRITA continua restrita à gestão (perfis que não são morador).
+      match /contas/{doc} {
+        allow read:  if veTela('contas') || veTela('relDespesas') || veTela('balancete');
+        allow write: if equipe();
+      }
+      match /extrato/{doc} {
+        allow read:  if veTela('conciliacao') || veTela('relConciliacao') || veTela('balancete');
+        allow write: if equipe();
+      }
+      match /orcamento/{doc} {
+        allow read:  if veTela('orcamento') || veTela('balancete');
+        allow write: if equipe();
+      }
+      match /receitas_avulsas/{doc} {
+        allow read:  if veTela('receitasAvulsas') || veTela('relReceitas') || veTela('balancete');
+        allow write: if equipe();
+      }
+      match /responsaveis/{doc} {
+        allow read:  if veTela('responsaveis');
+        allow write: if equipe();
+      }
+      match /fornecedores/{doc} {
+        allow read:  if veTela('fornecedores');
+        allow write: if equipe();
+      }
 
       // ===== Coleções por apartamento =====
       // Leitura: gestor/equipe vê tudo; morador só o que for da unidade dele.
@@ -168,11 +197,12 @@ service cloud.firestore {
         allow write: if gestor();
       }
 
-      // Qualquer coleção futura em /condominios/{cid}/... fica restrita à
-      // gestão até ganhar uma regra própria. É o padrão seguro: uma coleção
-      // nova nunca nasce aberta para o morador.
+      // Qualquer coleção futura em /condominios/{cid}/... fica restrita a
+      // admin e síndico até ganhar uma regra própria. É o padrão seguro: uma
+      // coleção nova nunca nasce aberta para morador nem para os demais
+      // perfis. Todas as coleções que o app grava hoje estão listadas acima.
       match /{colecao}/{doc=**} {
-        allow read, write: if equipe();
+        allow read, write: if gestor();
       }
     }
 
@@ -224,11 +254,16 @@ service cloud.firestore {
 // Como morador do apto 12 (deve FALHAR):
 //   - list   /condominios/{cid}/pagamentos        SEM where  <- o mais importante
 //   - list   /condominios/{cid}/pagamentos        com where apto == '15'
-//   - list   /condominios/{cid}/contas
+//   - list   /condominios/{cid}/contas            (sem 'relDespesas' em permissoes)
 //   - list   /condominios/{cid}/extrato
 //   - list   /user_profiles
 //   - create /condominios/{cid}/ocorrencias       com solicitante == '15'
 //   - update /condominios/{cid}/taxas_apartamento/{qualquer}
+//
+// Matriz de permissões — morador com permissoes = ['dashboard','relDespesas']:
+//   - list   /condominios/{cid}/contas            deve PASSAR (o relatório lê contas)
+//   - write  /condominios/{cid}/contas/{qualquer} deve FALHAR (escrita é da gestão)
+//   - list   /condominios/{cid}/extrato           deve FALHAR (outra tela)
 //
 // Depois de publicar, abra o app com a conta do morador e confira no console
 // do navegador se aparece algum aviso "sem permissão" em tela que ele deveria

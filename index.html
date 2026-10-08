@@ -872,6 +872,16 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 .pwa-update-banner button { background: var(--secondary); color: #1A2744; border: none; padding: 6px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.82rem; cursor: pointer; }
 .pwa-update-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 0.78rem; text-decoration: underline; }
 
+/* Matriz de permissões (tela x ação) no cadastro de usuário */
+.matriz-acessos { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.matriz-acessos thead th { position: sticky; top: 0; background: var(--bg-card); z-index: 1; text-align: center; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); padding: 0.5rem 0.3rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.matriz-acessos thead th label { display: flex; align-items: center; gap: 4px; justify-content: center; cursor: pointer; }
+.matriz-acessos td { text-align: center; padding: 0.3rem; border-bottom: 1px solid var(--border); }
+.matriz-acessos tbody tr:hover td { background: var(--bg-main); }
+.matriz-acessos tr.grupo-linha td { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; color: var(--text-secondary); background: var(--bg-main); padding: 0.4rem 0.5rem; }
+.matriz-acessos input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+.matriz-acessos input[disabled] { cursor: not-allowed; opacity: 0.45; }
+
 /* Aviso de conexão: aparece quando o aparelho fica offline */
 .offline-bar { position: fixed; top: 0; left: 0; right: 0; background: #B45309; color: #fff; padding: 7px 16px; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 10001; font-size: 0.82rem; font-weight: 600; transform: translateY(-100%); transition: transform 0.3s ease; }
 .offline-bar.show { transform: translateY(0); }
@@ -1905,7 +1915,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <div class="card">
                 <div class="card-title" style="justify-content:space-between">
                     <span><i class="ti ti-users-group"></i> Gestão de Usuários</span>
-                    <button class="btn btn-fill btn-sm" onclick="openModal('modalUsuario')">+ Novo Usuário</button>
+                    <button class="btn btn-fill btn-sm" onclick="novoUsuario()">+ Novo Usuário</button>
                 </div>
                 <div class="table-container">
                     <table><thead><tr>
@@ -2390,7 +2400,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="form-group"><label>Email *</label><input type="email" id="userEmail"></div>
                 <div class="form-group"><label>Senha (min. 6 caracteres)</label><input type="password" id="userSenha" minlength="6"></div>
                 <div class="form-group"><label>Perfil *</label>
-                    <select id="userPerfil">
+                    <select id="userPerfil" onchange="perfilUsuarioMudou()">
                         <option value="admin">Administrador</option>
                         <option value="sindico">Síndico</option>
                         <option value="usuario">Usuário</option>
@@ -2412,33 +2422,19 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             </div>
 
             <div style="margin-top:1.2rem">
-                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.5rem">Permissões de Acesso</label>
-                <div class="access-grid" id="accessGrid">
-                    <label class="access-item"><input type="checkbox" value="dashboard" checked> Dashboard</label>
-                    <label class="access-item"><input type="checkbox" value="condominios"> Condomínios</label>
-                    <label class="access-item"><input type="checkbox" value="responsaveis"> Responsáveis</label>
-                    <label class="access-item"><input type="checkbox" value="moradores"> Moradores</label>
-                    <label class="access-item"><input type="checkbox" value="taxas"> Taxas</label>
-                    <label class="access-item"><input type="checkbox" value="contas"> Contas a Pagar</label>
-                    <label class="access-item"><input type="checkbox" value="conciliacao"> Conciliação</label>
-                    <label class="access-item"><input type="checkbox" value="pagamentos"> Pagamentos</label>
-                    <label class="access-item"><input type="checkbox" value="boletos"> Boletos / PIX</label>
-                    <label class="access-item"><input type="checkbox" value="receitasAvulsas"> Receitas Avulsas</label>
-                    <label class="access-item"><input type="checkbox" value="inadimplentes"> Inadimplentes</label>
-                    <label class="access-item"><input type="checkbox" value="orcamento"> Orçamento</label>
-                    <label class="access-item"><input type="checkbox" value="comunicados"> Comunicados</label>
-                    <label class="access-item"><input type="checkbox" value="reservas"> Reservas</label>
-                    <label class="access-item"><input type="checkbox" value="ocorrencias"> Ocorrências</label>
-                    <label class="access-item"><input type="checkbox" value="assembleias"> Assembleias</label>
-                    <label class="access-item"><input type="checkbox" value="hidrometros"> Hidrômetros</label>
-                    <label class="access-item"><input type="checkbox" value="fornecedores"> Fornecedores</label>
-                    <label class="access-item"><input type="checkbox" value="backup"> Backup</label>
-                    <label class="access-item"><input type="checkbox" value="relDespesas"> Rel. Despesas</label>
-                    <label class="access-item"><input type="checkbox" value="relReceitas"> Rel. Receitas</label>
-                    <label class="access-item"><input type="checkbox" value="relConciliacao"> Rel. Conciliação</label>
-                    <label class="access-item"><input type="checkbox" value="balancete"> Balancete</label>
-                    <label class="access-item"><input type="checkbox" value="usuarios"> Usuários</label>
-                    <label class="access-item"><input type="checkbox" value="configuracoes"> Configurações</label>
+                <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:0.3rem">Permissões de Acesso</label>
+                <p id="acessosAviso" style="font-size:0.78rem;color:var(--text-secondary);margin:0 0 0.6rem"></p>
+                <div class="table-container" style="max-height:340px;overflow:auto">
+                    <table class="matriz-acessos">
+                        <thead><tr>
+                            <th style="text-align:left">Tela</th>
+                            <th title="Marcar/desmarcar a coluna"><label><input type="checkbox" onchange="marcarColunaAcesso('ver',this.checked)"> Ver</label></th>
+                            <th title="Marcar/desmarcar a coluna"><label><input type="checkbox" onchange="marcarColunaAcesso('criar',this.checked)"> Incluir</label></th>
+                            <th title="Marcar/desmarcar a coluna"><label><input type="checkbox" onchange="marcarColunaAcesso('alterar',this.checked)"> Alterar</label></th>
+                            <th title="Marcar/desmarcar a coluna"><label><input type="checkbox" onchange="marcarColunaAcesso('excluir',this.checked)"> Excluir</label></th>
+                        </tr></thead>
+                        <tbody id="matrizAcessos"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -3516,13 +3512,114 @@ function enterApp() {
 }
 
 // =====================================================================
+// PERMISSÕES POR TELA E POR AÇÃO
+// ---------------------------------------------------------------------
+// Dois conceitos diferentes, que não se misturam:
+//
+//   PERFIL  decide o ESCOPO DOS DADOS. Morador só enxerga a própria
+//           unidade, e isso é garantido no servidor pelo firestore.rules.
+//   ACESSOS decide QUAIS TELAS e QUAIS AÇÕES. É a matriz que o
+//           administrador monta usuário a usuário, aqui embaixo.
+//
+// Um morador com acesso a "Relatório de Despesas" continua vendo só o que
+// é dele: a matriz abre a tela, não amplia o escopo dos dados.
+// =====================================================================
+
+const ACOES = ['ver', 'criar', 'alterar', 'excluir'];
+
+// Catálogo das telas. 'colecao' liga a tela à coleção do Firestore, e é o
+// que permite barrar gravação e exclusão num ponto só (fbSave/fbDelete).
+const TELAS = [
+    { id: 'dashboard',       nome: 'Dashboard',          grupo: 'Principal',   semEscrita: true },
+    { id: 'condominios',     nome: 'Condomínios',        grupo: 'Cadastros' },
+    { id: 'responsaveis',    nome: 'Responsáveis',       grupo: 'Cadastros',   colecao: 'responsaveis' },
+    { id: 'moradores',       nome: 'Moradores',          grupo: 'Cadastros',   colecao: 'moradores' },
+    { id: 'fornecedores',    nome: 'Fornecedores',       grupo: 'Cadastros',   colecao: 'fornecedores' },
+    { id: 'taxas',           nome: 'Taxas',              grupo: 'Cadastros',   colecao: 'taxas' },
+    { id: 'comunicados',     nome: 'Comunicados',        grupo: 'Operacional', colecao: 'comunicados' },
+    { id: 'reservas',        nome: 'Reservas',           grupo: 'Operacional', colecao: 'reservas' },
+    { id: 'ocorrencias',     nome: 'Ocorrências',        grupo: 'Operacional', colecao: 'ocorrencias' },
+    { id: 'assembleias',     nome: 'Assembleias',        grupo: 'Operacional', colecao: 'assembleias' },
+    { id: 'hidrometros',     nome: 'Hidrômetros',        grupo: 'Operacional', colecao: 'hidrometros' },
+    { id: 'contas',          nome: 'Contas a Pagar',     grupo: 'Financeiro',  colecao: 'contas' },
+    { id: 'conciliacao',     nome: 'Conciliação',        grupo: 'Financeiro',  colecao: 'extrato' },
+    { id: 'pagamentos',      nome: 'Pagamentos',         grupo: 'Financeiro',  colecao: 'pagamentos' },
+    { id: 'boletos',         nome: 'Boletos / PIX',      grupo: 'Financeiro',  colecao: 'taxas_apartamento' },
+    { id: 'receitasAvulsas', nome: 'Receitas Avulsas',   grupo: 'Financeiro',  colecao: 'receitas_avulsas' },
+    { id: 'inadimplentes',   nome: 'Inadimplentes',      grupo: 'Financeiro',  colecao: 'inad_exclusoes' },
+    { id: 'orcamento',       nome: 'Orçamento',          grupo: 'Financeiro',  colecao: 'orcamento' },
+    { id: 'relDespesas',     nome: 'Rel. Despesas',      grupo: 'Relatórios',  semEscrita: true },
+    { id: 'relReceitas',     nome: 'Rel. Receitas',      grupo: 'Relatórios',  semEscrita: true },
+    { id: 'relConciliacao',  nome: 'Rel. Conciliação',   grupo: 'Relatórios',  semEscrita: true },
+    { id: 'balancete',       nome: 'Balancete',          grupo: 'Relatórios',  semEscrita: true },
+    { id: 'usuarios',        nome: 'Usuários',           grupo: 'Sistema' },
+    { id: 'configuracoes',   nome: 'Configurações',      grupo: 'Sistema' },
+    { id: 'backup',          nome: 'Backup / Exportar',  grupo: 'Sistema',     semEscrita: true }
+];
+
+const TELA_POR_COLECAO = (() => {
+    const m = {};
+    TELAS.forEach(t => { if (t.colecao) m[t.colecao] = t.id; });
+    // Isenções de multa e juros são comandadas pela tela de Inadimplentes
+    m['encargos_isencoes'] = 'inadimplentes';
+    return m;
+})();
+
+// Telas que um morador recebe marcadas por padrão ao ser cadastrado.
+// É só um ponto de partida: o administrador pode tirar ou acrescentar.
+const PAGINAS_MORADOR = ['dashboard', 'comunicados', 'reservas', 'ocorrencias', 'boletos', 'hidrometros', 'assembleias'];
+
+// Normaliza a matriz de um usuário. Quem ainda não tem 'acessos' é
+// convertido a partir do antigo campo 'permissoes', onde estar na lista
+// significava poder tudo naquela tela — assim nenhum usuário já cadastrado
+// perde acesso quando esta versão entra no ar.
+function normalizarAcessos(u) {
+    const out = {};
+    const antigos = (u && u.permissoes) || [];
+    const novos = (u && u.acessos) || null;
+    TELAS.forEach(t => {
+        const linha = {};
+        const base = novos && novos[t.id];
+        ACOES.forEach(a => {
+            if (base) linha[a] = base[a] === true;
+            else linha[a] = antigos.includes(t.id);   // migração
+        });
+        if (t.semEscrita) { linha.criar = false; linha.alterar = false; linha.excluir = false; }
+        out[t.id] = linha;
+    });
+    out.dashboard.ver = true;   // o dashboard é a tela de entrada de todos
+    return out;
+}
+
+function acessosDoUsuarioAtual() {
+    if (!APP._acessosCache || APP._acessosCacheDe !== APP.userProfile) {
+        APP._acessosCache = normalizarAcessos(APP.userProfile || {});
+        APP._acessosCacheDe = APP.userProfile;
+    }
+    return APP._acessosCache;
+}
+
+// Admin e síndico continuam com acesso total — a matriz não se aplica a eles.
+function pode(tela, acao) {
+    if (!APP.userProfile) return true;          // ainda carregando
+    if (ehGestor()) return true;
+    const linha = acessosDoUsuarioAtual()[tela];
+    return !!(linha && linha[acao]);
+}
+function nomeDaTela(id) {
+    const t = TELAS.find(x => x.id === id);
+    return t ? t.nome : id;
+}
+function podeVer(tela)     { return pode(tela, 'ver'); }
+function podeCriar(tela)   { return pode(tela, 'criar'); }
+function podeAlterar(tela) { return pode(tela, 'alterar'); }
+function podeExcluir(tela) { return pode(tela, 'excluir'); }
+
+// =====================================================================
 // PORTAL DO MORADOR — isolamento por apartamento
 // O morador só pode ver a própria unidade. Estas funções são a fonte
 // única usada pelas telas; gestores (admin/síndico) não são afetados.
 // =====================================================================
-
-// Páginas liberadas para o perfil "morador"
-const PAGINAS_MORADOR = ['dashboard', 'comunicados', 'reservas', 'ocorrencias', 'boletos', 'hidrometros', 'assembleias'];
 
 function ehGestor() {
     const p = APP.userProfile?.perfil;
@@ -3555,13 +3652,13 @@ function filtrarPorApto(lista, campo) {
 
 // Decide se um perfil pode abrir uma página. Centraliza o que antes estava
 // espalhado entre applyMenuPermissions() e navigateTo().
+// Quem pode abrir cada página. Fonte única, usada pelo menu e pelo
+// navigateTo. O perfil morador NÃO tem mais uma lista fixa: ele obedece à
+// mesma matriz dos outros, e o que o mantém restrito é o escopo de dados.
 function podeAbrirPagina(page) {
-    const perfil = APP.userProfile?.perfil;
-    if (!perfil) return true;                       // ainda carregando
-    if (perfil === 'admin' || perfil === 'sindico') return true;
-    if (perfil === 'morador') return PAGINAS_MORADOR.includes(page);
+    if (!APP.userProfile) return true;              // ainda carregando
     if (page === 'dashboard') return true;
-    return (APP.userProfile?.permissoes || []).includes(page);
+    return podeVer(page);
 }
 
 // ===== ATALHOS DA PWA (?page=...) =====
@@ -3604,57 +3701,20 @@ function applyBoletoPermissions() {
 
 // ===== APLICAR PERMISSÕES NO MENU =====
 function applyMenuPermissions() {
-    const perfil = APP.userProfile?.perfil || 'usuario';
-    const permissoes = APP.userProfile?.permissoes || [];
-    const isAdmin = perfil === 'admin';
-    const isSindico = perfil === 'sindico';
-    const isGestor = isAdmin || isSindico;
-    const isMorador = perfil === 'morador';
-
-    // Admin e Síndico veem tudo
-    if (isGestor) {
-        document.querySelectorAll('.nav-item').forEach(item => item.style.display = '');
-        document.querySelectorAll('.nav-section').forEach(sec => sec.style.display = '');
-        return;
-    }
-
-    // Portal do Morador: acesso limitado
-    if (isMorador) {
-        document.querySelectorAll('.nav-item[data-page]').forEach(item => {
-            const page = item.getAttribute('data-page');
-            item.style.display = PAGINAS_MORADOR.includes(page) ? '' : 'none';
-        });
-        // Ocultar seções sem itens visíveis
-        document.querySelectorAll('.nav-section').forEach(section => {
-            const items = section.querySelectorAll('.nav-item[data-page]');
-            let hasVisible = false;
-            items.forEach(item => { if (item.style.display !== 'none') hasVisible = true; });
-            section.style.display = hasVisible ? '' : 'none';
-        });
-        return;
-    }
-
-    // Para outros perfis, ocultar itens sem permissão
+    // Uma regra só para todos os perfis: o item aparece se podeAbrirPagina()
+    // deixar. Antes havia três caminhos (gestor, morador e "os outros"), que
+    // divergiam do navigateTo e já tinham causado bloqueio indevido.
     document.querySelectorAll('.nav-item[data-page]').forEach(item => {
         const page = item.getAttribute('data-page');
-        // Dashboard é sempre visível
-        if (page === 'dashboard') {
-            item.style.display = '';
-        } else if (permissoes.includes(page)) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
+        item.style.display = podeAbrirPagina(page) ? '' : 'none';
     });
 
-    // Ocultar seções inteiras se nenhum item visível dentro delas
+    // Esconde a seção inteira quando nenhum item dela ficou visível
     document.querySelectorAll('.nav-section').forEach(section => {
-        const visibleItems = section.querySelectorAll('.nav-item[data-page]');
-        let hasVisible = false;
-        visibleItems.forEach(item => {
-            if (item.style.display !== 'none') hasVisible = true;
-        });
-        section.style.display = hasVisible ? '' : 'none';
+        const itens = section.querySelectorAll('.nav-item[data-page]');
+        let algumVisivel = false;
+        itens.forEach(item => { if (item.style.display !== 'none') algumVisivel = true; });
+        section.style.display = algumVisivel ? '' : 'none';
     });
 }
 
@@ -4017,9 +4077,12 @@ async function loadCondoData() {
         return out;
     };
 
-    // Coleção que o morador não pode ver de jeito nenhum.
-    const lerSoGestor = async (nome, ordem) => {
-        if (soMeuApto) return [];
+    // Coleção do condomínio inteiro (não é por apartamento). Só é baixada se
+    // o usuário tiver permissão de VER alguma das telas que dependem dela —
+    // é o que permite o administrador liberar, por exemplo, o Relatório de
+    // Despesas a um morador sem abrir o Contas a Pagar junto.
+    const lerSeTemAcesso = async (nome, telas, ordem) => {
+        if (!telas.some(t => podeVer(t))) return [];
         let q = base.collection(nome);
         if (ordem) q = q.orderBy(ordem[0], ordem[1]);
         const snap = await q.get();
@@ -4034,7 +4097,7 @@ async function loadCondoData() {
         renderMoradores();
 
         // Responsaveis
-        APP.responsaveis = await lerSoGestor('responsaveis', ['nome']);
+        APP.responsaveis = await lerSeTemAcesso('responsaveis', ['responsaveis'], ['nome']);
         renderResponsaveis();
 
         // Taxas
@@ -4043,7 +4106,7 @@ async function loadCondoData() {
         renderTaxas();
 
         // Contas (só gestor)
-        APP.contas = await lerSoGestor('contas', ['vencimento', 'desc']);
+        APP.contas = await lerSeTemAcesso('contas', ['contas', 'relDespesas', 'balancete'], ['vencimento', 'desc']);
         renderContas();
 
         // Pagamentos
@@ -4051,11 +4114,11 @@ async function loadCondoData() {
         renderPagamentos();
 
         // Extrato bancário (só gestor)
-        APP.extrato = await lerSoGestor('extrato', ['data']);
+        APP.extrato = await lerSeTemAcesso('extrato', ['conciliacao', 'relConciliacao', 'balancete'], ['data']);
         renderExtrato();
 
         // Orçamento (só gestor)
-        APP.orcamento = await lerSoGestor('orcamento');
+        APP.orcamento = await lerSeTemAcesso('orcamento', ['orcamento', 'balancete']);
         renderOrcamento();
 
         // Taxas por Apartamento
@@ -4064,7 +4127,7 @@ async function loadCondoData() {
         populateBoletoSelects();
 
         // Receitas Avulsas (só gestor)
-        APP.receitasAvulsas = await lerSoGestor('receitas_avulsas', ['data', 'desc']);
+        APP.receitasAvulsas = await lerSeTemAcesso('receitas_avulsas', ['receitasAvulsas', 'relReceitas', 'balancete'], ['data', 'desc']);
         renderReceitasAvulsas();
 
         // Comunicados
@@ -4131,7 +4194,7 @@ async function loadCondoData() {
 
         // Fornecedores (só gestor)
         try {
-            APP.fornecedores = await lerSoGestor('fornecedores', ['nome']);
+            APP.fornecedores = await lerSeTemAcesso('fornecedores', ['fornecedores'], ['nome']);
         } catch(e) { console.warn('Fornecedores:', e.message); APP.fornecedores = []; }
         renderFornecedores();
 
@@ -4177,6 +4240,15 @@ async function fbSave(subcol, id, data) {
         return null;
     }
 
+    // Permissão por tela e por ação. Este é o ponto por onde passam todas
+    // as gravações em subcoleções do condomínio, então barrar aqui cobre o
+    // app inteiro, inclusive telas que esqueçam de esconder o botão.
+    const tela = TELA_POR_COLECAO[subcol];
+    if (tela && !pode(tela, id ? 'alterar' : 'criar')) {
+        toast(`Você não tem permissão para ${id ? 'alterar' : 'incluir'} registros em ${nomeDaTela(tela)}.`, 'error');
+        return null;
+    }
+
     // Injetar metadados de segurança em toda escrita
     data._condoId = APP.currentCondoId;
     data._updatedBy = APP.currentUser?.uid || 'unknown';
@@ -4203,6 +4275,12 @@ async function fbSave(subcol, id, data) {
 
 async function fbDelete(subcol, id) {
     if (!APP.firebaseReady || !APP.currentCondoId) return;
+
+    const telaDel = TELA_POR_COLECAO[subcol];
+    if (telaDel && !pode(telaDel, 'excluir')) {
+        toast(`Você não tem permissão para excluir registros em ${nomeDaTela(telaDel)}.`, 'error');
+        return;
+    }
 
     if (isSessionExpired()) {
         toast('Sessão expirada. Faça login novamente.', 'error');
@@ -8504,6 +8582,129 @@ async function rejectUser(userId) {
     }
 }
 
+// Ponto de partida da matriz para um usuário novo, conforme o perfil.
+// É só um padrão: o administrador ajusta à vontade antes de salvar.
+function matrizPadraoPara(perfil) {
+    const a = {};
+    TELAS.forEach(t => { a[t.id] = { ver: false, criar: false, alterar: false, excluir: false }; });
+    a.dashboard.ver = true;
+    if (perfil === 'morador') {
+        PAGINAS_MORADOR.forEach(id => { if (a[id]) a[id].ver = true; });
+        // O morador abre chamado e reserva área — mas não apaga nem edita
+        // o que a administração já tratou.
+        a.ocorrencias.criar = true;
+        a.reservas.criar = true;
+    }
+    return a;
+}
+
+function novoUsuario() {
+    ['userEditId', 'userNome', 'userEmail', 'userSenha'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('userPerfil').value = 'usuario';
+    document.getElementById('userStatus').value = 'ativo';
+    const aptoSel = document.getElementById('userApto');
+    if (aptoSel) {
+        aptoSel.innerHTML = '<option value="">Nenhum (Admin/Síndico)</option>' +
+            (APP.moradores || []).map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
+        aptoSel.value = '';
+    }
+    document.querySelectorAll('#accessGridEspecial input[type="checkbox"], #accessCondos input[type="checkbox"]')
+        .forEach(cb => { cb.checked = false; });
+    renderMatrizAcessos(matrizPadraoPara('usuario'), 'usuario');
+    openModal('modalUsuario');
+}
+
+// Trocar o perfil num cadastro NOVO recarrega os padrões da matriz.
+// Numa edição, só atualiza o aviso e o travamento para gestor — seria ruim
+// perder as marcações que o administrador acabou de fazer.
+function perfilUsuarioMudou() {
+    const perfil = document.getElementById('userPerfil').value;
+    const editando = !!document.getElementById('userEditId').value;
+    renderMatrizAcessos(editando ? lerMatrizAcessos() : matrizPadraoPara(perfil), perfil);
+}
+
+// ----- Matriz de permissões na tela de cadastro de usuário -----
+function renderMatrizAcessos(acessos, perfil) {
+    const tb = document.getElementById('matrizAcessos');
+    if (!tb) return;
+    const gestor = perfil === 'admin' || perfil === 'sindico';
+
+    const aviso = document.getElementById('acessosAviso');
+    if (aviso) {
+        aviso.textContent = gestor
+            ? 'Administrador e síndico têm acesso total: a matriz abaixo não se aplica a eles.'
+            : (perfil === 'morador'
+                ? 'O morador vê apenas os dados do apartamento vinculado. A matriz define quais telas ele abre — não amplia o que ele enxerga dentro delas.'
+                : 'Marque o que este usuário pode fazer em cada tela.');
+    }
+
+    let grupo = '';
+    tb.innerHTML = TELAS.map(t => {
+        const linha = acessos[t.id] || {};
+        const cabecalho = t.grupo !== grupo ? (grupo = t.grupo,
+            `<tr class="grupo-linha"><td colspan="5">${H(t.grupo)}</td></tr>`) : '';
+        const celulas = ACOES.map(a => {
+            if (t.semEscrita && a !== 'ver') return '<td></td>';
+            if (t.id === 'dashboard' && a === 'ver') {
+                return '<td><input type="checkbox" checked disabled title="O Dashboard é a tela de entrada de todos"></td>';
+            }
+            return `<td><input type="checkbox" class="acesso-chk" data-tela="${t.id}" data-acao="${a}"
+                ${linha[a] ? 'checked' : ''} ${gestor ? 'disabled' : ''}
+                ${a !== 'ver' ? `data-depende="${t.id}"` : ''}></td>`;
+        }).join('');
+        return cabecalho + `<tr><td style="text-align:left">${H(t.nome)}</td>${celulas}</tr>`;
+    }).join('');
+
+    // Desmarcar "Ver" tira as demais ações: sem abrir a tela, não há o que fazer nela
+    tb.querySelectorAll('.acesso-chk[data-acao="ver"]').forEach(chk => {
+        chk.addEventListener('change', () => {
+            if (chk.checked) return;
+            tb.querySelectorAll(`.acesso-chk[data-tela="${chk.dataset.tela}"]`).forEach(o => {
+                if (o.dataset.acao !== 'ver') o.checked = false;
+            });
+        });
+    });
+    // Marcar qualquer ação liga o "Ver" da mesma tela
+    tb.querySelectorAll('.acesso-chk:not([data-acao="ver"])').forEach(chk => {
+        chk.addEventListener('change', () => {
+            if (!chk.checked) return;
+            const ver = tb.querySelector(`.acesso-chk[data-tela="${chk.dataset.tela}"][data-acao="ver"]`);
+            if (ver) ver.checked = true;
+        });
+    });
+}
+
+function marcarColunaAcesso(acao, valor) {
+    const tb = document.getElementById('matrizAcessos');
+    if (!tb) return;
+    tb.querySelectorAll(`.acesso-chk[data-acao="${acao}"]`).forEach(chk => {
+        if (chk.disabled) return;
+        chk.checked = valor;
+        if (valor && acao !== 'ver') {
+            const ver = tb.querySelector(`.acesso-chk[data-tela="${chk.dataset.tela}"][data-acao="ver"]`);
+            if (ver) ver.checked = true;
+        }
+        if (!valor && acao === 'ver') {
+            tb.querySelectorAll(`.acesso-chk[data-tela="${chk.dataset.tela}"]`).forEach(o => {
+                if (o.dataset.acao !== 'ver') o.checked = false;
+            });
+        }
+    });
+}
+
+// Lê a matriz da tela e devolve o objeto que vai para o Firestore
+function lerMatrizAcessos() {
+    const acessos = {};
+    TELAS.forEach(t => { acessos[t.id] = { ver: false, criar: false, alterar: false, excluir: false }; });
+    document.querySelectorAll('#matrizAcessos .acesso-chk').forEach(chk => {
+        if (chk.checked) acessos[chk.dataset.tela][chk.dataset.acao] = true;
+    });
+    acessos.dashboard.ver = true;
+    return acessos;
+}
+
 function editUsuario(id) {
     const u = APP.usuarios.find(x => x.id === id);
     if (!u) return;
@@ -8520,8 +8721,10 @@ function editUsuario(id) {
         APP.moradores.map(m => `<option value="${H(m.apto)}">${H(m.apto)} - ${H(m.nome)}</option>`).join('');
     aptoSel.value = u.apartamentoVinculado || '';
 
-    // Set permission checkboxes
-    document.querySelectorAll('#accessGrid input[type="checkbox"], #accessGridEspecial input[type="checkbox"]').forEach(cb => {
+    // Matriz de permissões (migra sozinha de quem só tem o campo antigo)
+    renderMatrizAcessos(normalizarAcessos(u), u.perfil);
+
+    document.querySelectorAll('#accessGridEspecial input[type="checkbox"]').forEach(cb => {
         cb.checked = u.perfil === 'admin' || (u.permissoes||[]).includes(cb.value);
     });
 
@@ -8549,8 +8752,13 @@ async function saveUsuario() {
         return;
     }
 
-    const permissoes = [];
-    document.querySelectorAll('#accessGrid input[type="checkbox"]:checked, #accessGridEspecial input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
+    const acessos = lerMatrizAcessos();
+
+    // 'permissoes' continua sendo gravado, derivado da coluna "Ver", para
+    // não quebrar nada que ainda leia o campo antigo. A matriz 'acessos' é
+    // que manda.
+    const permissoes = TELAS.filter(t => acessos[t.id] && acessos[t.id].ver).map(t => t.id);
+    document.querySelectorAll('#accessGridEspecial input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
 
     const condosPermitidos = [];
     document.querySelectorAll('#accessCondos input[type="checkbox"]:checked').forEach(cb => condosPermitidos.push(cb.value));
@@ -8586,7 +8794,7 @@ async function saveUsuario() {
     try {
         if (editId) {
             await APP.db.collection('user_profiles').doc(editId).update({
-                nome, perfil, status, permissoes, condosPermitidos, apartamentoVinculado,
+                nome, perfil, status, permissoes, acessos, condosPermitidos, apartamentoVinculado,
                 atualizadoEm: new Date().toISOString()
             });
             auditLog('USER_UPDATE', { targetUserId: editId, perfil, status, apartamentoVinculado });
@@ -8594,7 +8802,7 @@ async function saveUsuario() {
             if (!senha || senha.length < 6) { toast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
             const tempId = 'pending_' + Date.now();
             await APP.db.collection('user_profiles').doc(tempId).set({
-                nome, email, perfil, status, permissoes, condosPermitidos, apartamentoVinculado,
+                nome, email, perfil, status, permissoes, acessos, condosPermitidos, apartamentoVinculado,
                 pendingPassword: true,
                 criadoEm: new Date().toISOString()
             });
