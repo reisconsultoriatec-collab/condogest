@@ -8377,6 +8377,22 @@ async function removeCategoria(i) {
 }
 
 // ===== USUÁRIOS =====
+// Recarrega a lista de usuários e redesenha a tela.
+// Existe porque os usuários NÃO vivem dentro de um condomínio: eles são
+// carregados em loadAllData(), não em loadCondoData(). Quem alterava um
+// usuário chamava loadCondoData() e a tabela continuava mostrando os dados
+// antigos, como se a gravação não tivesse acontecido.
+async function recarregarUsuarios() {
+    if (!APP.firebaseReady) return;
+    try {
+        const snap = await APP.db.collection('user_profiles').get();
+        APP.usuarios = []; snap.forEach(d => APP.usuarios.push({ id: d.id, ...d.data() }));
+        renderUsuarios();
+    } catch (e) {
+        console.warn('Usuários:', e.message);
+    }
+}
+
 function renderUsuarios() {
     const tb = document.getElementById('tbUsuarios');
     if (APP.usuarios.length === 0) {
@@ -8456,7 +8472,7 @@ async function approveUser(userId) {
         });
         auditLog('USER_APPROVED', { targetUserId: userId });
         toast('Usuário aprovado com sucesso!');
-        await loadCondoData();
+        await recarregarUsuarios();
     } catch(e) {
         toast('Erro ao aprovar: ' + e.message, 'error');
     }
@@ -8473,7 +8489,7 @@ async function rejectUser(userId) {
         });
         auditLog('USER_REJECTED', { targetUserId: userId });
         toast('Usuário rejeitado.');
-        await loadCondoData();
+        await recarregarUsuarios();
     } catch(e) {
         toast('Erro ao rejeitar: ' + e.message, 'error');
     }
@@ -8534,12 +8550,37 @@ async function saveUsuario() {
 
     if (!APP.firebaseReady) { toast('Configure o Firebase', 'error'); return; }
 
+    // Trava de segurança: não deixar o sistema ficar sem nenhum administrador
+    // ativo. Sem isso, rebaixar o último admin tranca todo mundo para fora e
+    // só se resolve mexendo direto no Firestore.
+    if (editId) {
+        const antes = (APP.usuarios || []).find(u => u.id === editId);
+        const eraAdminAtivo = antes && antes.perfil === 'admin' && antes.status !== 'inativo';
+        const continuaAdminAtivo = perfil === 'admin' && status !== 'inativo';
+        if (eraAdminAtivo && !continuaAdminAtivo) {
+            const outrosAdmins = (APP.usuarios || []).filter(u =>
+                u.id !== editId && u.perfil === 'admin' && u.status !== 'inativo' && u.aprovado !== false
+            ).length;
+            if (outrosAdmins === 0) {
+                toast('Este é o único administrador ativo. Promova outro usuário a administrador antes de alterar este.', 'error');
+                return;
+            }
+            // Rebaixar a própria conta é legítimo, mas merece confirmação:
+            // ao recarregar, o acesso de administrador acaba.
+            if (APP.currentUser && editId === APP.currentUser.uid &&
+                !confirm(`Você está alterando a SUA PRÓPRIA conta de administrador para "${perfil}".\n\nAo recarregar a página você perde o acesso de administrador e precisará de outro admin para voltar atrás.\n\nConfirma?`)) {
+                return;
+            }
+        }
+    }
+
     try {
         if (editId) {
             await APP.db.collection('user_profiles').doc(editId).update({
                 nome, perfil, status, permissoes, condosPermitidos, apartamentoVinculado,
                 atualizadoEm: new Date().toISOString()
             });
+            auditLog('USER_UPDATE', { targetUserId: editId, perfil, status, apartamentoVinculado });
         } else {
             if (!senha || senha.length < 6) { toast('Senha deve ter no mínimo 6 caracteres', 'error'); return; }
             const tempId = 'pending_' + Date.now();
@@ -8548,13 +8589,16 @@ async function saveUsuario() {
                 pendingPassword: true,
                 criadoEm: new Date().toISOString()
             });
+            auditLog('USER_CREATE', { targetUserId: tempId, email, perfil });
             toast('Usuário criado! O usuário deve criar a conta na tela de login.');
         }
 
         closeModal('modalUsuario');
         document.getElementById('userEditId').value = '';
         toast('Usuário salvo!');
-        await loadCondoData();
+        // Os usuários não ficam dentro do condomínio, então loadCondoData()
+        // não traz a lista nova — é preciso recarregá-la explicitamente.
+        await recarregarUsuarios();
     } catch(e) {
         toast('Erro: ' + e.message, 'error');
     }

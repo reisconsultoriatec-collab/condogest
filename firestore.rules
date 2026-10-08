@@ -167,6 +167,24 @@ service cloud.firestore {
       }
     }
 
+    // ---------- Trilha de auditoria ----------
+    // Todo usuário logado precisa conseguir GRAVAR (o auditLog() dispara em
+    // login, criação, alteração e exclusão). Ninguém altera nem apaga: um log
+    // que pode ser editado não serve de prova. Leitura só do admin.
+    match /audit_trail/{doc} {
+      allow create: if logado()
+        && request.resource.data.uid == request.auth.uid;
+      allow read:   if admin();
+      allow update, delete: if false;
+    }
+
+    // ---------- Teste de conexão ----------
+    // Usado pelo botão "Testar conexão" em Configurações: grava e apaga um
+    // documento único. Só gestor, e só esse documento.
+    match /_test_connection/ping {
+      allow read, write: if gestor();
+    }
+
     // Nada mais é acessível
     match /{document=**} {
       allow read, write: if false;
