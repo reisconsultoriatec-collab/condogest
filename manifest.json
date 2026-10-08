@@ -1,0 +1,72 @@
+{
+  "name": "CondoGest - Gestão de Condomínios",
+  "short_name": "CondoGest",
+  "description": "Gestão completa de condomínios: taxas, boletos com PIX, inadimplência, hidrômetros, reservas, ocorrências e assembleias.",
+  "id": "/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#1A2744",
+  "theme_color": "#1A2744",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Boletos / PIX",
+      "short_name": "Boletos",
+      "description": "Gerar boleto com QR Code PIX",
+      "url": "./?page=boletos",
+      "icons": [{ "src": "icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Inadimplentes",
+      "short_name": "Inadimplentes",
+      "description": "Parcelas em aberto",
+      "url": "./?page=inadimplentes",
+      "icons": [{ "src": "icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ocorrências",
+      "short_name": "Ocorrências",
+      "description": "Chamados e ocorrências",
+      "url": "./?page=ocorrencias",
+      "icons": [{ "src": "icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ]
+}

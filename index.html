@@ -872,6 +872,11 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 .pwa-update-banner button { background: var(--secondary); color: #1A2744; border: none; padding: 6px 16px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.82rem; cursor: pointer; }
 .pwa-update-banner .dismiss { background: transparent; color: rgba(255,255,255,0.7); font-size: 0.78rem; text-decoration: underline; }
 
+/* Aviso de conexão: aparece quando o aparelho fica offline */
+.offline-bar { position: fixed; top: 0; left: 0; right: 0; background: #B45309; color: #fff; padding: 7px 16px; display: flex; align-items: center; justify-content: center; gap: 8px; z-index: 10001; font-size: 0.82rem; font-weight: 600; transform: translateY(-100%); transition: transform 0.3s ease; }
+.offline-bar.show { transform: translateY(0); }
+.offline-bar.voltou { background: #047857; }
+
 /* ===== PDF HEADER (print) ===== */
 .pdf-header { display: none; }
 @media print {
@@ -3095,6 +3100,11 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 </div>
 
 <!-- PWA UPDATE BANNER -->
+<div class="offline-bar" id="offlineBar">
+    <i class="ti ti-wifi-off"></i>
+    <span id="offlineBarTexto">Sem conexão &ndash; você está vendo os dados já carregados. Alterações não serão salvas.</span>
+</div>
+
 <div class="pwa-update-banner" id="pwaUpdateBanner">
     <i class="ti ti-refresh"></i>
     <span>Nova versão do CondoGest disponível!</span>
@@ -3266,13 +3276,10 @@ function setTheme(t) {
 
 // ===== NAVIGATION =====
 function navigateTo(page) {
-    // Check access
-    if (APP.userProfile && APP.userProfile.perfil !== 'admin') {
-        const perms = APP.userProfile.permissoes || [];
-        if (!perms.includes(page) && page !== 'dashboard') {
-            toast('Você não tem permissão para acessar esta área.', 'error');
-            return;
-        }
+    // Check access (fonte única: podeAbrirPagina)
+    if (!podeAbrirPagina(page)) {
+        toast('Você não tem permissão para acessar esta área.', 'error');
+        return;
     }
 
     document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
@@ -3494,11 +3501,81 @@ function enterApp() {
     applyMenuPermissions();
     applyBoletoPermissions();
 
+    // Morador sem apartamento vinculado não consegue ver nada da unidade.
+    // Avisar é melhor do que deixar as telas vazias sem explicação.
+    if (moradorSemVinculo()) {
+        setTimeout(() => toast('Sua conta ainda não está vinculada a um apartamento. Peça ao síndico para fazer o vínculo em Usuários.', 'error'), 800);
+    }
+
     // Sempre iniciar no Dashboard
     navigateTo('dashboard');
+    aplicarAtalhoURL();
     recolherMenusAoEntrar();
 
     loadAllData();
+}
+
+// =====================================================================
+// PORTAL DO MORADOR — isolamento por apartamento
+// O morador só pode ver a própria unidade. Estas funções são a fonte
+// única usada pelas telas; gestores (admin/síndico) não são afetados.
+// =====================================================================
+
+// Páginas liberadas para o perfil "morador"
+const PAGINAS_MORADOR = ['dashboard', 'comunicados', 'reservas', 'ocorrencias', 'boletos', 'hidrometros', 'assembleias'];
+
+function ehGestor() {
+    const p = APP.userProfile?.perfil;
+    return p === 'admin' || p === 'sindico';
+}
+function ehMorador() { return APP.userProfile?.perfil === 'morador'; }
+
+// Apartamento do morador logado. '' para qualquer outro perfil.
+function moradorApto() {
+    return ehMorador() ? String(APP.userProfile?.apartamentoVinculado || '').trim() : '';
+}
+
+// Morador sem apartamento vinculado: não pode ver dado de unidade nenhuma.
+// Melhor mostrar vazio do que mostrar o de todo mundo.
+function moradorSemVinculo() { return ehMorador() && !moradorApto(); }
+
+// Compara apartamentos com tolerância a espaço e maiúscula ("12 " == "12")
+function _mesmoApto(a, b) {
+    return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+}
+
+// Filtra uma lista pelo apartamento do morador. Para gestores devolve a
+// lista inteira, sem cópia desnecessária.
+function filtrarPorApto(lista, campo) {
+    if (!ehMorador()) return lista;
+    const meu = moradorApto();
+    if (!meu) return [];
+    return (lista || []).filter(item => _mesmoApto(item?.[campo], meu));
+}
+
+// Decide se um perfil pode abrir uma página. Centraliza o que antes estava
+// espalhado entre applyMenuPermissions() e navigateTo().
+function podeAbrirPagina(page) {
+    const perfil = APP.userProfile?.perfil;
+    if (!perfil) return true;                       // ainda carregando
+    if (perfil === 'admin' || perfil === 'sindico') return true;
+    if (perfil === 'morador') return PAGINAS_MORADOR.includes(page);
+    if (page === 'dashboard') return true;
+    return (APP.userProfile?.permissoes || []).includes(page);
+}
+
+// ===== ATALHOS DA PWA (?page=...) =====
+// Os atalhos do manifest.json abrem o app direto numa tela. A permissão
+// continua sendo decidida pelo navigateTo(), que já barra o que o perfil
+// não pode ver.
+function aplicarAtalhoURL() {
+    try {
+        const page = new URLSearchParams(window.location.search).get('page');
+        if (!page) return;
+        if (document.getElementById('pg-' + page)) navigateTo(page);
+        // Limpa a query para o atalho não "grudar" ao recarregar
+        history.replaceState(null, '', window.location.pathname);
+    } catch (e) { /* sem atalho, segue no dashboard */ }
 }
 
 // ===== PERMISSÕES DA TELA DE BOLETOS =====
@@ -3543,10 +3620,9 @@ function applyMenuPermissions() {
 
     // Portal do Morador: acesso limitado
     if (isMorador) {
-        const moradorPages = ['dashboard','comunicados','reservas','ocorrencias','boletos','hidrometros'];
         document.querySelectorAll('.nav-item[data-page]').forEach(item => {
             const page = item.getAttribute('data-page');
-            item.style.display = moradorPages.includes(page) ? '' : 'none';
+            item.style.display = PAGINAS_MORADOR.includes(page) ? '' : 'none';
         });
         // Ocultar seções sem itens visíveis
         document.querySelectorAll('.nav-section').forEach(section => {
@@ -3912,16 +3988,52 @@ async function loadAllData() {
 async function loadCondoData() {
     if (!APP.firebaseReady || !APP.currentCondoId) return;
     const cid = APP.currentCondoId;
+    const base = APP.db.collection('condominios').doc(cid);
+
+    // --- Portal do Morador -------------------------------------------------
+    // Quando quem está logado é morador, a consulta já sai filtrada pelo
+    // apartamento dele: o navegador nem chega a baixar o dado dos vizinhos.
+    // As regras do Firestore (firestore.rules) exigem exatamente este filtro,
+    // então tirar o where daqui faz a leitura ser recusada pelo servidor.
+    const soMeuApto = ehMorador();
+    const meuApto = moradorApto();
+
+    // Coleção que tem um campo de apartamento.
+    // ordemGestor: [campo, direcao] usado só para gestor, preservando a
+    // ordenação de antes. Para o morador usamos where + ordenação em JS,
+    // que evita exigir índice composto no Firestore.
+    const lerPorApto = async (nome, campo, ordemGestor, compararMorador) => {
+        if (soMeuApto) {
+            if (!meuApto) return [];
+            const snap = await base.collection(nome).where(campo, '==', meuApto).get();
+            const out = []; snap.forEach(d => out.push({ id: d.id, ...d.data() }));
+            return compararMorador ? out.sort(compararMorador) : out;
+        }
+        let q = base.collection(nome);
+        if (ordemGestor) q = q.orderBy(ordemGestor[0], ordemGestor[1]);
+        const snap = await q.get();
+        const out = []; snap.forEach(d => out.push({ id: d.id, ...d.data() }));
+        return out;
+    };
+
+    // Coleção que o morador não pode ver de jeito nenhum.
+    const lerSoGestor = async (nome, ordem) => {
+        if (soMeuApto) return [];
+        let q = base.collection(nome);
+        if (ordem) q = q.orderBy(ordem[0], ordem[1]);
+        const snap = await q.get();
+        const out = []; snap.forEach(d => out.push({ id: d.id, ...d.data() }));
+        return out;
+    };
+    // -----------------------------------------------------------------------
 
     try {
         // Moradores
-        const morSnap = await APP.db.collection('condominios').doc(cid).collection('moradores').orderBy('apto').get();
-        APP.moradores = []; morSnap.forEach(d => APP.moradores.push({ id: d.id, ...d.data() }));
+        APP.moradores = await lerPorApto('moradores', 'apto', ['apto']);
         renderMoradores();
 
         // Responsaveis
-        const respSnap = await APP.db.collection('condominios').doc(cid).collection('responsaveis').orderBy('nome').get();
-        APP.responsaveis = []; respSnap.forEach(d => APP.responsaveis.push({ id: d.id, ...d.data() }));
+        APP.responsaveis = await lerSoGestor('responsaveis', ['nome']);
         renderResponsaveis();
 
         // Taxas
@@ -3929,35 +4041,29 @@ async function loadCondoData() {
         APP.taxas = []; taxSnap.forEach(d => APP.taxas.push({ id: d.id, ...d.data() }));
         renderTaxas();
 
-        // Contas
-        const ctSnap = await APP.db.collection('condominios').doc(cid).collection('contas').orderBy('vencimento','desc').get();
-        APP.contas = []; ctSnap.forEach(d => APP.contas.push({ id: d.id, ...d.data() }));
+        // Contas (só gestor)
+        APP.contas = await lerSoGestor('contas', ['vencimento', 'desc']);
         renderContas();
 
         // Pagamentos
-        const pgSnap = await APP.db.collection('condominios').doc(cid).collection('pagamentos').get();
-        APP.pagamentos = []; pgSnap.forEach(d => APP.pagamentos.push({ id: d.id, ...d.data() }));
+        APP.pagamentos = await lerPorApto('pagamentos', 'apto');
         renderPagamentos();
 
-        // Extrato
-        const exSnap = await APP.db.collection('condominios').doc(cid).collection('extrato').orderBy('data').get();
-        APP.extrato = []; exSnap.forEach(d => APP.extrato.push({ id: d.id, ...d.data() }));
+        // Extrato bancário (só gestor)
+        APP.extrato = await lerSoGestor('extrato', ['data']);
         renderExtrato();
 
-        // Orçamento
-        const orcSnap = await APP.db.collection('condominios').doc(cid).collection('orcamento').get();
-        APP.orcamento = []; orcSnap.forEach(d => APP.orcamento.push({ id: d.id, ...d.data() }));
+        // Orçamento (só gestor)
+        APP.orcamento = await lerSoGestor('orcamento');
         renderOrcamento();
 
         // Taxas por Apartamento
-        const taSnap = await APP.db.collection('condominios').doc(cid).collection('taxas_apartamento').orderBy('apto').get();
-        APP.taxasApto = []; taSnap.forEach(d => APP.taxasApto.push({ id: d.id, ...d.data() }));
+        APP.taxasApto = await lerPorApto('taxas_apartamento', 'apto', ['apto']);
         renderTaxasApto();
         populateBoletoSelects();
 
-        // Receitas Avulsas
-        const raSnap = await APP.db.collection('condominios').doc(cid).collection('receitas_avulsas').orderBy('data','desc').get();
-        APP.receitasAvulsas = []; raSnap.forEach(d => APP.receitasAvulsas.push({ id: d.id, ...d.data() }));
+        // Receitas Avulsas (só gestor)
+        APP.receitasAvulsas = await lerSoGestor('receitas_avulsas', ['data', 'desc']);
         renderReceitasAvulsas();
 
         // Comunicados
@@ -3982,10 +4088,10 @@ async function loadCondoData() {
         } catch(e) { console.warn('Áreas comuns: settings ainda não existe:', e.message); }
         renderReservas();
 
-        // Ocorrências
+        // Ocorrências — morador vê só as que ele abriu
         try {
-            const ocSnap = await APP.db.collection('condominios').doc(cid).collection('ocorrencias').orderBy('dataAbertura','desc').get();
-            APP.ocorrencias = []; ocSnap.forEach(d => APP.ocorrencias.push({ id: d.id, ...d.data() }));
+            APP.ocorrencias = await lerPorApto('ocorrencias', 'solicitante', ['dataAbertura', 'desc'],
+                (a, b) => String(b.dataAbertura || '').localeCompare(String(a.dataAbertura || '')));
         } catch(e) { console.warn('Ocorrências:', e.message); APP.ocorrencias = []; }
         renderOcorrencias();
 
@@ -3996,10 +4102,10 @@ async function loadCondoData() {
         } catch(e) { console.warn('Assembleias:', e.message); APP.assembleias = []; }
         renderAssembleias();
 
-        // Hidrômetros
+        // Hidrômetros — morador vê só a leitura da unidade dele
+        // (leituras coletivas e rateios não têm a unidade dele e ficam de fora)
         try {
-            const hidSnap = await APP.db.collection('condominios').doc(cid).collection('hidrometros').get();
-            APP.hidrometros = []; hidSnap.forEach(d => APP.hidrometros.push({ id: d.id, ...d.data() }));
+            APP.hidrometros = await lerPorApto('hidrometros', 'unidade');
             APP.hidrometros.sort((a,b) => (b.mesRef||'').localeCompare(a.mesRef||''));
         } catch(e) { console.warn('Hidrômetros:', e.message); APP.hidrometros = []; }
 
@@ -4022,10 +4128,9 @@ async function loadCondoData() {
         switchHidroModo(false);
         renderHidrometros();
 
-        // Fornecedores
+        // Fornecedores (só gestor)
         try {
-            const fornSnap = await APP.db.collection('condominios').doc(cid).collection('fornecedores').orderBy('nome').get();
-            APP.fornecedores = []; fornSnap.forEach(d => APP.fornecedores.push({ id: d.id, ...d.data() }));
+            APP.fornecedores = await lerSoGestor('fornecedores', ['nome']);
         } catch(e) { console.warn('Fornecedores:', e.message); APP.fornecedores = []; }
         renderFornecedores();
 
@@ -6483,7 +6588,13 @@ async function loadEncargos() {
         if (d.exists) APP.encargosCfg = d.data();
     } catch (e) { console.warn('Encargos (configuração):', e.message); }
     try {
-        const snap = await condoRef().collection('encargos_isencoes').get();
+        let q = condoRef().collection('encargos_isencoes');
+        // Morador só enxerga as isenções da própria unidade
+        if (ehMorador()) {
+            if (!moradorApto()) return;
+            q = q.where('apto', '==', moradorApto());
+        }
+        const snap = await q.get();
         snap.forEach(d => APP.encargosIsencoes.push({ id: d.id, ...d.data() }));
     } catch (e) { console.warn('Encargos (isenções):', e.message); }
 }
@@ -7008,7 +7119,13 @@ function inadExclParaAssociar() {
 async function loadInadExclusoes() {
     if (!APP.firebaseReady || !APP.currentCondoId) return;
     try {
-        const snap = await condoRef().collection('inad_exclusoes').get();
+        let q = condoRef().collection('inad_exclusoes');
+        // Morador só enxerga os cancelamentos da própria unidade
+        if (ehMorador()) {
+            if (!moradorApto()) { APP.inadExclusoes = []; return; }
+            q = q.where('apto', '==', moradorApto());
+        }
+        const snap = await q.get();
         APP.inadExclusoes = [];
         snap.forEach(d => APP.inadExclusoes.push({ id: d.id, ...d.data() }));
     } catch(e) {
@@ -8400,6 +8517,12 @@ async function saveUsuario() {
     const apartamentoVinculado = document.getElementById('userApto').value;
 
     if (!nome || !email) { toast('Preencha nome e email', 'error'); return; }
+    // O perfil "morador" só funciona com um apartamento vinculado: é esse
+    // vínculo que define o que ele pode ver.
+    if (perfil === 'morador' && !apartamentoVinculado) {
+        toast('Selecione o apartamento vinculado — o morador só enxerga a própria unidade.', 'error');
+        return;
+    }
 
     const permissoes = [];
     document.querySelectorAll('#accessGrid input[type="checkbox"]:checked, #accessGridEspecial input[type="checkbox"]:checked').forEach(cb => permissoes.push(cb.value));
@@ -9245,7 +9368,8 @@ function renderOcorrencias() {
     const filtroPrio = document.getElementById('ocorFiltroPrio')?.value || '';
     const filtroCat = document.getElementById('ocorFiltroCat')?.value || '';
     const busca = (document.getElementById('searchOcorrencia')?.value || '').toLowerCase();
-    let lista = APP.ocorrencias || [];
+    // Morador vê apenas as ocorrências que ele mesmo abriu
+    let lista = filtrarPorApto(APP.ocorrencias || [], 'solicitante');
     if (filtroStatus) lista = lista.filter(o => o.status === filtroStatus);
     if (filtroPrio) lista = lista.filter(o => o.prioridade === filtroPrio);
     if (filtroCat) lista = lista.filter(o => o.categoria === filtroCat);
@@ -10616,6 +10740,34 @@ function mcRotularTabelas(raiz) {
         const app = document.getElementById('appContainer');
         if (app) { obs.observe(app, { childList: true, subtree: true }); mcRotularTabelas(); }
     });
+})();
+
+// ===== AVISO DE CONEXÃO =====
+// O Firestore guarda as escritas e reenvia quando a conexão volta, mas o
+// usuário precisa saber que está offline para não achar que o dado sumiu.
+(function monitorarConexao() {
+    const barra = () => document.getElementById('offlineBar');
+    const texto = () => document.getElementById('offlineBarTexto');
+    let _timer = null;
+
+    function caiu() {
+        const b = barra(); if (!b) return;
+        clearTimeout(_timer);
+        b.classList.remove('voltou');
+        if (texto()) texto().innerHTML = 'Sem conexão &ndash; você está vendo os dados já carregados. Alterações não serão salvas.';
+        b.classList.add('show');
+    }
+    function voltou() {
+        const b = barra(); if (!b) return;
+        b.classList.add('voltou');
+        if (texto()) texto().textContent = 'Conexão restabelecida.';
+        b.classList.add('show');
+        _timer = setTimeout(() => { b.classList.remove('show'); b.classList.remove('voltou'); }, 3000);
+    }
+
+    window.addEventListener('offline', caiu);
+    window.addEventListener('online', voltou);
+    window.addEventListener('load', () => { if (!navigator.onLine) caiu(); });
 })();
 
 // ===== PWA: Service Worker Registration =====

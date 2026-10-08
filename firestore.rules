@@ -1,0 +1,209 @@
+rules_version = '2';
+
+// =============================================================================
+// CondoGest — Regras do Firestore (Fase 2: isolamento do Portal do Morador)
+// -----------------------------------------------------------------------------
+// ATENÇÃO antes de publicar:
+//   1. Compare com as regras da Fase 1 que já estão no console do Firebase.
+//      Este arquivo foi escrito a partir do que o index.html lê e grava; se a
+//      Fase 1 tiver alguma permissão a mais que o app usa, ela precisa estar
+//      aqui também, senão a tela correspondente para de carregar.
+//   2. Teste no "Simulador de regras" do console antes de publicar, usando o
+//      roteiro no fim deste arquivo.
+//   3. O app tem try/catch por coleção: se uma regra barrar algo indevidamente,
+//      a tela fica vazia e aparece um aviso no console do navegador — não
+//      quebra o sistema inteiro. Ainda assim, teste antes.
+//
+// Princípio: o morador só enxerga a própria unidade. Esconder o menu no
+// navegador não basta — sem estas regras, qualquer morador logado consegue
+// baixar os dados de todos os apartamentos pelo console do navegador.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Auxiliares ----------
+
+    function logado() {
+      return request.auth != null;
+    }
+
+    function perfilDoc() {
+      return get(/databases/$(database)/documents/user_profiles/$(request.auth.uid)).data;
+    }
+
+    function temPerfil() {
+      return logado() && exists(/databases/$(database)/documents/user_profiles/$(request.auth.uid));
+    }
+
+    // .get(campo, padrao) evita erro quando o documento de perfil é antigo
+    // e ainda não tem o campo — sem isso a regra estoura e nega tudo.
+    function status() { return perfilDoc().get('status', 'ativo'); }
+    function papel()  { return perfilDoc().get('perfil', 'usuario'); }
+    function meuApto() { return perfilDoc().get('apartamentoVinculado', ''); }
+
+    // Conta válida: existe, não está inativa e não está pendente de aprovação
+    function ativo() {
+      return temPerfil() && status() != 'inativo' && status() != 'pendente';
+    }
+
+    function admin()   { return ativo() && papel() == 'admin'; }
+    function gestor()  { return ativo() && (papel() == 'admin' || papel() == 'sindico'); }
+    function morador() { return ativo() && papel() == 'morador'; }
+
+    // Perfis internos que não são morador nem gestor (usuario, visualizador)
+    function equipe()  { return ativo() && papel() != 'morador'; }
+
+    // Morador com apartamento vinculado. Sem vínculo, não vê unidade nenhuma.
+    function moradorComApto() {
+      return morador() && meuApto() != '';
+    }
+
+    // ---------- Perfis de usuário ----------
+    match /user_profiles/{uid} {
+      // Cada um lê o próprio perfil; admin lê todos (tela de Usuários)
+      allow get: if logado() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+
+      // Primeiro login: o app cria o próprio perfil, sempre pendente e sem
+      // poderes. Quem promove é o admin.
+      allow create: if logado()
+        && request.auth.uid == uid
+        && request.resource.data.perfil == 'usuario'
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.aprovado == false;
+
+      // Só admin altera perfil, permissões, status e apartamento vinculado
+      allow update, delete: if admin();
+    }
+
+    // ---------- Condomínios ----------
+    match /condominios/{cid} {
+      allow read: if ativo();
+      allow create, update, delete: if gestor();
+
+      // ===== Coleções que o morador NÃO pode ver =====
+      // Contas a pagar, extrato bancário, orçamento, receitas avulsas,
+      // responsáveis legais e fornecedores são dados de gestão.
+      match /contas/{doc}           { allow read, write: if equipe(); }
+      match /extrato/{doc}          { allow read, write: if equipe(); }
+      match /orcamento/{doc}        { allow read, write: if equipe(); }
+      match /receitas_avulsas/{doc} { allow read, write: if equipe(); }
+      match /responsaveis/{doc}     { allow read, write: if equipe(); }
+      match /fornecedores/{doc}     { allow read, write: if equipe(); }
+
+      // ===== Coleções por apartamento =====
+      // Leitura: gestor/equipe vê tudo; morador só o que for da unidade dele.
+      // Escrita: só gestão (o morador não lança pagamento nem taxa).
+      match /moradores/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.apto == meuApto());
+        allow write: if gestor();
+      }
+      match /pagamentos/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.apto == meuApto());
+        allow write: if equipe();
+      }
+      match /taxas_apartamento/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.apto == meuApto());
+        allow write: if gestor();
+      }
+      match /hidrometros/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.unidade == meuApto());
+        allow write: if equipe();
+      }
+      match /inad_exclusoes/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.apto == meuApto());
+        allow write: if gestor();
+      }
+      match /encargos_isencoes/{doc} {
+        allow read:  if equipe() || (moradorComApto() && resource.data.apto == meuApto());
+        allow write: if gestor();
+      }
+
+      // ===== Ocorrências: o morador abre e acompanha as dele =====
+      match /ocorrencias/{doc} {
+        allow read:   if equipe() || (moradorComApto() && resource.data.solicitante == meuApto());
+        allow create: if equipe() || (moradorComApto() && request.resource.data.solicitante == meuApto());
+        // Quem trata e fecha o chamado é a administração
+        allow update, delete: if equipe();
+      }
+
+      // ===== Reservas: agenda compartilhada das áreas comuns =====
+      // Todo mundo precisa enxergar a agenda inteira — é assim que o app
+      // detecta conflito de horário. O morador só mexe nas reservas dele.
+      match /reservas/{doc} {
+        allow read:   if ativo();
+        allow create: if equipe() || (moradorComApto() && request.resource.data.solicitante == meuApto());
+        allow update, delete: if equipe() || (moradorComApto() && resource.data.solicitante == meuApto());
+      }
+
+      // ===== Conteúdo do condomínio, visível a todos =====
+      match /comunicados/{doc} {
+        allow read:  if ativo();
+        allow write: if equipe();
+      }
+      match /assembleias/{doc} {
+        allow read:  if ativo();
+        allow write: if equipe();
+      }
+      match /taxas/{doc} {
+        allow read:  if ativo();
+        allow write: if gestor();
+      }
+
+      // ===== Configurações =====
+      // settings/encargos precisa ser legível pelo morador: é o que permite
+      // o boleto dele mostrar multa e juros corretamente.
+      match /settings/{doc} {
+        allow read:  if ativo();
+        allow write: if gestor();
+      }
+
+      // Qualquer coleção futura em /condominios/{cid}/... fica restrita à
+      // gestão até ganhar uma regra própria. É o padrão seguro: uma coleção
+      // nova nunca nasce aberta para o morador.
+      match /{colecao}/{doc=**} {
+        allow read, write: if equipe();
+      }
+    }
+
+    // Nada mais é acessível
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// =============================================================================
+// ROTEIRO DE TESTE (console do Firebase > Firestore > Regras > Simulador)
+// -----------------------------------------------------------------------------
+// Prepare dois usuários de teste em user_profiles:
+//   A) síndico  -> { perfil: 'sindico', status: 'ativo' }
+//   B) morador  -> { perfil: 'morador', status: 'ativo', apartamentoVinculado: '12' }
+//
+// Como síndico (tudo deve PASSAR):
+//   - get    /condominios/{cid}/contas/{qualquer}
+//   - list   /condominios/{cid}/pagamentos
+//   - update /condominios/{cid}/taxas_apartamento/{qualquer}
+//
+// Como morador do apto 12 (deve PASSAR):
+//   - list   /condominios/{cid}/pagamentos        com where apto == '12'
+//   - list   /condominios/{cid}/hidrometros       com where unidade == '12'
+//   - list   /condominios/{cid}/ocorrencias       com where solicitante == '12'
+//   - list   /condominios/{cid}/reservas          (agenda inteira)
+//   - get    /condominios/{cid}/settings/encargos
+//   - create /condominios/{cid}/ocorrencias       com solicitante == '12'
+//
+// Como morador do apto 12 (deve FALHAR):
+//   - list   /condominios/{cid}/pagamentos        SEM where  <- o mais importante
+//   - list   /condominios/{cid}/pagamentos        com where apto == '15'
+//   - list   /condominios/{cid}/contas
+//   - list   /condominios/{cid}/extrato
+//   - list   /user_profiles
+//   - create /condominios/{cid}/ocorrencias       com solicitante == '15'
+//   - update /condominios/{cid}/taxas_apartamento/{qualquer}
+//
+// Depois de publicar, abra o app com a conta do morador e confira no console
+// do navegador se aparece algum aviso "sem permissão" em tela que ele deveria
+// ver. Se aparecer, é regra faltando — não mexa no app antes de conferir aqui.
+// =============================================================================
