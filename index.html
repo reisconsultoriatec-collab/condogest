@@ -1255,6 +1255,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 <div class="nav-item" data-page="contas" onclick="navigateTo('contas')">
                     <span class="nav-icon"><i class="ti ti-file-invoice"></i></span> Contas a Pagar
                 </div>
+                <div class="nav-item" data-page="categorias" onclick="navigateTo('categorias')">
+                    <span class="nav-icon"><i class="ti ti-tags"></i></span> Categorias de Despesas
+                </div>
                 <div class="nav-item" data-page="conciliacao" onclick="navigateTo('conciliacao')">
                     <span class="nav-icon"><i class="ti ti-building-bank"></i></span> Conciliação Bancária
                 </div>
@@ -2156,12 +2159,31 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         </section>
 
         <!-- ============ CONFIGURAÇÕES ============ -->
+        <!-- ============ CATEGORIAS DE DESPESAS (menu Financeiro) ============ -->
+        <!-- Antes era uma aba de Configurações; a lista e o armazenamento são os mesmos. -->
+        <section class="page-section" id="pg-categorias">
+            <div class="card">
+                <div class="card-title" style="justify-content:space-between">
+                    <span><i class="ti ti-tags"></i> Categorias de Despesas</span>
+                    <span class="badge badge-blue" id="catTotal"></span>
+                </div>
+                <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
+                    Categorias usadas em Contas a Pagar, Previsão Orçamentária, Conciliação Bancária e no Relatório de Despesas. Cada condomínio tem a sua própria lista.
+                </p>
+                <div class="form-row" id="catFormNova" style="margin-bottom:1rem">
+                    <input type="text" id="newCategoria" placeholder="Nova categoria..." onkeydown="if (event.key === 'Enter') addCategoria()"
+                        style="flex:1;padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-main);color:var(--text-primary)">
+                    <button class="btn btn-fill btn-sm" onclick="addCategoria()">+ Adicionar</button>
+                </div>
+                <div id="listCategorias"></div>
+            </div>
+        </section>
+
         <section class="page-section" id="pg-configuracoes">
             <div class="card">
                 <div class="card-title"><i class="ti ti-settings"></i> Configurações do Sistema</div>
                 <div class="tabs-bar">
                     <button class="tab-btn active" onclick="switchTab(this,'tabFirebase')">Firebase</button>
-                    <button class="tab-btn" onclick="switchTab(this,'tabCategorias')">Categorias</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabGeral')">Geral</button>
                     <button class="tab-btn" onclick="switchTab(this,'tabEncargos');renderEncargosConfig()"><i class="ti ti-percentage"></i> Multa e Juros</button>
                 </div>
@@ -2200,17 +2222,6 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                         <button class="btn btn-fill" onclick="saveFirebaseConfig()"><i class="ti ti-device-floppy"></i> Salvar e Conectar</button>
                         <button class="btn btn-outline" onclick="testFirebaseConnection()"><i class="ti ti-plug"></i> Testar Conexão</button>
                     </div>
-                </div>
-
-                <div class="tab-pane" id="tabCategorias">
-                    <p style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.88rem">
-                        Gerencie as categorias de despesas do condomínio.
-                    </p>
-                    <div class="form-row" style="margin-bottom:1rem">
-                        <input type="text" id="newCategoria" placeholder="Nova categoria..." style="flex:1;padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm)">
-                        <button class="btn btn-fill btn-sm" onclick="addCategoria()">+ Adicionar</button>
-                    </div>
-                    <div id="listCategorias"></div>
                 </div>
 
                 <div class="tab-pane" id="tabGeral">
@@ -3652,6 +3663,7 @@ function navigateTo(page) {
     const titles = {
         dashboard:'Dashboard', condominios:'Condomínios', responsaveis:'Responsáveis Legais',
         moradores:'Moradores', taxas:'Taxas e Cobranças', contas:'Contas a Pagar',
+        categorias:'Categorias de Despesas',
         conciliacao:'Conciliação Bancária', pagamentos:'Pagamentos de Taxas',
         inadimplentes:'Inadimplentes', orcamento:'Previsão Orçamentária',
         boletos:'Boletos / PIX',
@@ -3670,6 +3682,7 @@ function navigateTo(page) {
     if (page === 'dashboard') renderDashboard();
     else if (page === 'moradores') renderMoradores();
     else if (page === 'contas') { populateContaCategorias(); renderContas(); }
+    else if (page === 'categorias') renderCategorias();
     else if (page === 'conciliacao') renderConciliar();
     else if (page === 'pagamentos') renderPagamentos();
     else if (page === 'inadimplentes') renderInadimplentes();
@@ -3901,6 +3914,9 @@ const TELAS = [
     { id: 'assembleias',     nome: 'Assembleias',        grupo: 'Operacional', colecao: 'assembleias' },
     { id: 'hidrometros',     nome: 'Hidrômetros',        grupo: 'Operacional', colecao: 'hidrometros' },
     { id: 'contas',          nome: 'Contas a Pagar',     grupo: 'Financeiro',  colecao: 'contas' },
+    // Era uma aba de Configurações: quem ainda não tem a linha própria na
+    // matriz herda o que tinha em Configurações, para ninguém perder acesso.
+    { id: 'categorias',      nome: 'Categorias de Despesas', grupo: 'Financeiro', herdaDe: 'configuracoes' },
     { id: 'conciliacao',     nome: 'Conciliação',        grupo: 'Financeiro',  colecao: 'extrato' },
     { id: 'pagamentos',      nome: 'Pagamentos',         grupo: 'Financeiro',  colecao: 'pagamentos' },
     { id: 'boletos',         nome: 'Boletos / PIX',      grupo: 'Financeiro',  colecao: 'taxas_apartamento' },
@@ -3938,10 +3954,10 @@ function normalizarAcessos(u) {
     const novos = (u && u.acessos) || null;
     TELAS.forEach(t => {
         const linha = {};
-        const base = novos && novos[t.id];
+        const base = novos && (novos[t.id] || (t.herdaDe && novos[t.herdaDe]));
         ACOES.forEach(a => {
             if (base) linha[a] = base[a] === true;
-            else linha[a] = antigos.includes(t.id);   // migração
+            else linha[a] = antigos.includes(t.id) || (!!t.herdaDe && antigos.includes(t.herdaDe));   // migração
         });
         if (t.semEscrita) { linha.criar = false; linha.alterar = false; linha.excluir = false; }
         out[t.id] = linha;
@@ -8871,12 +8887,18 @@ function printReport(type) {
 function renderCategorias() {
     const el = document.getElementById('listCategorias');
     if (!el) return;
+    // Incluir e excluir seguem a matriz de acessos da tela Categorias de Despesas
+    const podeIncluir = podeCriar('categorias'), podeRemover = podeExcluir('categorias');
+    const form = document.getElementById('catFormNova');
+    if (form) form.style.display = podeIncluir ? '' : 'none';
+    const total = document.getElementById('catTotal');
+    if (total) total.textContent = `${APP.categorias.length} ${APP.categorias.length === 1 ? 'categoria' : 'categorias'}`;
     el.innerHTML = APP.categorias.map((c,i) => `
         <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border)">
             <span style="flex:1">${H(c)}</span>
-            <button class="btn btn-danger btn-sm" title="Remover categoria" onclick="removeCategoria(${i})"><i class="ti ti-trash"></i></button>
+            ${podeRemover ? `<button class="btn btn-danger btn-sm" title="Remover categoria" onclick="removeCategoria(${i})"><i class="ti ti-trash"></i></button>` : ''}
         </div>
-    `).join('');
+    `).join('') || '<div class="empty-state"><p>Nenhuma categoria cadastrada.</p></div>';
     atualizarSelectsCategorias();
 }
 
@@ -8907,6 +8929,7 @@ async function salvarCategorias() {
 }
 
 async function addCategoria() {
+    if (!podeCriar('categorias')) { toast('Você não tem permissão para incluir categorias.', 'error'); return; }
     const input = document.getElementById('newCategoria');
     const v = input.value.trim().replace(/\s+/g, ' ');
     if (!v) return;
@@ -8919,6 +8942,7 @@ async function addCategoria() {
 }
 
 async function removeCategoria(i) {
+    if (!podeExcluir('categorias')) { toast('Você não tem permissão para excluir categorias.', 'error'); return; }
     const nome = APP.categorias[i];
     if (!confirm(`Remover a categoria "${nome}"?\n\nLançamentos já feitos com ela não são alterados.`)) return;
     APP.categorias.splice(i, 1);
