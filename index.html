@@ -963,6 +963,90 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     .pdf-header .pdf-logo { font-size: 1.2rem; font-weight: 700; color: #1A2744; }
     .pdf-header .pdf-info { text-align: right; font-size: 0.75rem; color: #555; }
 }
+
+/* ===== ANIMAÇÕES ===================================================== */
+/* Tela de carregamento: abertura do app e login, até o painel estar pronto.
+   Mesmo degradê da tela de login, para a passagem ser contínua. */
+.tc {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: linear-gradient(135deg, #1A237E 0%, #1565C0 50%, #0288D1 100%);
+    color: #fff; font-family: var(--font-body);
+    opacity: 0; visibility: hidden;
+    transition: opacity .5s ease, visibility 0s linear .5s;
+}
+.tc.ativo { opacity: 1; visibility: visible; transition: opacity .25s ease; }
+/* Se o JavaScript nunca assumir a tela, ela sai sozinha e libera o login */
+.tc.inicial { transition: none; animation: tcSaidaSegura .4s ease 12s forwards; }
+@keyframes tcSaidaSegura { to { opacity: 0; visibility: hidden; } }
+.tc::before, .tc::after {
+    content: ''; position: absolute; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 70%);
+}
+.tc::before { width: 520px; height: 520px; top: -160px; left: -140px; animation: tcLuz 9s ease-in-out infinite alternate; }
+.tc::after  { width: 420px; height: 420px; bottom: -150px; right: -120px; animation: tcLuz 11s ease-in-out infinite alternate-reverse; }
+@keyframes tcLuz { to { transform: translate(60px, 40px) scale(1.15); } }
+.tc-centro { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 24px;
+    transition: transform .5s cubic-bezier(.2,.7,.2,1), opacity .4s ease; }
+.tc:not(.ativo) .tc-centro { transform: scale(1.06); opacity: 0; }
+.tc-logo { position: relative; width: 132px; height: 132px; display: flex; align-items: center; justify-content: center; margin-bottom: 22px; }
+.tc-anel { position: absolute; inset: 0; border-radius: 50%; border: 3px solid rgba(255,255,255,.16); border-top-color: #fff; border-right-color: rgba(255,255,255,.55);
+    animation: spin 1.1s linear infinite; }
+.tc-pulso { position: absolute; inset: 22px; border-radius: 24px; background: rgba(245,158,11,.45); animation: tcPulso 1.8s ease-out infinite; }
+@keyframes tcPulso { from { transform: scale(1); opacity: .55; } to { transform: scale(1.55); opacity: 0; } }
+.tc-marca { position: relative; width: 84px; height: 84px; border-radius: 22px; background: var(--gradient-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px; color: #fff;
+    box-shadow: 0 14px 34px rgba(245,158,11,.38); animation: tcFlutua 2.4s ease-in-out infinite; }
+@keyframes tcFlutua { 50% { transform: translateY(-5px); } }
+.tc-nome { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; letter-spacing: -0.4px; }
+.tc-sub { font-size: .9rem; opacity: .75; margin-top: 2px; }
+.tc-barra { position: relative; width: 240px; height: 5px; border-radius: 5px; background: rgba(255,255,255,.18); overflow: hidden; margin: 26px 0 12px; }
+.tc-barra span { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 5px; overflow: hidden;
+    background: linear-gradient(90deg, #FBBF24, #F97316); transition: width .9s cubic-bezier(.2,.7,.2,1); }
+.tc-barra span::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.65), transparent);
+    transform: translateX(-100%); animation: tcBrilho 1.3s ease-in-out infinite; }
+@keyframes tcBrilho { to { transform: translateX(100%); } }
+.tc-msg { font-size: .88rem; opacity: .85; min-height: 1.3em; }
+.tc-msg.troca { animation: tcTexto .35s ease; }
+@keyframes tcTexto { from { opacity: 0; transform: translateY(5px); } }
+.tc-rodape { position: absolute; bottom: 22px; left: 0; right: 0; text-align: center; font-size: .75rem; opacity: .55; letter-spacing: .3px; }
+
+/* Botão Entrar enquanto valida usuário e senha */
+.btn-spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%;
+    animation: spin .7s linear infinite; vertical-align: -3px; margin-right: 6px; }
+#loginScreen .btn-primary:disabled { opacity: .85; cursor: wait; transform: none; }
+
+/* Barra fina no topo: troca de condomínio e outras cargas em segundo plano */
+.barra-topo { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 10002; pointer-events: none; overflow: hidden;
+    opacity: 0; transition: opacity .3s ease; }
+.barra-topo.ativa { opacity: 1; }
+.barra-topo span { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: var(--gradient-accent);
+    box-shadow: 0 0 8px rgba(249,115,22,.6); transition: width .35s ease; }
+.barra-topo.ativa span { animation: btAvanca 8s cubic-bezier(.1,.6,.2,1) forwards; }
+.barra-topo.fim span { animation: none; width: 100% !important; }
+@keyframes btAvanca { from { width: 0; } 20% { width: 45%; } to { width: 90%; } }
+
+/* Troca de página: a página entra com um leve deslize e os cards em sequência */
+@keyframes pgEntrada { from { opacity: 0; transform: translateY(12px); } }
+@keyframes cardEntrada { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+@media (prefers-reduced-motion: no-preference) {
+    .page-section.active { animation: pgEntrada .34s cubic-bezier(.2,.7,.2,1) backwards; }
+    .page-section.active .stats-row > *,
+    .page-section.active .dash-hero > *,
+    .page-section.active .kpi-strip > *,
+    .page-section.active .saldo-atual-card { animation: cardEntrada .45s cubic-bezier(.2,.7,.2,1) backwards; }
+    .page-section.active .stats-row > :nth-child(2), .page-section.active .dash-hero > :nth-child(2), .page-section.active .kpi-strip > :nth-child(2) { animation-delay: .05s; }
+    .page-section.active .stats-row > :nth-child(3), .page-section.active .dash-hero > :nth-child(3), .page-section.active .kpi-strip > :nth-child(3) { animation-delay: .1s; }
+    .page-section.active .stats-row > :nth-child(4), .page-section.active .dash-hero > :nth-child(4), .page-section.active .kpi-strip > :nth-child(4) { animation-delay: .15s; }
+    .page-section.active .stats-row > :nth-child(n+5), .page-section.active .dash-hero > :nth-child(n+5), .page-section.active .kpi-strip > :nth-child(n+5) { animation-delay: .2s; }
+    .page-section.active .saldo-atual-card { animation-delay: .22s; }
+}
+/* Quem pediu menos movimento no sistema fica só com os fades */
+@media (prefers-reduced-motion: reduce) {
+    .tc::before, .tc::after, .tc-anel, .tc-pulso, .tc-marca, .tc-barra span::after { animation: none !important; }
+    .barra-topo.ativa span { animation: none; width: 70%; }
+}
 </style>
 </head>
 <body>
@@ -1060,6 +1144,24 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <button class="btn-primary" onclick="pendingLogout()" style="background:transparent;color:var(--text-secondary);border:1.5px solid var(--border);box-shadow:none"><i class="ti ti-logout"></i> Sair</button>
     </div>
 </div>
+
+<!-- =================== TELA DE CARREGAMENTO (abertura e login) =================== -->
+<!-- Fica depois do login no HTML para cobrir a tela de login enquanto a sessão é verificada. -->
+<div id="telaCarregando" class="tc ativo inicial" role="status" aria-live="polite">
+    <div class="tc-centro">
+        <div class="tc-logo">
+            <span class="tc-pulso"></span>
+            <span class="tc-anel"></span>
+            <div class="tc-marca">CG</div>
+        </div>
+        <div class="tc-nome">CondoGest</div>
+        <div class="tc-sub">Gestão de Condomínios</div>
+        <div class="tc-barra"><span id="tcProgresso"></span></div>
+        <div class="tc-msg" id="tcMsg">Conectando...</div>
+    </div>
+    <div class="tc-rodape">Reis Tecnologia</div>
+</div>
+<div class="barra-topo" id="barraTopo"><span></span></div>
 
 <!-- =================== SIDEBAR OVERLAY (MOBILE) =================== -->
 <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -3369,6 +3471,158 @@ function setTheme(t) {
 }
 
 // ===== NAVIGATION =====
+// ===== ANIMAÇÕES =====
+// Tela de carregamento da abertura e do login. Tem saída garantida: qualquer
+// caminho que volte ao login ou à tela de aprovação a esconde, e um
+// temporizador de segurança a tira se alguma etapa travar.
+const telaCarregando = (() => {
+    let seguranca = null, saida = null;
+    const tela = () => document.getElementById('telaCarregando');
+    const armar = ms => { clearTimeout(seguranca); seguranca = setTimeout(esconder, ms); };
+    function ativa() { const t = tela(); return !!(t && t.classList.contains('ativo')); }
+    function passo(msg, pct) {
+        if (!ativa()) return;
+        const m = document.getElementById('tcMsg');
+        if (msg && m && m.textContent !== msg) {
+            m.textContent = msg;
+            m.classList.remove('troca'); void m.offsetWidth; m.classList.add('troca');
+        }
+        const b = document.getElementById('tcProgresso');
+        if (b && pct != null) b.style.width = Math.max(parseFloat(b.style.width) || 0, pct) + '%';
+        armar(30000);
+    }
+    function mostrar(msg, pct, limiteMs) {
+        const t = tela(); if (!t) return;
+        clearTimeout(saida);
+        t.classList.remove('inicial');
+        t.classList.add('ativo');
+        passo(msg, pct);
+        armar(limiteMs || 30000);
+    }
+    function esconder() {
+        const t = tela(); if (!t) return;
+        clearTimeout(seguranca); clearTimeout(saida);
+        t.classList.remove('inicial', 'ativo');
+        saida = setTimeout(() => {
+            const b = document.getElementById('tcProgresso');
+            if (b && !ativa()) b.style.width = '0%';
+        }, 550);
+    }
+    // Fecha com a barra cheia e deixa a página entrar animada por baixo
+    function concluir() {
+        if (!ativa()) return;
+        passo('Tudo pronto!', 100);
+        clearTimeout(saida);
+        saida = setTimeout(() => { esconder(); reanimarPagina(); }, 450);
+    }
+    return { mostrar, passo, esconder, concluir, ativa };
+})();
+
+// Barra fina no topo para cargas em segundo plano (ex.: troca de condomínio)
+const barraTopo = (() => {
+    let n = 0, t = null;
+    const el = () => document.getElementById('barraTopo');
+    function iniciar() {
+        const b = el(); if (!b) return;
+        n++; clearTimeout(t);
+        b.classList.remove('fim'); void b.offsetWidth; b.classList.add('ativa');
+        t = setTimeout(() => { n = 0; concluir(); }, 30000);
+    }
+    function concluir() {
+        const b = el(); if (!b) return;
+        n = Math.max(0, n - 1); if (n) return;
+        clearTimeout(t);
+        b.classList.add('fim');
+        t = setTimeout(() => b.classList.remove('ativa', 'fim'), 380);
+    }
+    return { iniciar, concluir };
+})();
+
+// Repete a entrada animada da página aberta (usado quando a tela de
+// carregamento sai ou quando os dados do condomínio são trocados)
+function reanimarPagina() {
+    const s = document.querySelector('.page-section.active');
+    if (!s) return;
+    s.classList.remove('active'); void s.offsetWidth; s.classList.add('active');
+}
+
+// Botão Entrar em estado de espera enquanto usuário e senha são conferidos
+function _btnEntrarCarregando(sim) {
+    const btn = document.querySelector('#formEntrar .btn-primary');
+    if (!btn) return;
+    if (sim) {
+        if (!btn.dataset.html) btn.dataset.html = btn.innerHTML;
+        btn.innerHTML = '<span class="btn-spin"></span> Entrando...';
+        btn.disabled = true;
+    } else if (btn.dataset.html) {
+        btn.innerHTML = btn.dataset.html;
+        delete btn.dataset.html;
+        btn.disabled = false;
+    }
+}
+
+// Na abertura, a tela de carregamento cobre o login até o Firebase dizer se
+// já existe sessão. Sem sessão, showLogin() a esconde.
+document.addEventListener('DOMContentLoaded', () => telaCarregando.mostrar('Conectando...', 12, 12000));
+
+// Animação dentro da janela dos relatórios (impressão e PDF). Aparece enquanto
+// o documento é montado e durante a geração do PDF; some antes da impressão.
+function _loaderJanelaRelatorio(w) {
+    try {
+        const d = w && w.document;
+        if (!d || !d.body || d.getElementById('relLoader')) return;
+        const st = d.createElement('style');
+        st.textContent = `
+        #relLoader { position:fixed; inset:0; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+            background:rgba(248,250,252,.95); font-family:'Inter',Arial,sans-serif; transition:opacity .35s ease, visibility 0s linear 0s; }
+        #relLoader.saindo { opacity:0; visibility:hidden; transition:opacity .35s ease, visibility 0s linear .35s; }
+        #relLoader .rl-doc { position:relative; box-sizing:border-box; width:66px; height:84px; background:#fff; border:2px solid #1A2744; border-radius:9px;
+            padding:20px 11px 0; box-shadow:0 12px 30px rgba(26,39,68,.18); animation:rlFlutua 2s ease-in-out infinite; }
+        #relLoader .rl-doc::before { content:''; position:absolute; top:-2px; right:-2px; width:17px; height:17px; border-bottom-left-radius:5px;
+            background:linear-gradient(225deg,#F8FAFC 50%,#F59E0B 50%); }
+        #relLoader .rl-doc b { display:block; height:5px; border-radius:3px; background:#CBD5E1; margin:0 0 7px; transform-origin:left center;
+            animation:rlLinha 1.8s ease-in-out infinite; }
+        #relLoader .rl-doc b:nth-child(1) { width:70%; background:#1A2744; }
+        #relLoader .rl-doc b:nth-child(2) { width:100%; animation-delay:.15s; }
+        #relLoader .rl-doc b:nth-child(3) { width:85%; animation-delay:.3s; }
+        #relLoader .rl-doc b:nth-child(4) { width:55%; background:#F59E0B; animation-delay:.45s; }
+        #relLoader .rl-txt { font-size:15px; font-weight:700; color:#1A2744; margin-top:6px; }
+        #relLoader .rl-sub { font-size:12px; color:#64748B; margin-top:-8px; }
+        #relLoader .rl-barra { position:relative; width:190px; height:4px; border-radius:4px; background:#E2E8F0; overflow:hidden; }
+        #relLoader .rl-barra i { position:absolute; top:0; bottom:0; left:-40%; width:40%; border-radius:4px;
+            background:linear-gradient(90deg,#F59E0B,#1A2744); animation:rlCorre 1.1s ease-in-out infinite; }
+        @keyframes rlLinha { 0% { transform:scaleX(0); opacity:1; } 40%, 80% { transform:scaleX(1); opacity:1; } 100% { transform:scaleX(1); opacity:0; } }
+        @keyframes rlFlutua { 50% { transform:translateY(-5px); } }
+        @keyframes rlCorre { to { left:100%; } }
+        @media (prefers-reduced-motion: reduce) { #relLoader .rl-doc, #relLoader .rl-doc b, #relLoader .rl-barra i { animation:none; } #relLoader .rl-barra i { left:0; width:60%; } }
+        @media print { #relLoader { display:none !important; } }`;
+        d.head.appendChild(st);
+        const el = d.createElement('div');
+        el.id = 'relLoader';
+        el.innerHTML = '<div class="rl-doc"><b></b><b></b><b></b><b></b></div>'
+            + '<div class="rl-txt">Montando o relatório...</div><div class="rl-sub">Organizando as informações</div>'
+            + '<div class="rl-barra"><i></i></div>';
+        d.body.appendChild(el);
+        const txt = el.querySelector('.rl-txt'), sub = el.querySelector('.rl-sub');
+        const esconder = () => el.classList.add('saindo');
+        const gerandoPdf = () => { const s = d.getElementById('tbStatus'); return !!(s && /^Gerando PDF/i.test(s.textContent || '')); };
+        // Impressão: sai quando a janela de impressão abre
+        w.addEventListener('beforeprint', esconder);
+        // PDF: acompanha o texto de status da barra do documento
+        const status = d.getElementById('tbStatus');
+        if (status && w.MutationObserver) {
+            new w.MutationObserver(() => {
+                if (gerandoPdf()) { txt.textContent = 'Gerando o PDF...'; sub.textContent = 'Isso leva alguns segundos'; el.classList.remove('saindo'); }
+                else esconder();
+            }).observe(status, { childList: true, characterData: true, subtree: true });
+        }
+        if (gerandoPdf()) { txt.textContent = 'Gerando o PDF...'; sub.textContent = 'Isso leva alguns segundos'; }
+        // Segurança: nunca fica presa na tela
+        w.setTimeout(() => { if (!gerandoPdf()) esconder(); }, 2500);
+        w.setTimeout(esconder, 60000);
+    } catch (e) { /* a animação nunca pode impedir o relatório */ }
+}
+
 function navigateTo(page) {
     // Check access (fonte única: podeAbrirPagina)
     if (!podeAbrirPagina(page)) {
@@ -3528,6 +3782,7 @@ function initFirebase(cfg) {
         }
     } catch(e) {
         console.error('Firebase init error:', e);
+        telaCarregando.esconder();
         toast('Erro ao inicializar Firebase: ' + e.message, 'error');
     }
 }
@@ -3546,6 +3801,8 @@ function doInit(cfg) {
             // Se estiver no meio de um cadastro, NÃO processar aqui
             // O doRegister controla o fluxo diretamente
             if (APP._isRegistering) return;
+            telaCarregando.mostrar('Carregando seu perfil...', 35);
+            _btnEntrarCarregando(false);
             loadUserProfile(user.uid);
         } else {
             APP.currentUser = null;
@@ -3559,6 +3816,8 @@ function doInit(cfg) {
 
 // ===== AUTH =====
 function showLogin() {
+    telaCarregando.esconder();
+    _btnEntrarCarregando(false);
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('pendingScreen').style.display = 'none';
@@ -3578,6 +3837,7 @@ function showLogin() {
 }
 
 function enterApp() {
+    telaCarregando.passo('Preparando o painel...', 55);
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('pendingScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'flex';
@@ -3606,7 +3866,8 @@ function enterApp() {
     aplicarAtalhoURL();
     recolherMenusAoEntrar();
 
-    loadAllData();
+    // A tela de carregamento sai quando os dados chegam (com ou sem erro)
+    Promise.resolve(loadAllData()).finally(() => telaCarregando.concluir());
 }
 
 // =====================================================================
@@ -3876,11 +4137,13 @@ async function doLogin() {
         return;
     }
 
+    _btnEntrarCarregando(true);
     try {
         const cred = await APP.auth.signInWithEmailAndPassword(email, pass);
         touchActivity();
         auditLog('LOGIN', { email: email });
     } catch(e) {
+        _btnEntrarCarregando(false);
         auditLog('LOGIN_FAILED', { email: email, error: e.code });
         if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
             errEl.textContent = 'Usuário ou senha incorretos.';
@@ -4053,6 +4316,7 @@ async function loadUserProfile(uid) {
 
 // ===== TELA AGUARDANDO APROVAÇÃO =====
 function showPendingScreen() {
+    telaCarregando.esconder();
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('appContainer').style.display = 'none';
     document.getElementById('pendingScreen').style.display = 'flex';
@@ -4131,6 +4395,8 @@ async function loadAllData() {
         }
 
         if (APP.currentCondoId) {
+            const condoAtual = APP.condominios.find(c => c.id === APP.currentCondoId);
+            telaCarregando.passo(`Carregando ${condoAtual?.nome || 'o condomínio'}...`, 75);
             await loadCondoData();
         }
 
@@ -4318,7 +4584,8 @@ async function loadCondoData() {
 function switchCondo() {
     APP.currentCondoId = document.getElementById('condoSelect').value;
     if (APP.currentCondoId) {
-        loadCondoData();
+        barraTopo.iniciar();
+        Promise.resolve(loadCondoData()).finally(() => { barraTopo.concluir(); reanimarPagina(); });
         renderDashboard();
     }
 }
@@ -4774,6 +5041,7 @@ function imprimirTaxaGerada() {
         <style>body{font-family:Arial,sans-serif;padding:20px}@media print{body{padding:0}}</style>
         </head><body>${content}</body></html>`);
     w.document.close();
+    _loaderJanelaRelatorio(w);
     w.print();
 }
 
@@ -5963,6 +6231,7 @@ function abrirDocumentoRelatorio(opts) {
 <\/script>
 </body></html>`);
     w.document.close();
+    _loaderJanelaRelatorio(w);
     const acao = () => { try { w.focus(); if (modo === 'pdf') w.salvarPDF(); else w.print(); } catch(e) {} };
     if (w.document.fonts && w.document.fonts.ready) w.document.fonts.ready.then(() => setTimeout(acao, 250));
     else setTimeout(acao, 600);
@@ -7243,6 +7512,7 @@ function printInadimplentes(modo) {
 <\/script>
 </body></html>`);
     w.document.close();
+    _loaderJanelaRelatorio(w);
     const acao = () => {
         try {
             w.focus();
@@ -7870,6 +8140,7 @@ function imprimirBoleto() {
         </style>
     </head><body>${content}</body></html>`);
     w.document.close();
+    _loaderJanelaRelatorio(w);
     setTimeout(() => w.print(), 300);
 }
 
