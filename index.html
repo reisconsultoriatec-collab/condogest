@@ -445,6 +445,22 @@ a { text-decoration: none; color: inherit; }
 .stat-info h4 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; }
 .stat-info span { font-size: 0.8rem; color: var(--text-secondary); }
 
+/* Saldo atual da conta (Balancete): fica fora da linha de cards porque não
+   segue o período selecionado; mostra sempre a posição de hoje. */
+.saldo-atual-card {
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--primary);
+    border-radius: var(--radius-md); box-shadow: var(--shadow-sm);
+    padding: 1.1rem 1.5rem; margin: -0.5rem 0 1.5rem;
+}
+.saldo-atual-card .sa-info { flex: 1; min-width: 220px; }
+.saldo-atual-card .sa-rot { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.saldo-atual-card .sa-info h4 { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; margin: 0.15rem 0; }
+.saldo-atual-card .sa-pe { font-size: 0.8rem; color: var(--text-secondary); }
+.saldo-atual-card .sa-det { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+.saldo-atual-card .sa-det span { display: block; font-size: 0.75rem; color: var(--text-secondary); }
+.saldo-atual-card .sa-det b { font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+
 /* ===== FORM STYLES ===== */
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 .form-group { margin-bottom: 1rem; }
@@ -8313,6 +8329,58 @@ function printRelReceitas(modo) {
     _docMovimento(d, _CFG_MOV.receitas, modo);
 }
 
+// ===== SALDO ATUAL DA CONTA (independe do período do balancete) =====
+// Posição acumulada até hoje: tudo o que entrou menos tudo o que saiu, desde o
+// primeiro lançamento do sistema. Usa as mesmas fontes do balancete, mas só o
+// que já foi realizado: conta a pagar entra apenas quando está paga, e nada com
+// data futura é somado. O dinheiro que já existia na conta antes do CondoGest
+// entra como Receita Avulsa "Ajuste Saldo Anterior".
+function _hojeIsoLocal() {
+    const d = new Date();   // data local (Brasil), não UTC
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// ateIso (opcional): posição numa data passada, ex. o último dia do período
+// do balancete. Sem ele, ou com data futura, vale a posição de hoje.
+function saldoAtualConta(ateIso) {
+    const hojeReal = _hojeIsoLocal();
+    const hoje = ateIso && ateIso < hojeReal ? ateIso : hojeReal;
+    const ate = iso => !iso || iso <= hoje;
+    // Sem data de pagamento: na posição de hoje, o que está pago já conta; numa
+    // data passada, vale a competência (taxa) ou o vencimento (conta).
+    const passado = hoje < hojeReal;
+    let entradas = 0, saidas = 0;
+
+    // Taxas recebidas, com multa e juros
+    (APP.pagamentos || []).forEach(p => {
+        const dia = _isoDeData(p.dataPgto) || (passado ? `${p.ano}-${p.mes}-01` : '');
+        if (!ate(dia)) return;
+        entradas += (p.valor || 0) + _r2((p.multa || 0) + (p.juros || 0));
+    });
+    // Contas a pagar: só as já pagas
+    (APP.contas || []).forEach(c => {
+        if (c.status !== 'pago') return;
+        const dia = _isoDeData(c.dataPgto) || (passado ? _isoDeData(c.vencimento) : '');
+        if (!ate(dia)) return;
+        saidas += c.valor || 0;
+    });
+    // Extrato conciliado e receitas avulsas, ano a ano, pelas mesmas regras do balancete
+    const anos = new Set();
+    (APP.extrato || []).forEach(e => { const a = _isoDeData(e.data).slice(0, 4); if (a) anos.add(a); });
+    (APP.receitasAvulsas || []).forEach(r => { const a = _isoDeData(r.data).slice(0, 4); if (a) anos.add(a); });
+    anos.forEach(ano => {
+        const ext = getExtratoConciliado(ano, '');
+        ext.receitasExtrato.forEach(e => { if (ate(_isoDeData(e.data))) entradas += e.valor || 0; });
+        ext.despesasExtrato.forEach(e => { if (ate(_isoDeData(e.data))) saidas += e.valor || 0; });
+        getReceitasAvulsas(ano, '').forEach(r => { if (ate(_isoDeData(r.data))) entradas += r.valor || 0; });
+    });
+
+    entradas = _r2(entradas); saidas = _r2(saidas);
+    const [a, m, d] = hoje.split('-');
+    return { hoje, dataFmt: `${d}/${m}/${a}`, mesRef: `${MESES[parseInt(m)]}/${a}`,
+        entradas, saidas, saldo: _r2(entradas - saidas) };
+}
+
 // ===== BALANCETE / PRESTAÇÃO DE CONTAS =====
 function dadosBalancete(ano, mes) {
     const rec = dadosRelReceitas(ano, mes), desp = dadosRelDespesas(ano, mes);
@@ -8348,6 +8416,19 @@ function renderBalancete() {
         <div class="stat-card"><div class="stat-icon ${pos?'blue':'red'}"><i class="ti ti-scale"></i></div><div class="stat-info"><h4 style="color:${pos?'var(--accent)':'var(--accent-red)'}">${fmtMoney(b.resultado)}</h4><span>${pos?'Superávit':'Déficit'} no período</span></div></div>
         <div class="stat-card"><div class="stat-icon amber"><i class="ti ti-percentage"></i></div><div class="stat-info"><h4>${b.comprometimento.toFixed(1)}%</h4><span>Receitas comprometidas</span></div></div>
     </div>
+    ${(() => { const sa = saldoAtualConta(); return `
+    <div class="saldo-atual-card" title="Tudo o que já entrou menos tudo o que já foi pago, desde o primeiro lançamento até hoje">
+        <div class="stat-icon blue"><i class="ti ti-building-bank"></i></div>
+        <div class="sa-info">
+            <span class="sa-rot">Saldo atual da conta <span class="badge badge-blue">${H(sa.mesRef)}</span></span>
+            <h4 style="color:${sa.saldo >= 0 ? 'var(--primary)' : 'var(--accent-red)'}">${fmtMoney(sa.saldo)}</h4>
+            <span class="sa-pe">Posição em ${sa.dataFmt} &middot; não depende do período selecionado</span>
+        </div>
+        <div class="sa-det">
+            <div><span>Entradas recebidas</span><b style="color:var(--accent)">${fmtMoney(sa.entradas)}</b></div>
+            <div><span>Saídas pagas</span><b style="color:var(--accent-red)">${fmtMoney(sa.saidas)}</b></div>
+        </div>
+    </div>`; })()}
     <h4 style="margin:1.2rem 0 0.6rem;color:var(--accent)">RECEITAS</h4>
     <div class="table-container"><table><thead><tr><th>Categoria</th><th>Lançamentos</th><th>Participação</th><th style="text-align:right">Total</th></tr></thead><tbody>
         ${b.rec.categorias.map(c => linhaCat(c, b.rec.total, 'var(--accent)')).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">Nenhuma receita no período</td></tr>'}
@@ -8398,6 +8479,13 @@ function printBalancete(modo) {
     const periodo = (mes ? MESES[parseInt(mes)] + '/' : '') + ano;
     const pos = b.resultado >= 0;
     const pctFmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+    const sa = saldoAtualConta();
+    // Saldo no último dia do período escolhido; só aparece se o período já terminou
+    // (no mês ou ano corrente ele seria igual ao saldo atual).
+    const fimPeriodo = mes
+        ? `${ano}-${mes}-${String(new Date(parseInt(ano), parseInt(mes), 0).getDate()).padStart(2, '0')}`
+        : `${ano}-12-31`;
+    const sp = fimPeriodo < sa.hoje ? saldoAtualConta(fimPeriodo) : null;
 
     const tabela = (d, tipo) => d.categorias.map((c, k) => {
         const pct = d.total ? c.total / d.total * 100 : 0;
@@ -8434,7 +8522,18 @@ function printBalancete(modo) {
     .resultado { margin-top:18px; padding:16px 18px; border-radius:12px; display:flex; justify-content:space-between; align-items:center;
         background:${pos ? '#ECFDF5' : '#FEF2F2'}; border:1px solid ${pos ? '#A7F3D0' : '#FECACA'}; page-break-inside:avoid; }
     .resultado span { font-size:12px; color:#475569; } .resultado b { display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
-    .resultado strong { font-size:22px; color:${pos ? '#047857' : '#DC2626'}; }`;
+    .resultado strong { font-size:22px; color:${pos ? '#047857' : '#DC2626'}; }
+    .saldo-atual { margin:-6px 0 18px; padding:12px 16px; background:#EFF6FF; border:1px solid #BFDBFE; border-left:4px solid #2563EB; border-radius:0 10px 10px 0;
+        display:flex; justify-content:space-between; align-items:center; gap:16px; page-break-inside:avoid; }
+    .saldo-atual b { display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
+    .saldo-atual span { display:block; font-size:11px; color:#475569; margin-top:2px; }
+    .saldo-atual strong { display:block; font-size:20px; text-align:right; white-space:nowrap; color:${sa.saldo >= 0 ? '#1D4ED8' : '#DC2626'}; }
+    .saldos { display:grid; gap:8px; margin:-6px 0 18px; } .saldos > div { margin:0; }
+    .saldo-periodo { padding:12px 16px; background:#F8FAFC; border:1px solid #E2E8F0; border-left:4px solid #1A2744; border-radius:0 10px 10px 0;
+        display:flex; justify-content:space-between; align-items:center; gap:16px; page-break-inside:avoid; }
+    .saldo-periodo b { display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:#1A2744; }
+    .saldo-periodo span { display:block; font-size:11px; color:#475569; margin-top:2px; }
+    .saldo-periodo strong { display:block; font-size:20px; text-align:right; white-space:nowrap; color:${sp && sp.saldo < 0 ? '#DC2626' : '#1A2744'}; }`;
 
     const corpo = `
         ${cabecalhoCondoHtml(condo, 'Balancete', periodo)}
@@ -8447,6 +8546,25 @@ function printBalancete(modo) {
             <div class="card red"><span>Total de despesas</span><strong>${fmtMoney(b.desp.total)}</strong><small>${b.desp.itens.length} lançamento(s)</small></div>
             <div class="card res"><span>Resultado</span><strong>${fmtMoney(b.resultado)}</strong><small>${pos ? 'Superávit' : 'Déficit'} no período</small></div>
             <div class="card"><span>Receitas comprometidas</span><strong>${pctFmt(b.comprometimento)}</strong><small>despesas ÷ receitas</small></div>
+        </div>
+
+        <div class="saldos">
+            ${sp ? `<div class="saldo-periodo blk">
+                <div>
+                    <b>Saldo ao final do período &middot; ${H(periodo)}</b>
+                    <span>Posição em ${sp.dataFmt}</span>
+                    <span>Entradas recebidas ${fmtMoney(sp.entradas)} &minus; Saídas pagas ${fmtMoney(sp.saidas)}</span>
+                </div>
+                <strong>${fmtMoney(sp.saldo)}</strong>
+            </div>` : ''}
+            <div class="saldo-atual blk">
+                <div>
+                    <b>Saldo atual da conta &middot; ${H(sa.mesRef)}</b>
+                    <span>Posição em ${sa.dataFmt}, independente do período deste balancete</span>
+                    <span>Entradas recebidas ${fmtMoney(sa.entradas)} &minus; Saídas pagas ${fmtMoney(sa.saidas)}</span>
+                </div>
+                <strong>${fmtMoney(sa.saldo)}</strong>
+            </div>
         </div>
 
         <div class="sec blk">Demonstrativo de receitas</div>
