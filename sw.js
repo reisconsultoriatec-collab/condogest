@@ -111,28 +111,31 @@ self.addEventListener('fetch', event => {
     // Extensões do navegador e afins
     if (!url.protocol.startsWith('http')) return;
 
-    // Navegação (abrir o app): rede primeiro, cache como rede de segurança
+    // Navegação: rede primeiro, cache como rede de segurança.
+    // Só a abertura do app (raiz, index.html e atalhos ?page=) vira a cópia offline
+    // do app. Outras páginas do site (Termos de uso, Política de privacidade) ficam
+    // guardadas com o próprio endereço: antes, abrir uma delas trocaria a cópia
+    // offline do app por ela. Respostas de erro (404, 500) nunca são guardadas.
     if (req.mode === 'navigate') {
+        const ehApp = /\/(index\.html)?$/.test(url.pathname);
+        const chave = ehApp ? './index.html' : url.origin + url.pathname;
         event.respondWith((async () => {
             try {
-                const preload = await event.preloadResponse;
-                if (preload) {
+                const resp = (await event.preloadResponse) || await fetch(req);
+                if (resp && resp.ok) {
                     const c = await caches.open(CACHE_SHELL);
-                    c.put('./index.html', preload.clone());
-                    return preload;
+                    c.put(chave, resp.clone());
                 }
-                const resp = await fetch(req);
-                const c = await caches.open(CACHE_SHELL);
-                c.put('./index.html', resp.clone());
                 return resp;
             } catch (e) {
                 const cache = await caches.open(CACHE_SHELL);
-                return (await cache.match('./index.html')) ||
-                       (await cache.match('./')) ||
-                       new Response(
-                           '<h1>CondoGest</h1><p>Você está sem conexão e o app ainda não foi guardado para uso offline. Conecte-se à internet e abra novamente.</p>',
-                           { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 }
-                       );
+                const guardada = (await cache.match(chave)) || (ehApp ? await cache.match('./') : null);
+                return guardada || new Response(
+                    ehApp
+                        ? '<h1>CondoGest</h1><p>Você está sem conexão e o app ainda não foi guardado para uso offline. Conecte-se à internet e abra novamente.</p>'
+                        : '<h1>CondoGest</h1><p>Esta página não está disponível sem conexão. Conecte-se à internet e tente de novo.</p>',
+                    { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 }
+                );
             }
         })());
         return;

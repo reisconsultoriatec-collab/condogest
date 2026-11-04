@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Página estática: sem scripts de terceiros, sem fontes externas e sem rastreadores.
+     A política abaixo só libera os estilos desta própria página e o botão de imprimir. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-hashes' 'sha256-MguIPR6qNR8D3B+eAlK+bIRTZe8t3wkOY4B/56Me9FU='; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#1A2744">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231A2744'/%3E%3Cpath d='M8 26V9.5C8 8.7 8.7 8 9.5 8h7c.8 0 1.5.7 1.5 1.5V26z' fill='%23FBBF24'/%3E%3Cpath d='M18 26V15.5c0-.8.7-1.5 1.5-1.5h3c.8 0 1.5.7 1.5 1.5V26z' fill='%23F59E0B'/%3E%3C/svg%3E">
+<style>
+  :root { --navy: #1A2744; --amber: #F59E0B; --amber-d: #B45309; --bg: #F1F5F9; --card: #fff; --text: #1E293B; --text2: #475569; --muted: #64748B; --border: #E2E8F0; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.65; font-size: 15px; }
+  header { background: linear-gradient(135deg, #061126 0%, #0C1F45 50%, #133A6E 100%); color: #fff; padding: 28px 16px 72px; }
+  .topo { max-width: 820px; margin: 0 auto; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .topo svg { width: 30px; height: 30px; }
+  header h1 { max-width: 820px; margin: 22px auto 6px; font-size: 28px; line-height: 1.25; }
+  header p { max-width: 820px; margin: 0 auto; color: #CBD5E1; font-size: 14px; }
+  main { max-width: 820px; margin: -48px auto 0; padding: 0 16px 40px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 28px 28px 20px; box-shadow: 0 8px 24px rgba(15, 23, 42, .06); }
+  .resumo { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 14px 18px; margin-bottom: 22px; }
+  .resumo strong { color: var(--navy); }
+  .resumo ul { margin: 6px 0 0; padding-left: 20px; }
+  nav.indice { border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px; margin-bottom: 24px; font-size: 14px; }
+  nav.indice ol { margin: 6px 0 0; padding-left: 20px; columns: 2; column-gap: 28px; }
+  nav.indice a { color: var(--amber-d); text-decoration: none; }
+  nav.indice a:hover { text-decoration: underline; }
+  h2 { font-size: 19px; color: var(--navy); margin: 30px 0 8px; scroll-margin-top: 16px; }
+  h3 { font-size: 15.5px; color: var(--navy); margin: 18px 0 4px; }
+  ul, ol { padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 14px; font-size: 14px; }
+  th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #F8FAFC; color: var(--navy); }
+  .tabela { overflow-x: auto; }
+  a { color: var(--amber-d); }
+  .nota { color: var(--muted); font-size: 13.5px; }
+  .alerta { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px; padding: 12px 16px; margin: 12px 0; }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 18px; }
+  footer a { color: var(--muted); }
+  .acoes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 26px; }
+  .acoes a, .acoes button { border: 1px solid var(--border); background: #fff; color: var(--navy); border-radius: 9px; padding: 9px 14px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+  @media (max-width: 600px) { header h1 { font-size: 23px; } .card { padding: 22px 18px 14px; } nav.indice ol { columns: 1; } }
+  @media print {
+    body { background: #fff; font-size: 11pt; } header { background: none; color: #000; padding: 0 0 8px; } header p { color: #333; }
+    main { margin: 0; padding: 0; } .card { border: 0; box-shadow: none; padding: 0; } .acoes, nav.indice { display: none; } h2 { break-after: avoid; }
+  }
+</style>
+<title>Política de privacidade · CondoGest</title>
+<meta name="description" content="Como o CondoGest trata os dados pessoais de moradores, síndicos e equipes dos condomínios, conforme a LGPD.">
+</head>
+<body>
+<header>
+  <div class="topo"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="#FBBF24"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="#F59E0B"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg> CondoGest</div>
+  <h1>Política de privacidade</h1>
+  <p>Versão 2026-11 · novembro de 2026 · conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018)</p>
+</header>
+<main>
+<article class="card">
+  <div class="resumo">
+    <strong>Em poucas palavras</strong>
+    <ul>
+      <li>Os dados são do <strong>condomínio</strong>, que decide como usá-los. A <strong>Reis Tecnologia</strong> fornece o CondoGest e trata os dados só a serviço do condomínio.</li>
+      <li>Usamos os dados para administrar o condomínio: cobrança das taxas, prestação de contas, comunicados, reservas, ocorrências e assembleias. <strong>Nada é vendido nem usado para propaganda.</strong></li>
+      <li>Cada pessoa vê só o que o perfil dela permite. O morador vê apenas a própria unidade, e cada condomínio vê apenas os próprios dados. Entradas e alterações ficam registradas.</li>
+      <li>Para pedir cópia, correção ou exclusão dos seus dados, fale com o <strong>síndico</strong> ou com a <strong>administração</strong> do condomínio.</li>
+    </ul>
+  </div>
+
+  <nav class="indice" aria-label="Índice">
+    <strong>Nesta página</strong>
+    <ol>
+      <li><a href="#quem">Quem cuida dos dados</a></li>
+      <li><a href="#quais">Quais dados tratamos</a></li>
+      <li><a href="#para-que">Para que usamos e com qual base legal</a></li>
+      <li><a href="#quem-ve">Quem vê o quê</a></li>
+      <li><a href="#compartilhamento">Com quem compartilhamos</a></li>
+      <li><a href="#tempo">Por quanto tempo guardamos</a></li>
+      <li><a href="#seguranca">Como protegemos</a></li>
+      <li><a href="#direitos">Seus direitos e como exercê-los</a></li>
+      <li><a href="#navegador">Cookies e dados no aparelho</a></li>
+      <li><a href="#incidentes">Incidentes de segurança</a></li>
+      <li><a href="#mudancas">Mudanças nesta política</a></li>
+      <li><a href="#contato">Contato</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="quem">1. Quem cuida dos dados</h2>
+  <p>O CondoGest é um sistema de gestão usado por condomínios e administradoras. Cada condomínio tem os próprios dados, separados dos demais.</p>
+  <ul>
+    <li><strong>Controlador</strong> (art. 5º, VI da LGPD): o <strong>condomínio</strong>, representado pelo síndico (art. 1.348 do Código Civil) ou pela administradora que ele contratar. É ele quem decide quais dados registrar e para quê, e quem responde aos pedidos dos titulares.</li>
+    <li><strong>Operadora</strong> (art. 5º, VII): a <strong>Reis Tecnologia</strong>, que desenvolve e mantém o CondoGest e trata os dados apenas para prestar o serviço ao condomínio, seguindo as instruções dele.</li>
+    <li><strong>Encarregado</strong> (art. 41): cada condomínio indica a pessoa responsável pela comunicação com os titulares e com a Autoridade Nacional de Proteção de Dados (ANPD). O nome e o contato podem ser pedidos ao síndico ou à administração.</li>
+  </ul>
+
+  <h2 id="quais">2. Quais dados tratamos</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>De quem ou do quê</th><th>Quais dados</th></tr></thead>
+    <tbody>
+      <tr><td>Moradores e proprietários</td><td>Nome, apartamento e bloco, CPF, telefone, e-mail, se a unidade é alugada e o nome do locatário.</td></tr>
+      <tr><td>Quem tem conta no sistema</td><td>Nome, e-mail, perfil (administrador, síndico, usuário, morador, visualizador), apartamento vinculado, telas e condomínios liberados e situação da conta.</td></tr>
+      <tr><td>Cobrança das unidades</td><td>Taxas lançadas para cada apartamento, cobranças e códigos PIX gerados, pagamentos (data, valor e forma), multa e juros, isenções com o motivo, parcelas em aberto e cancelamentos com o motivo.</td></tr>
+      <tr><td>Movimento financeiro do condomínio</td><td>Extratos bancários importados (data, histórico e valor), contas a pagar, receitas, previsão orçamentária e balancete. O histórico do extrato pode trazer o nome de quem fez um depósito ou PIX.</td></tr>
+      <tr><td>Gestão e fornecedores</td><td>Nome e função de síndico, subsíndico e conselheiros, com o período do mandato; nome ou razão social, CPF ou CNPJ, telefone, e-mail, pessoa de contato e dados do contrato dos fornecedores.</td></tr>
+      <tr><td>Vida no condomínio</td><td>Comunicados; reservas de áreas comuns (unidade, data e horário); ocorrências e chamados (unidade que abriu e descrição); assembleias (unidades presentes, deliberações e ata); leituras de hidrômetro, com a foto do medidor quando enviada.</td></tr>
+      <tr><td>Todos que acessam</td><td>Data e hora de entradas, saídas e tentativas de login, e das inclusões, alterações e exclusões feitas, com o e-mail de quem fez.</td></tr>
+    </tbody>
+  </table></div>
+  <p>O CondoGest não tem campos para dados sensíveis, como saúde, religião ou origem racial. Pedimos aos condomínios que não registrem esse tipo de informação nos campos de texto livre (observações, ocorrências, comunicados e atas).</p>
+  <p>As senhas não ficam no CondoGest: o login é feito por um serviço especializado (veja o item 5), e nem o condomínio nem a Reis Tecnologia conseguem ver a sua senha.</p>
+
+  <h2 id="para-que">3. Para que usamos e com qual base legal</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Finalidade</th><th>Base legal (LGPD)</th></tr></thead>
+    <tbody>
+      <tr><td>Cadastro das unidades e dos moradores, cobrança das taxas, cobranças com PIX, multa e juros e controle de parcelas em aberto</td><td>Cumprimento de obrigação legal (Código Civil, arts. 1.336 e 1.348) e exercício regular de direitos na cobrança (art. 7º, II e VI)</td></tr>
+      <tr><td>Prestação de contas, balancete, conciliação bancária, assembleias e atas</td><td>Cumprimento de obrigação legal (Código Civil, arts. 1.348 e 1.350; art. 7º, II)</td></tr>
+      <tr><td>Comunicados, reservas de áreas comuns, ocorrências e leitura de hidrômetros com rateio do consumo</td><td>Legítimo interesse do condomínio na administração das áreas e serviços comuns, conforme a convenção e o regimento interno (art. 7º, IX)</td></tr>
+      <tr><td>Contratos com fornecedores</td><td>Execução de contrato (art. 7º, V)</td></tr>
+      <tr><td>Contas de acesso, registro de acessos, prevenção de fraudes e auditoria</td><td>Legítimo interesse e Marco Civil da Internet (Lei 12.965/2014, art. 15) (art. 7º, II e IX)</td></tr>
+    </tbody>
+  </table></div>
+  <p>Não usamos os dados para publicidade e não traçamos perfil de comportamento. As sugestões automáticas do sistema, como a conciliação assistida do extrato, só valem depois que uma pessoa as confere e confirma.</p>
+
+  <h2 id="quem-ve">4. Quem vê o quê</h2>
+  <ul>
+    <li><strong>Administradores e síndico</strong>: todos os dados dos condomínios a que têm acesso.</li>
+    <li><strong>Demais pessoas da equipe</strong> (conselho, administradora, funcionários): só as telas e as ações (ver, incluir, alterar, excluir) que o administrador liberou para cada uma.</li>
+    <li><strong>Moradores</strong>: só os dados da própria unidade (cobranças, pagamentos, consumo de água e os chamados que abriram), além do que é do condomínio todo: comunicados, assembleias e a agenda de reservas. A agenda mostra o número da unidade que reservou, para evitar dois usos no mesmo horário.</li>
+    <li><strong>Inadimplência</strong>: o painel inicial mostra só totais, sem identificar unidades. A lista por unidade fica restrita a quem tem acesso à tela de inadimplentes, e nela não aparece o nome do morador.</li>
+    <li>Cada condomínio vê apenas os próprios dados.</li>
+  </ul>
+  <p>Essas regras valem nas telas do sistema e também nas consultas ao banco de dados: o aparelho de um morador recebe apenas os dados da unidade dele.</p>
+
+  <h2 id="compartilhamento">5. Com quem compartilhamos</h2>
+  <ul>
+    <li><strong>Reis Tecnologia</strong>, operadora do CondoGest, para manter o sistema funcionando e dar suporte.</li>
+    <li><strong>Google Firebase</strong>, que faz o login (Firebase Authentication) e guarda o banco de dados do sistema (Cloud Firestore).</li>
+    <li><strong>GitHub Pages</strong>, que hospeda os arquivos do sistema. Ele entrega as telas, mas não recebe os dados dos condomínios.</li>
+    <li><strong>Órgãos públicos</strong>, quando a lei exigir (por exemplo, ordem judicial).</li>
+  </ul>
+  <p>Pagamentos por PIX são feitos pelo aplicativo do banco de quem paga, direto para a conta do condomínio: o CondoGest só gera o código e não recebe dados bancários de quem paga. Mensagens de cobrança por WhatsApp ou e-mail saem do aplicativo de quem envia: o CondoGest apenas prepara o texto.</p>
+  <p><strong>Transferência internacional:</strong> os serviços do Google podem guardar dados em servidores fora do Brasil. Nesses casos, a transferência segue o art. 33 da LGPD, com fornecedores que adotam cláusulas contratuais e garantias de proteção equivalentes às da lei brasileira.</p>
+  <p>Os dados nunca são vendidos, alugados ou cedidos para propaganda.</p>
+
+  <h2 id="tempo">6. Por quanto tempo guardamos</h2>
+  <ul>
+    <li><strong>Cobrança, pagamentos e prestação de contas</strong>: pelo menos 5 anos, que é o prazo para cobrar taxas condominiais (Código Civil, art. 206, §5º, I), ou mais, se a convenção ou a assembleia determinar.</li>
+    <li><strong>Assembleias e atas</strong>: enquanto o condomínio precisar delas como registro das decisões tomadas.</li>
+    <li><strong>Registros de acesso</strong>: pelo menos 6 meses (Marco Civil da Internet).</li>
+    <li><strong>Cadastro de moradores</strong>: enquanto a pessoa morar no condomínio ou for proprietária. Depois da saída, os dados de contato podem ser excluídos; os registros de cobrança seguem os prazos acima.</li>
+    <li><strong>Conta de acesso</strong>: enquanto houver vínculo com o condomínio. O administrador desativa a conta de quem sai, como no fim de um mandato de síndico.</li>
+  </ul>
+  <p>Se o condomínio deixar de usar o CondoGest, ele pode exportar uma cópia completa dos dados (planilha Excel ou arquivo JSON) pela tela de Backup. Depois disso, a Reis Tecnologia elimina os dados do condomínio em até 90 dias, salvo obrigação legal de guardá-los. Terminados os prazos e não havendo outra obrigação, os dados são eliminados ou anonimizados (art. 16).</p>
+
+  <h2 id="seguranca">7. Como protegemos</h2>
+  <ul>
+    <li>Conexão sempre criptografada (HTTPS).</li>
+    <li>Senhas guardadas pelo serviço de login do Google, nunca no CondoGest.</li>
+    <li>Contas novas só entram no sistema depois de aprovadas pelo administrador do condomínio.</li>
+    <li>Acesso por perfil e permissões por tela e por ação, definidas pelo administrador para cada pessoa.</li>
+    <li>Trilha de auditoria com entradas, tentativas de login e alterações feitas.</li>
+    <li>Encerramento da sessão depois de 1 hora sem uso.</li>
+    <li>Cópia completa dos dados que a administração pode exportar a qualquer momento.</li>
+  </ul>
+
+  <h2 id="direitos">8. Seus direitos e como exercê-los</h2>
+  <p>Pelo art. 18 da LGPD, você pode pedir ao condomínio, a qualquer momento e sem custo:</p>
+  <ul>
+    <li>confirmação de que os seus dados são tratados e <strong>acesso</strong> a eles;</li>
+    <li><strong>correção</strong> de dados incompletos, inexatos ou desatualizados;</li>
+    <li>anonimização, bloqueio ou <strong>eliminação</strong> de dados desnecessários, excessivos ou tratados em desacordo com a lei;</li>
+    <li><strong>portabilidade</strong> dos dados (uma cópia em formato que possa ser levado para outro serviço);</li>
+    <li><strong>informação</strong> sobre com quem os dados são compartilhados.</li>
+  </ul>
+  <h3>Como pedir</h3>
+  <p>Fale com o síndico, com a administração ou com o encarregado de dados do condomínio. O condomínio aciona a Reis Tecnologia quando necessário. A lei prevê até 15 dias para a resposta completa (art. 19, II).</p>
+  <p>Alguns pedidos têm limites legais: o condomínio não pode apagar registros de cobrança e de prestação de contas enquanto a lei mandar guardá-los. Nesses casos, o condomínio explica o motivo na resposta. Se não ficar satisfeito, você também pode reclamar à ANPD (<a href="https://www.gov.br/anpd" target="_blank" rel="noopener noreferrer">gov.br/anpd</a>).</p>
+
+  <h2 id="navegador">9. Cookies e dados no aparelho</h2>
+  <p>O CondoGest não usa cookies de propaganda nem de rastreamento. O navegador guarda apenas:</p>
+  <ul>
+    <li>a sessão de login, para você não precisar digitar a senha a cada tela;</li>
+    <li>preferências simples, como o tema claro ou escuro e os menus abertos;</li>
+    <li>uma <strong>cópia dos dados já abertos</strong>, para o sistema continuar mostrando as telas mesmo sem internet.</li>
+  </ul>
+  <div class="alerta"><strong>Em computador de uso coletivo</strong> (portaria, escritório compartilhado), use uma janela anônima e saia da conta ao terminar. Ao fechar a janela anônima, a sessão e a cópia dos dados são apagadas do aparelho.</div>
+  <p>Fontes, ícones e bibliotecas da tela são carregados de serviços de entrega de conteúdo (Google Fonts, jsDelivr e Google), que recebem o endereço IP do aparelho para entregar os arquivos. A leitura automática da foto do hidrômetro é feita no próprio aparelho, sem enviar a imagem a terceiros.</p>
+
+  <h2 id="incidentes">10. Incidentes de segurança</h2>
+  <p>Se acontecer um incidente que possa causar risco ou dano relevante aos titulares, o condomínio e a Reis Tecnologia comunicam a ANPD e as pessoas afetadas, com o que aconteceu, os dados envolvidos e as medidas tomadas (art. 48).</p>
+
+  <h2 id="mudancas">11. Mudanças nesta política</h2>
+  <p>Quando esta política mudar, a versão nova é publicada nesta página, com a data no topo. Mudanças importantes também são avisadas aos condomínios.</p>
+
+  <h2 id="contato">12. Contato</h2>
+  <p>Para dúvidas e pedidos sobre os seus dados, procure o <strong>síndico</strong>, a <strong>administração</strong> ou o <strong>encarregado de dados</strong> do seu condomínio. O condomínio aciona a Reis Tecnologia quando necessário.</p>
+  <p class="nota">Leia também os <a href="termos.html">Termos de uso</a>.</p>
+
+  <div class="acoes">
+    <a href="./">Voltar ao CondoGest</a>
+    <button type="button" onclick="window.print()">Imprimir ou salvar em PDF</button>
+  </div>
+</article>
+<footer>CondoGest · Reis Tecnologia · <a href="termos.html">Termos de uso</a></footer>
+</main>
+</body>
+</html>

@@ -200,7 +200,7 @@ a { text-decoration: none; color: inherit; }
 #loginScreen .auth-lado-texto { max-width: 600px; position: relative; }
 #loginScreen .auth-titulo {
     font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: clamp(32px, 3.3vw, 48px); line-height: 1.18; letter-spacing: -.02em;
-    font-weight: 700; margin: 0 0 42px; text-wrap: balance; color: #fff; font-style: normal;
+    font-weight: 700; margin: 0 0 32px; text-wrap: balance; color: #fff; font-style: normal;
 }
 /* frase escrita pela caneta: contorno azul-céu no traço, depois preenche de branco */
 #loginScreen .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -286,15 +286,84 @@ a { text-decoration: none; color: inherit; }
 #loginScreen .caneta.visivel { opacity: 1; }
 #loginScreen .caneta-mov { position: absolute; left: 0; top: 0; }
 #loginScreen .caneta svg { position: absolute; left: 0; top: -10px; width: 124px; height: 20px; transform-origin: 0 10px; transform: rotate(-38deg); filter: drop-shadow(-3px 10px 8px rgba(2,6,23,.55)); }
-/* recursos */
-#loginScreen .auth-recursos { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
-#loginScreen .auth-recursos li { display: flex; gap: 14px; align-items: flex-start; }
-#loginScreen .auth-recurso-icone {
-    width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(148,190,255,.16); color: var(--ls-ceu); font-size: 21px;
+/* ---------- Prévia do painel (vitrine) ----------
+   Só decoração: valores fictícios fixos no código, nenhum dado do banco. */
+#loginScreen .vitrine { max-width: 600px; margin: 0 0 26px; }
+#loginScreen .vt-rotulo { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(225,235,255,.58); }
+#loginScreen .vt-rotulo-nota { text-transform: none; letter-spacing: 0; font-weight: 500; color: rgba(225,235,255,.4); }
+#loginScreen .vt-pulso { width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 0 rgba(52,211,153,.55); animation: vtPulso 2.2s ease-out infinite; }
+#loginScreen .vt-grade { display: grid; grid-template-columns: 1.08fr 1fr; grid-template-rows: auto auto; gap: 12px; }
+#loginScreen .vt-i1 { grid-row: 1 / span 2; }
+#loginScreen .vt-item { min-width: 0; }
+#loginScreen .vt-card {
+    height: 100%; border-radius: 14px; padding: 14px 16px; color: var(--ls-texto);
+    background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.03));
+    box-shadow: inset 0 0 0 1px rgba(148,190,255,.14), 0 18px 40px -22px rgba(2,6,23,.85);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    animation: vtFlutua 7s ease-in-out infinite;
 }
-#loginScreen .auth-recursos strong { display: block; font-size: 15px; font-weight: 600; margin: 1px 0 3px; color: #fff; }
-#loginScreen .auth-recursos small { display: block; font-size: 13.5px; line-height: 1.5; color: rgba(225,235,255,.64); max-width: 46ch; }
+#loginScreen .vt-i2 .vt-card { animation-delay: -2.3s; }
+#loginScreen .vt-i3 .vt-card { animation-delay: -4.6s; }
+#loginScreen .vt-topo { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; color: var(--ls-texto-2); white-space: nowrap; }
+#loginScreen .vt-chip { margin-left: auto; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; background: rgba(56,189,248,.12); color: var(--ls-tinta); }
+#loginScreen .vt-ic { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+#loginScreen .vt-ic.azul { background: rgba(56,189,248,.14); color: #7DD3FC; }
+#loginScreen .vt-ic.verde { background: rgba(52,211,153,.15); color: #6EE7B7; }
+#loginScreen .vt-ic.ambar { background: rgba(251,191,36,.15); color: #FCD34D; }
+#loginScreen .vt-valor {
+    margin: 12px 0 3px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: clamp(22px, 2vw, 28px); font-weight: 700;
+    letter-spacing: -.02em; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; transition: color .4s ease;
+}
+#loginScreen .vt-valor.sobe { color: #6EE7B7; }
+#loginScreen .vt-variacao { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #6EE7B7; white-space: nowrap; }
+#loginScreen .vt-variacao i { font-size: 14px; }
+#loginScreen .vt-grafico { display: block; width: 100%; height: auto; margin-top: 14px; overflow: visible; }
+#loginScreen .vt-linha { fill: none; stroke: #38BDF8; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+#loginScreen .vt-ponto { fill: #FCD34D; }
+#loginScreen .vt-halo { fill: #FCD34D; opacity: 0; transform-box: fill-box; transform-origin: center; animation: vtHalo 2.4s ease-out 2.6s infinite; }
+/* aviso que troca sozinho, com a barrinha do tempo até o próximo */
+#loginScreen .vt-aviso { display: flex; align-items: center; gap: 10px; position: relative; overflow: hidden; }
+#loginScreen .vt-aviso-txt { flex: 1; min-width: 0; }
+#loginScreen .vt-aviso-txt strong { display: block; font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#loginScreen .vt-aviso-txt small { display: block; font-size: 11.5px; color: var(--ls-texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+#loginScreen .vt-aviso-hora { align-self: flex-start; font-size: 10.5px; color: var(--ls-texto-3); }
+#loginScreen .vt-aviso::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, rgba(56,189,248,.7), rgba(56,189,248,0)); transform-origin: left; transform: scaleX(0); }
+#loginScreen .vt-aviso.troca::after { animation: vtTempo var(--vt-troca, 4.2s) linear both; }
+#loginScreen .vt-aviso.troca .vt-ic, #loginScreen .vt-aviso.troca .vt-aviso-txt { animation: vtTroca .45s cubic-bezier(.2,.8,.2,1) both; }
+#loginScreen .vt-aviso.troca .vt-aviso-txt { animation-delay: .05s; }
+/* inadimplência: só o percentual do mês, sem identificar unidade */
+#loginScreen .vt-inad-linha { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+#loginScreen .vt-valor-p { font-size: clamp(20px, 1.8vw, 24px); margin: 10px 0 3px; }
+#loginScreen .vt-barras { display: flex; align-items: flex-end; gap: 4px; height: 34px; padding-bottom: 4px; }
+#loginScreen .vt-barras span { width: 7px; height: calc(var(--h) * 1%); border-radius: 3px 3px 1px 1px; background: rgba(125,211,252,.38); transform-origin: bottom; }
+#loginScreen .vt-barras span:last-child { background: #FCD34D; box-shadow: 0 0 10px rgba(252,211,77,.45); }
+/* animação de entrada (classe vt-anima ligada pelo script; sem ela tudo aparece pronto) */
+#loginScreen .vitrine.vt-anima .vt-rotulo { animation: lsSurgir .6s ease .2s both; }
+#loginScreen .vitrine.vt-anima .vt-item { animation: vtSobe .7s cubic-bezier(.2,.8,.2,1) both; }
+#loginScreen .vitrine.vt-anima .vt-i1 { animation-delay: .35s; }
+#loginScreen .vitrine.vt-anima .vt-i2 { animation-delay: .5s; }
+#loginScreen .vitrine.vt-anima .vt-i3 { animation-delay: .65s; }
+#loginScreen .vitrine.vt-anima .vt-linha { animation: vtLinha 1.6s cubic-bezier(.4,.1,.2,1) .8s both; }
+#loginScreen .vitrine.vt-anima .vt-area { animation: lsAparecer .8s ease 1.7s both; }
+#loginScreen .vitrine.vt-anima .vt-ponto { animation: vtPonto .4s cubic-bezier(.2,.8,.2,1) 2.3s both; }
+#loginScreen .vitrine.vt-anima .vt-barras span { animation: vtBarra .6s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(.95s + var(--i) * .08s); }
+@keyframes vtSobe { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes vtFlutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes vtPulso { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.55); } 70%, 100% { box-shadow: 0 0 0 7px rgba(52,211,153,0); } }
+@keyframes vtLinha { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes vtPonto { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes vtHalo { 0% { opacity: .55; transform: scale(1); } 100% { opacity: 0; transform: scale(3.4); } }
+@keyframes vtBarra { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes vtTroca { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+@keyframes vtTempo { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+#loginScreen .vt-ponto, #loginScreen .vt-halo { transform-box: fill-box; transform-origin: center; }
+/* recursos, em selos compactos */
+#loginScreen .auth-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: 600px; }
+#loginScreen .auth-chips li {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px 6px 9px; border-radius: 999px; font-size: 12.5px; font-weight: 500;
+    color: rgba(225,235,255,.82); background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(148,190,255,.14);
+}
+#loginScreen .auth-chips i { color: var(--ls-ceu); font-size: 15px; }
 #loginScreen .auth-lado-rodape { font-size: 12px; color: rgba(225,235,255,.42); }
 
 /* ---------- Cartão de acesso ---------- */
@@ -354,13 +423,17 @@ a { text-decoration: none; color: inherit; }
 #loginScreen .login-esqueci:focus-visible { outline: 2px solid var(--ls-ceu); outline-offset: 2px; }
 #loginScreen .login-seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 22px; color: var(--ls-texto-2); font-size: 12.5px; }
 #loginScreen .login-versao { margin: 8px 0 0; text-align: center; font-size: 12px; color: var(--ls-texto-3); }
+#loginScreen .login-versao a, #loginScreen .login-termos a { color: var(--ls-texto-2); text-decoration: underline; text-decoration-color: rgba(167,182,211,.4); text-underline-offset: 2px; }
+#loginScreen .login-versao a:hover, #loginScreen .login-termos a:hover { color: var(--ls-texto); text-decoration-color: currentColor; }
+#loginScreen .login-versao a:focus-visible, #loginScreen .login-termos a:focus-visible { outline: 2px solid var(--ls-ceu); outline-offset: 2px; border-radius: 3px; }
+#loginScreen .login-termos { margin: 12px 0 0; font-size: 12px; line-height: 1.5; text-align: center; color: var(--ls-texto-3); }
 /* entrada da tela e troca de aba */
 #loginScreen.entrando .login-box { animation: lsSubir .6s cubic-bezier(.2,.8,.2,1) both; }
-#loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-recursos li { animation: lsSurgir .6s cubic-bezier(.2,.8,.2,1) both; }
-#loginScreen.entrando .auth-recursos li:nth-child(1) { animation-delay: .26s; }
-#loginScreen.entrando .auth-recursos li:nth-child(2) { animation-delay: .34s; }
-#loginScreen.entrando .auth-recursos li:nth-child(3) { animation-delay: .42s; }
-#loginScreen.entrando .auth-recursos li:nth-child(4) { animation-delay: .5s; }
+#loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-chips li { animation: lsSurgir .6s cubic-bezier(.2,.8,.2,1) both; }
+#loginScreen.entrando .auth-chips li:nth-child(1) { animation-delay: .8s; }
+#loginScreen.entrando .auth-chips li:nth-child(2) { animation-delay: .88s; }
+#loginScreen.entrando .auth-chips li:nth-child(3) { animation-delay: .96s; }
+#loginScreen.entrando .auth-chips li:nth-child(4) { animation-delay: 1.04s; }
 #loginScreen #formEntrar, #loginScreen #formCadastrar { animation: lsAparecer .22s ease both; }
 @keyframes lsSubir { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes lsSurgir { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -369,11 +442,16 @@ a { text-decoration: none; color: inherit; }
     #loginScreen .auth-lado { display: none; }
     #loginScreen .auth-direita { flex: 1 1 auto; padding: 28px 16px; }
 }
-@media (min-width: 961px) and (max-height: 640px) {
+/* telas mais baixas (notebooks): os selos saem primeiro; em telas bem baixas, sai a prévia e voltam os selos */
+@media (min-width: 961px) and (max-height: 800px) {
     #loginScreen .auth-lado { padding-top: 32px; padding-bottom: 28px; }
-    #loginScreen .auth-titulo { margin-bottom: 26px; }
-    #loginScreen .auth-recursos { gap: 13px; }
-    #loginScreen .auth-recursos small { display: none; }
+    #loginScreen .auth-titulo { margin-bottom: 24px; }
+    #loginScreen .vitrine { margin-bottom: 0; }
+    #loginScreen .auth-chips { display: none; }
+}
+@media (min-width: 961px) and (max-height: 620px) {
+    #loginScreen .vitrine { display: none; }
+    #loginScreen .auth-chips { display: flex; }
 }
 @media (max-width: 520px) {
     #loginScreen .login-box { padding: 30px 20px 22px; border-radius: 18px; }
@@ -382,8 +460,10 @@ a { text-decoration: none; color: inherit; }
     #loginScreen .input-group input { font-size: 16px; } /* evita o zoom automático do iPhone ao tocar no campo */
 }
 @media (prefers-reduced-motion: reduce) {
-    #loginScreen.entrando .login-box, #loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-recursos li,
-    #loginScreen #formEntrar, #loginScreen #formCadastrar { animation: none; }
+    #loginScreen.entrando .login-box, #loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-chips li,
+    #loginScreen #formEntrar, #loginScreen #formCadastrar,
+    #loginScreen .vt-card, #loginScreen .vt-pulso, #loginScreen .vt-halo,
+    #loginScreen .vitrine.vt-anima *, #loginScreen .vt-aviso.troca *, #loginScreen .vt-aviso.troca::after { animation: none !important; }
 }
 
 /* LOGIN TABS */
@@ -1252,11 +1332,34 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <div class="auth-lado-texto">
             <h1 class="auth-titulo">Sua gestão condominial 100% integrada e sem complicações</h1>
             <div class="caneta" aria-hidden="true"><div class="caneta-mov"></div></div>
-            <ul class="auth-recursos">
-                <li><span class="auth-recurso-icone"><i class="ti ti-receipt-2"></i></span><div><strong>Cobrança sem planilha</strong><small>Taxas por apartamento, boletos com PIX, cobrança em lote e multa e juros calculados sozinhos.</small></div></li>
-                <li><span class="auth-recurso-icone"><i class="ti ti-scale"></i></span><div><strong>Prestação de contas</strong><small>Conciliação bancária assistida, balancete e relatórios prontos para o conselho.</small></div></li>
-                <li><span class="auth-recurso-icone"><i class="ti ti-users-group"></i></span><div><strong>Portal do Morador</strong><small>Comunicados, reservas de áreas comuns, ocorrências e boletos da própria unidade.</small></div></li>
-                <li><span class="auth-recurso-icone"><i class="ti ti-shield-lock"></i></span><div><strong>Dados protegidos</strong><small>Permissões por tela para cada usuário e trilha de auditoria.</small></div></li>
+            <!-- Prévia do painel: só decoração, com valores fictícios fixos no código.
+                 Não lê nada do banco de dados (nesta tela ninguém entrou ainda). -->
+            <div class="vitrine" aria-hidden="true">
+                <div class="vt-rotulo"><span class="vt-pulso"></span>Prévia do painel<span class="vt-rotulo-nota">&middot; dados ilustrativos</span></div>
+                <div class="vt-grade">
+                    <div class="vt-item vt-i1"><div class="vt-card vt-saldo">
+                        <div class="vt-topo"><span class="vt-ic azul"><i class="ti ti-building-bank"></i></span><span>Saldo da conta</span><span class="vt-chip">Novembro</span></div>
+                        <div class="vt-valor" id="vtSaldo">R$ 43.180,15</div>
+                        <div class="vt-variacao"><i class="ti ti-trending-up"></i><span><span id="vtRecebido">R$ 3.770,00</span> recebidos no mês</span></div>
+                        <svg class="vt-grafico" viewBox="0 0 260 64"><defs><linearGradient id="vtAreaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38BDF8" stop-opacity=".32"/><stop offset="1" stop-color="#38BDF8" stop-opacity="0"/></linearGradient></defs><path class="vt-area" d="M4.0 56.0C7.7 54.9 18.9 50.0 26.4 49.3C33.8 48.7 41.3 53.1 48.7 52.0C56.2 50.9 63.6 43.8 71.1 42.7C78.5 41.6 86.0 46.4 93.5 45.3C100.9 44.2 108.4 37.1 115.8 36.0C123.3 34.9 130.7 39.8 138.2 38.7C145.6 37.6 153.1 30.4 160.5 29.3C168.0 28.2 175.5 33.1 182.9 32.0C190.4 30.9 197.8 25.1 205.3 22.7C212.7 20.2 220.2 19.8 227.6 17.3C235.1 14.9 246.3 9.6 250.0 8.0V64H4.0Z" fill="url(#vtAreaGrad)"/><path class="vt-linha" d="M4.0 56.0C7.7 54.9 18.9 50.0 26.4 49.3C33.8 48.7 41.3 53.1 48.7 52.0C56.2 50.9 63.6 43.8 71.1 42.7C78.5 41.6 86.0 46.4 93.5 45.3C100.9 44.2 108.4 37.1 115.8 36.0C123.3 34.9 130.7 39.8 138.2 38.7C145.6 37.6 153.1 30.4 160.5 29.3C168.0 28.2 175.5 33.1 182.9 32.0C190.4 30.9 197.8 25.1 205.3 22.7C212.7 20.2 220.2 19.8 227.6 17.3C235.1 14.9 246.3 9.6 250.0 8.0" pathLength="1"/><circle class="vt-halo" cx="250" cy="8" r="3.5"/><circle class="vt-ponto" cx="250" cy="8" r="3.5"/></svg>
+                    </div></div>
+                    <div class="vt-item vt-i2"><div class="vt-card vt-aviso" id="vtAviso">
+                        <span class="vt-ic verde" id="vtAvisoIc"><i class="ti ti-circle-check"></i></span>
+                        <div class="vt-aviso-txt"><strong id="vtAvisoTit">Pagamento recebido</strong><small id="vtAvisoSub">Apto 302 &middot; PIX &middot; R$ 685,00</small></div>
+                        <span class="vt-aviso-hora">agora</span>
+                    </div></div>
+                    <div class="vt-item vt-i3"><div class="vt-card vt-inad">
+                        <div class="vt-topo"><span class="vt-ic ambar"><i class="ti ti-chart-bar"></i></span><span>Inadimplência do mês</span></div>
+                        <div class="vt-inad-linha"><div class="vt-valor vt-valor-p" id="vtInad">4,2%</div><div class="vt-barras"><span style="--h:98;--i:0"></span><span style="--h:81;--i:1"></span><span style="--h:70;--i:2"></span><span style="--h:62;--i:3"></span><span style="--h:51;--i:4"></span><span style="--h:42;--i:5"></span></div></div>
+                        <div class="vt-variacao"><i class="ti ti-trending-down"></i><span>menor taxa do ano</span></div>
+                    </div></div>
+                </div>
+            </div>
+            <ul class="auth-chips">
+                <li><i class="ti ti-receipt-2"></i>Cobrança com PIX</li>
+                <li><i class="ti ti-scale"></i>Prestação de contas</li>
+                <li><i class="ti ti-users-group"></i>Portal do Morador</li>
+                <li><i class="ti ti-shield-lock"></i>Dados protegidos</li>
             </ul>
         </div>
         <div class="auth-lado-rodape">Reis Tecnologia</div>
@@ -1326,10 +1429,11 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
             <button class="btn-primary" onclick="doRegister()">
                 <i class="ti ti-user-plus"></i> Criar conta
             </button>
+            <p class="login-termos">Ao criar a conta, você concorda com os <a href="termos.html" target="_blank" rel="noopener noreferrer">Termos de uso</a> e declara ter lido a <a href="privacidade.html" target="_blank" rel="noopener noreferrer">Política de privacidade</a>.</p>
         </div>
 
         <div class="login-seguro"><i class="ti ti-lock"></i> Conexão segura e dados protegidos</div>
-        <p class="login-versao">v1.0 Reis Tecnologia &copy; 2026</p>
+        <p class="login-versao">v1.0 Reis Tecnologia &copy; 2026 &middot; <a href="termos.html" target="_blank" rel="noopener noreferrer">Termos de uso</a> &middot; <a href="privacidade.html" target="_blank" rel="noopener noreferrer">Privacidade</a></p>
     </div>
     </div>
 </div>
@@ -12111,6 +12215,106 @@ function escreverFraseLogin() {
     });
 }
 
+// ===== TELA DE LOGIN: prévia do painel (vitrine) =====
+// Três cartões que imitam o CondoGest: saldo da conta, avisos que se revezam e a
+// inadimplência do mês. Segurança: é só decoração. Todos os valores são fictícios e
+// fixos aqui no código; nada é lido do banco de dados (nesta tela ninguém entrou
+// ainda), o texto entra por textContent e a vitrine fica fora dos leitores de tela.
+// A inadimplência aparece só como percentual, sem identificar unidade.
+const VITRINE_LOGIN = {
+    saldo: 43180.15, recebido: 3770.00, inadDe: 9.8, inadAte: 4.2, troca: 4200,
+    avisos: [
+        { ic: 'ti-circle-check', cor: 'verde', tit: 'Pagamento recebido', sub: 'Apto 302 · PIX · R$ 685,00', valor: 685 },
+        { ic: 'ti-calendar-check', cor: 'azul', tit: 'Reserva confirmada', sub: 'Salão de festas · sábado, 14h' },
+        { ic: 'ti-circle-check', cor: 'verde', tit: 'Pagamento recebido', sub: 'Apto 104 · Boleto · R$ 685,00', valor: 685 },
+        { ic: 'ti-sparkles', cor: 'ambar', tit: 'Conciliação assistida', sub: '12 créditos conferidos no extrato' },
+        { ic: 'ti-speakerphone', cor: 'azul', tit: 'Comunicado enviado', sub: 'Manutenção do elevador' }
+    ]
+};
+const _vitrine = { timer: 0, espera: 0, contas: {}, saldo: 0, recebido: 0, i: 0, rodando: false };
+
+function _vitrineEl() {
+    const t = document.getElementById('loginScreen');
+    const v = t && t.querySelector('.vitrine');
+    return v ? { t, v, saldo: v.querySelector('#vtSaldo'), recebido: v.querySelector('#vtRecebido'), inad: v.querySelector('#vtInad'),
+                 aviso: v.querySelector('#vtAviso'), ic: v.querySelector('#vtAvisoIc'), tit: v.querySelector('#vtAvisoTit'), sub: v.querySelector('#vtAvisoSub') } : null;
+}
+const _vitrineNaTela = e => !!(e && e.t.style.display !== 'none' && e.v.offsetParent);
+const _pct = v => v.toFixed(1).replace('.', ',') + '%';
+
+// Anima um número de 'de' até 'ate' (o texto vai por textContent)
+function _vitrineContar(chave, el, de, ate, ms, formato, atraso = 0) {
+    cancelAnimationFrame(_vitrine.contas[chave]);
+    if (!el) return;
+    const comeco = performance.now() + atraso;
+    const passo = agora => {
+        const f = Math.max(0, Math.min(1, (agora - comeco) / ms));
+        const suave = 1 - Math.pow(1 - f, 3);
+        el.textContent = formato(de + (ate - de) * suave);
+        if (f < 1) _vitrine.contas[chave] = requestAnimationFrame(passo);
+    };
+    el.textContent = formato(de);
+    _vitrine.contas[chave] = requestAnimationFrame(passo);
+}
+
+function _vitrineAviso(e, a, animar) {
+    if (!e.aviso) return;
+    e.ic.className = 'vt-ic ' + a.cor;
+    e.ic.firstElementChild.className = 'ti ' + a.ic;
+    e.tit.textContent = a.tit;
+    e.sub.textContent = a.sub;
+    e.aviso.classList.remove('troca');
+    if (animar) { void e.aviso.offsetWidth; e.aviso.classList.add('troca'); }
+}
+
+function pararVitrine() {
+    clearInterval(_vitrine.timer); clearTimeout(_vitrine.espera);
+    Object.keys(_vitrine.contas).forEach(k => cancelAnimationFrame(_vitrine.contas[k]));
+    _vitrine.timer = 0; _vitrine.rodando = false;
+}
+
+function iniciarVitrine() {
+    const e = _vitrineEl();
+    if (!e) return;
+    pararVitrine();
+    const V = VITRINE_LOGIN;
+    _vitrine.saldo = V.saldo; _vitrine.recebido = V.recebido; _vitrine.i = 0;
+    e.aviso.style.setProperty('--vt-troca', V.troca + 'ms');
+    let reduzir = false;
+    try { reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (err) { /* segue */ }
+    // Celular (painel escondido) e "reduzir movimento": tudo pronto e parado
+    if (reduzir || !_vitrineNaTela(e)) {
+        e.v.classList.remove('vt-anima');
+        e.saldo.textContent = fmtMoney(V.saldo); e.recebido.textContent = fmtMoney(V.recebido); e.inad.textContent = _pct(V.inadAte);
+        _vitrineAviso(e, V.avisos[0], false);
+        return;
+    }
+    _vitrine.rodando = true;
+    e.v.classList.remove('vt-anima'); void e.v.offsetWidth; e.v.classList.add('vt-anima');
+    _vitrineContar('saldo', e.saldo, 0, V.saldo, 1500, fmtMoney, 700);
+    _vitrineContar('recebido', e.recebido, 0, V.recebido, 1500, fmtMoney, 700);
+    _vitrineContar('inad', e.inad, V.inadDe, V.inadAte, 1400, _pct, 950);
+    _vitrineAviso(e, V.avisos[0], false);
+    _vitrine.espera = setTimeout(() => {
+        if (!_vitrineNaTela(e)) { pararVitrine(); return; }
+        _vitrineAviso(e, V.avisos[0], true);
+        _vitrine.timer = setInterval(() => {
+            if (!_vitrineNaTela(e)) { pararVitrine(); return; }   // saiu da tela de login: para tudo
+            _vitrine.i = (_vitrine.i + 1) % V.avisos.length;
+            const a = V.avisos[_vitrine.i];
+            _vitrineAviso(e, a, true);
+            if (a.valor) { // pagamento entrou: o saldo e o recebido do mês sobem junto
+                const s0 = _vitrine.saldo, r0 = _vitrine.recebido;
+                _vitrine.saldo += a.valor; _vitrine.recebido += a.valor;
+                _vitrineContar('saldo', e.saldo, s0, _vitrine.saldo, 700, fmtMoney, 250);
+                _vitrineContar('recebido', e.recebido, r0, _vitrine.recebido, 700, fmtMoney, 250);
+                e.saldo.classList.add('sobe');
+                setTimeout(() => e.saldo.classList.remove('sobe'), 1300);
+            }
+        }, V.troca);
+    }, 1100);
+}
+
 // Chamada pelo showLogin(): entrada animada da tela e caneta (se ainda não estiver escrevendo)
 function iniciarTelaLogin() {
     const t = document.getElementById('loginScreen');
@@ -12120,6 +12324,7 @@ function iniciarTelaLogin() {
     clearTimeout(iniciarTelaLogin._t);
     iniciarTelaLogin._t = setTimeout(() => t.classList.remove('entrando'), 1400);
     if (!_escritaLogin.ativa) escreverFraseLogin();
+    if (!_vitrine.rodando) iniciarVitrine(); // a prévia só recomeça se tinha parado
 }
 
 // Preparação ao abrir a página: monta a frase e liga o aviso de Caps Lock
