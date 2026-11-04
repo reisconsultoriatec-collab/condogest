@@ -466,6 +466,69 @@ a { text-decoration: none; color: inherit; }
     #loginScreen .vitrine.vt-anima *, #loginScreen .vt-aviso.troca *, #loginScreen .vt-aviso.troca::after { animation: none !important; }
 }
 
+/* ---------- Horizonte de prédios ao fundo ----------
+   Silhueta de uma cidade à noite na base da tela, atrás de tudo. O desenho é
+   gerado pelo próprio código (montarHorizonte) e as janelas acendem e apagam
+   aos poucos. Só decoração: fica fora dos leitores de tela. */
+#loginScreen .horizonte {
+    position: fixed; left: 0; right: 0; bottom: 0; height: clamp(110px, 24vh, 230px); z-index: -1; pointer-events: none;
+    opacity: 0; transform: translateY(16px); transition: opacity 1.6s ease .25s, transform 1.6s cubic-bezier(.2,.8,.2,1) .25s;
+    -webkit-mask-image: linear-gradient(to top, #000 38%, rgba(0,0,0,.4) 72%, transparent);
+    mask-image: linear-gradient(to top, #000 38%, rgba(0,0,0,.4) 72%, transparent);
+}
+#loginScreen .horizonte.pronto { opacity: 1; transform: none; }
+#loginScreen .horizonte::before {
+    content: ''; position: absolute; left: 8%; right: 8%; bottom: -45%; height: 95%; border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(56,189,248,.15), transparent 70%);
+}
+#loginScreen .horizonte svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#loginScreen .hz-fundo { fill: #16397A; opacity: .5; }
+#loginScreen .hz-frente { fill: #050D24; }
+#loginScreen .hz-jan rect { fill: #FCD34D; fill-opacity: .07; transition: fill-opacity 1.8s ease; }
+#loginScreen .hz-jan rect.acesa { fill-opacity: .68; }
+#loginScreen .hz-luz { fill: #FB7185; opacity: .2; animation: hzPisca 3.4s ease-in-out infinite; }
+#loginScreen .hz-luz:nth-of-type(2n) { animation-delay: -1.3s; }
+#loginScreen .hz-luz:nth-of-type(3n) { animation-delay: -2.4s; }
+@keyframes hzPisca { 0%, 100% { opacity: .15; } 45%, 60% { opacity: .85; } }
+/* o texto do painel fica acima do horizonte */
+#loginScreen .auth-lado-marca, #loginScreen .auth-lado-rodape { position: relative; z-index: 1; }
+#loginScreen .auth-lado-rodape { text-shadow: 0 1px 10px rgba(2,6,23,.95), 0 0 2px rgba(2,6,23,.9); }
+
+/* ---------- Saudação e "Lembrar meu e-mail" ---------- */
+#loginScreen #loginSaudacao strong { color: #fff; font-weight: 600; }
+#loginScreen .login-lembrar {
+    display: inline-flex; align-items: center; gap: 8px; margin: -2px 0 14px; cursor: pointer; user-select: none;
+    font-size: 13px; color: var(--ls-texto-2);
+}
+#loginScreen .login-lembrar input { width: 16px; height: 16px; margin: 0; accent-color: var(--ls-ceu); cursor: pointer; }
+#loginScreen .login-lembrar:hover { color: var(--ls-texto); }
+#loginScreen .login-lembrar input:focus-visible { outline: 2px solid var(--ls-ceu); outline-offset: 2px; }
+
+/* ---------- Passagem do login para a tela de carregamento ----------
+   O cartão encolhe até virar o logo "CG" (transicaoEntrada). Enquanto isso, a
+   tela de carregamento já está ativa por baixo, só com o centro escondido. */
+.tc.da-login .tc-centro { opacity: 0; transform: none; transition: none; }
+/* durante a passagem o login continua por baixo e o painel só aparece depois
+   (se o perfil carregar muito rápido, o painel não pisca na tela) */
+body.entrando-app #appContainer { visibility: hidden !important; }
+body.entrando-app #loginScreen { display: flex !important; }
+.entrada-fantasma {
+    position: fixed; z-index: 10001; pointer-events: none; overflow: hidden; border-radius: 22px;
+    background: linear-gradient(180deg, #13213F, #101C37);
+    box-shadow: 0 44px 90px -28px rgba(2,6,23,.75), 0 0 0 1px rgba(148,190,255,.10);
+}
+.entrada-fantasma i { position: absolute; inset: 0; background: var(--gradient-accent); opacity: 0; }
+.entrada-fantasma span {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0;
+    font-family: var(--font-display); font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px; color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #loginScreen .horizonte { transition: none; transform: none; }
+    #loginScreen .hz-jan rect { transition: none; }
+    #loginScreen .hz-luz { animation: none; opacity: .6; }
+}
+
 /* LOGIN TABS */
 .login-tabs {
     display: flex; border-bottom: 2px solid var(--border);
@@ -1327,6 +1390,8 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
      escrita pela caneta e o prédio construído no fim (some no celular); à direita o cartão
      de acesso. Os IDs e as funções são os mesmos de antes. -->
 <div id="loginScreen" class="login-overlay">
+    <!-- Horizonte de prédios ao fundo (desenhado por montarHorizonte; só decoração) -->
+    <div class="horizonte" aria-hidden="true"></div>
     <section class="auth-lado">
         <div class="auth-lado-marca"><span class="auth-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="cgMarca1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)" opacity=".78"/><path d="M9 9h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 14h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 19h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM20.8 15.5h2.4v2.4h-2.4zm0 5h2.4v2.4h-2.4zM10.8 23.6h2.4V28h-2.4z" fill="#0B1733" opacity=".6"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg></span><span>CondoGest</span></div>
         <div class="auth-lado-texto">
@@ -1369,7 +1434,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     <div class="login-box">
         <div class="auth-card-marca">
             <div class="auth-card-nome"><span class="auth-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="cgMarca2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca2)"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca2)" opacity=".78"/><path d="M9 9h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 14h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 19h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM20.8 15.5h2.4v2.4h-2.4zm0 5h2.4v2.4h-2.4zM10.8 23.6h2.4V28h-2.4z" fill="#0B1733" opacity=".6"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg></span><span>CondoGest</span></div>
-            <p>Gestão de Condomínios</p>
+            <p id="loginSaudacao">Gestão de Condomínios</p>
         </div>
 
         <!-- Abas Entrar / Criar conta -->
@@ -1392,6 +1457,9 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
                 </div>
                 <div class="caps-lock" id="caps-loginPass" hidden><i class="ti ti-alert-triangle"></i> Caps Lock ligado</div>
             </div>
+            <label class="login-lembrar" title="Guarda só o e-mail neste aparelho, nunca a senha. Não marque em computador compartilhado.">
+                <input type="checkbox" id="loginLembrar"> Lembrar meu e-mail
+            </label>
             <div class="login-error" id="loginError" role="alert"></div>
             <button class="btn-primary" onclick="doLogin()">
                 <i class="ti ti-login"></i> Entrar
@@ -3831,6 +3899,8 @@ const telaCarregando = (() => {
     // Fecha com a barra cheia e deixa a página entrar animada por baixo
     function concluir() {
         if (!ativa()) return;
+        // painel pronto antes de o cartão terminar de virar logo: espera a passagem acabar
+        if (document.body.classList.contains('entrando-app')) { setTimeout(concluir, 120); return; }
         passo('Tudo pronto!', 100);
         clearTimeout(saida);
         saida = setTimeout(() => { esconder(); reanimarPagina(); }, 450);
@@ -4262,8 +4332,15 @@ function _aoMudarLogin(user) {
         // Se estiver no meio de um cadastro, NÃO processar aqui
         // O doRegister controla o fluxo diretamente
         if (APP._isRegistering) return;
+        const doFormulario = APP._entrouPeloFormulario === true;
+        APP._entrouPeloFormulario = false;
         telaCarregando.mostrar('Carregando seu perfil...', 35);
-        _btnEntrarCarregando(false);
+        if (doFormulario) {
+            // o cartão encolhe até o logo; o botão volta ao normal por baixo, já coberto
+            transicaoEntrada().then(() => _btnEntrarCarregando(false), () => _btnEntrarCarregando(false));
+        } else {
+            _btnEntrarCarregando(false);
+        }
         loadUserProfile(user.uid);
     } else {
         const tinhaSessao = !!APP.userProfile;
@@ -4294,6 +4371,9 @@ function showLogin() {
     document.getElementById('regPass').value = '';
     document.getElementById('regPassConfirm').value = '';
     document.getElementById('regError').textContent = '';
+
+    // Saudação pelo horário e e-mail lembrado (só se a pessoa pediu)
+    try { saudacaoLogin(); preencherEmailLembrado(); } catch (e) { console.warn('Saudação do login:', e); }
 
     // Voltar para aba Entrar
     switchLoginTab('entrar');
@@ -4618,11 +4698,14 @@ async function doLogin() {
 
     _btnEntrarCarregando(true);
     touchActivity(true); // login novo: não confundir com sessão antiga expirada
+    APP._entrouPeloFormulario = true; // a entrada ganha a passagem animada do cartão
     try {
         const cred = await APP.auth.signInWithEmailAndPassword(email, pass);
         touchActivity();
+        try { lembrarEmailAposEntrar(email); } catch (e) { /* segue */ }
         auditLog('LOGIN', { email: email });
     } catch(e) {
+        APP._entrouPeloFormulario = false;
         _btnEntrarCarregando(false);
         auditLog('LOGIN_FAILED', { email: email, error: e.code });
         if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
@@ -12481,6 +12564,186 @@ function iniciarVitrine() {
     }, 1100);
 }
 
+// ===== TELA DE LOGIN: horizonte de prédios ao fundo =====
+// Silhueta de uma cidade à noite, com janelas que acendem e apagam aos poucos.
+// Só decoração: o desenho é gerado aqui com números (sem nenhum dado), fica
+// fora dos leitores de tela e para quando o login sai da tela. Com "reduzir
+// movimento", fica parado.
+const _horizonte = { timer: 0, janelas: null };
+
+function montarHorizonte() {
+    const h = document.querySelector('#loginScreen .horizonte');
+    if (!h) return null;
+    if (_horizonte.janelas) return h;
+    let s = 20261104; // sorteio fixo: a cidade é sempre a mesma
+    const r = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+    const n = v => Math.round(v * 10) / 10;
+    const L = 1600, A = 240;
+    let fundo = '', frente = '', jan = '', luz = '';
+    // camada de trás: só silhuetas, mais claras
+    for (let x = -20; x < L + 20;) {
+        const w = 50 + r() * 80, alt = 110 + r() * 125;
+        fundo += `<rect x="${n(x)}" y="${n(A - alt)}" width="${n(w)}" height="${n(alt)}"/>`;
+        if (r() < .3) fundo += `<rect x="${n(x + w * .22)}" y="${n(A - alt - 12 - r() * 16)}" width="${n(w * .56)}" height="30"/>`;
+        x += w + 2 + r() * 12;
+    }
+    // camada da frente: prédios com janelas
+    for (let x = -8; x < L + 8;) {
+        const w = 45 + Math.floor(r() * 8) * 9, alt = 46 + r() * 118, y = A - alt;
+        frente += `<rect x="${n(x)}" y="${n(y)}" width="${w}" height="${n(alt + 1)}"/>`;
+        if (r() < .25) frente += `<rect x="${n(x + 9)}" y="${n(y - 10)}" width="${w - 18}" height="12"/>`;
+        if (alt > 128 && r() < .55) {
+            const ax = n(x + w * (.3 + r() * .4)), ah = 16 + r() * 16;
+            frente += `<rect x="${ax}" y="${n(y - ah)}" width="2" height="${n(ah + 1)}"/>`;
+            luz += `<circle class="hz-luz" cx="${n(ax + 1)}" cy="${n(y - ah)}" r="2.4"/>`;
+        }
+        if (r() > .14) { // alguns prédios ficam todos apagados
+            for (let jy = y + 9; jy < A - 10; jy += 12) {
+                if (r() < .12) continue; // andar sem janela
+                for (let jx = x + 7; jx < x + w - 9; jx += 9) {
+                    if (r() < .8) jan += `<rect x="${n(jx)}" y="${n(jy)}" width="4" height="5"${r() < .24 ? ' class="acesa"' : ''}/>`;
+                }
+            }
+        }
+        x += w + 4 + r() * 9;
+    }
+    h.innerHTML = `<svg viewBox="0 0 ${L} ${A}" preserveAspectRatio="xMidYMax slice" focusable="false">`
+        + `<g class="hz-fundo">${fundo}</g><g class="hz-frente">${frente}</g>`
+        + `<g class="hz-jan" shape-rendering="crispEdges">${jan}</g><g>${luz}</g></svg>`;
+    _horizonte.janelas = h.querySelectorAll('.hz-jan rect');
+    return h;
+}
+
+function iniciarHorizonte() {
+    const t = document.getElementById('loginScreen');
+    const h = montarHorizonte();
+    if (!t || !h) return;
+    clearInterval(_horizonte.timer); _horizonte.timer = 0;
+    requestAnimationFrame(() => h.classList.add('pronto'));
+    let reduzir = false;
+    try { reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* segue */ }
+    const jan = _horizonte.janelas;
+    if (reduzir || !jan || !jan.length) return;
+    _horizonte.timer = setInterval(() => {
+        // saiu da tela de login: para
+        if (t.style.display === 'none' || document.getElementById('appContainer').style.display !== 'none') {
+            clearInterval(_horizonte.timer); _horizonte.timer = 0; return;
+        }
+        if (document.hidden) return;
+        // apaga as acesas e acende só 1 em cada 3 das apagadas: cerca de 1/4 fica acesa
+        for (let k = 0; k < 3; k++) {
+            const j = jan[Math.floor(Math.random() * jan.length)];
+            if (j.classList.contains('acesa')) j.classList.remove('acesa');
+            else if (Math.random() < .34) j.classList.add('acesa');
+        }
+    }, 650);
+}
+
+// ===== TELA DE LOGIN: saudação e "Lembrar meu e-mail" =====
+// Guarda SÓ o e-mail (nunca a senha), e só quando a pessoa marca a opção e
+// entra com sucesso. Desmarcar apaga na hora. A saída segura não apaga o
+// e-mail lembrado: ele serve justamente para a próxima entrada neste aparelho.
+const CHAVE_EMAIL_LEMBRADO = 'condogest_email_lembrado';
+
+function _emailLembrado() {
+    const v = (_lerMarca(CHAVE_EMAIL_LEMBRADO) || '').trim();
+    return v.length <= 254 && /^[^\s@<>"'`]+@[^\s@<>"'`]+\.[^\s@<>"'`]+$/.test(v) ? v : '';
+}
+
+function lembrarEmailAposEntrar(email) {
+    const cb = document.getElementById('loginLembrar');
+    if (cb && cb.checked && email) _gravarMarca(CHAVE_EMAIL_LEMBRADO, email);
+    else _apagarMarca(CHAVE_EMAIL_LEMBRADO);
+}
+
+function saudacaoLogin() {
+    const p = document.getElementById('loginSaudacao');
+    if (!p) return;
+    const h = new Date().getHours();
+    const oi = h >= 5 && h < 12 ? 'Bom dia!' : h >= 12 && h < 18 ? 'Boa tarde!' : 'Boa noite!';
+    const forte = document.createElement('strong');
+    forte.textContent = oi;
+    p.replaceChildren(forte, document.createTextNode(_emailLembrado() ? ' Que bom ter você de volta.' : ' Acesse a gestão do seu condomínio.'));
+}
+
+function preencherEmailLembrado() {
+    const email = _emailLembrado();
+    const campo = document.getElementById('loginEmail');
+    const cb = document.getElementById('loginLembrar');
+    if (cb) cb.checked = !!email;
+    if (!email || !campo) return;
+    campo.value = email;
+    // no computador, o cursor já vai para a senha (no celular não abre o teclado sozinho)
+    try {
+        if (window.matchMedia('(pointer: fine)').matches) {
+            setTimeout(() => { const s = document.getElementById('loginPass'); if (s && s.offsetParent && !s.value) s.focus({ preventScroll: true }); }, 60);
+        }
+    } catch (e) { /* segue */ }
+}
+
+// ===== TELA DE LOGIN: passagem para a tela de carregamento =====
+// Depois de usuário e senha conferidos, o cartão de acesso encolhe até virar o
+// logo "CG" da tela de carregamento, para a entrada parecer um movimento só.
+// A tela de carregamento já fica ativa por baixo (só com o centro escondido),
+// então o resto da entrada segue exatamente como antes; se algo falhar aqui,
+// o efeito some e nada trava (limite de 1,6 segundo).
+function transicaoEntrada() {
+    return new Promise(fim => {
+        let acabou = false, fantasma = null;
+        const tc = document.getElementById('telaCarregando');
+        const terminar = () => {
+            if (acabou) return;
+            acabou = true;
+            clearTimeout(limite);
+            document.body.classList.remove('entrando-app');
+            if (tc) tc.classList.remove('da-login');
+            if (fantasma) {
+                const f = fantasma;
+                setTimeout(() => { f.style.transition = 'opacity .22s ease'; f.style.opacity = '0'; }, 220);
+                setTimeout(() => f.remove(), 520);
+            }
+            fim();
+        };
+        const limite = setTimeout(terminar, 1600);
+        try {
+            const tela = document.getElementById('loginScreen');
+            const card = tela && tela.querySelector('.login-box');
+            const logo = tc && tc.querySelector('.tc-logo');
+            let reduzir = false;
+            try { reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* segue */ }
+            if (!card || !logo || reduzir || typeof card.animate !== 'function' || !card.offsetParent) { terminar(); return; }
+            const de = card.getBoundingClientRect();
+            document.body.classList.add('entrando-app');
+            tc.classList.add('da-login');
+            const alvo = logo.getBoundingClientRect();
+            const lado = 84, ax = alvo.left + alvo.width / 2 - lado / 2, ay = alvo.top + alvo.height / 2 - lado / 2;
+            fantasma = document.createElement('div');
+            fantasma.className = 'entrada-fantasma';
+            fantasma.setAttribute('aria-hidden', 'true');
+            const ambar = document.createElement('i');
+            const sigla = document.createElement('span');
+            sigla.textContent = 'CG';
+            fantasma.append(ambar, sigla);
+            Object.assign(fantasma.style, { left: de.left + 'px', top: de.top + 'px', width: de.width + 'px', height: de.height + 'px' });
+            document.body.appendChild(fantasma);
+            // o cartão "fica" enquanto o conteúdo some por baixo da tela de carregamento
+            fantasma.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out' });
+            const mov = fantasma.animate([
+                { left: de.left + 'px', top: de.top + 'px', width: de.width + 'px', height: de.height + 'px',
+                  boxShadow: '0 44px 90px -28px rgba(2,6,23,.75), 0 0 0 1px rgba(148,190,255,.10)' },
+                { left: ax + 'px', top: ay + 'px', width: lado + 'px', height: lado + 'px',
+                  boxShadow: '0 14px 34px rgba(245,158,11,.38), 0 0 0 0 rgba(148,190,255,0)' }
+            ], { duration: 620, delay: 240, easing: 'cubic-bezier(.65,0,.3,1)', fill: 'forwards' });
+            ambar.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, delay: 520, easing: 'ease', fill: 'both' });
+            sigla.animate([{ opacity: 0, transform: 'scale(.7)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 700, easing: 'ease-out', fill: 'both' });
+            mov.onfinish = terminar;
+        } catch (e) {
+            console.warn('Transição de entrada:', e);
+            terminar();
+        }
+    });
+}
+
 // Chamada pelo showLogin(): entrada animada da tela e caneta (se ainda não estiver escrevendo)
 function iniciarTelaLogin() {
     const t = document.getElementById('loginScreen');
@@ -12491,6 +12754,7 @@ function iniciarTelaLogin() {
     iniciarTelaLogin._t = setTimeout(() => t.classList.remove('entrando'), 1400);
     if (!_escritaLogin.ativa) escreverFraseLogin();
     if (!_vitrine.rodando) iniciarVitrine(); // a prévia só recomeça se tinha parado
+    try { if (!_horizonte.timer) iniciarHorizonte(); } catch (e) { console.warn('Horizonte do login:', e); }
 }
 
 // Preparação ao abrir a página: monta a frase e liga o aviso de Caps Lock
@@ -12507,6 +12771,15 @@ function iniciarTelaLogin() {
     t.addEventListener('focusout', e => {
         const aviso = e.target && e.target.id && document.getElementById('caps-' + e.target.id);
         if (aviso) aviso.hidden = true;
+    });
+    // "Lembrar meu e-mail" desmarcado: esquece na hora
+    const lembrar = document.getElementById('loginLembrar');
+    if (lembrar) lembrar.addEventListener('change', () => {
+        if (!lembrar.checked) { _apagarMarca(CHAVE_EMAIL_LEMBRADO); saudacaoLogin(); }
+    });
+    // a saudação acompanha o horário quando a pessoa volta para a aba
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && t.style.display !== 'none') saudacaoLogin();
     });
     // mudou de tamanho (girou o tablet, abriu o painel): recomeça com o roteiro novo
     let redim = 0;
