@@ -4708,6 +4708,10 @@ async function loadAllData() {
                 APP.db.collection('condominios').doc(id).get().catch(() => null)));
             docs.forEach(d => { if (d && d.exists) APP.condominios.push({ id: d.id, ...d.data() }); });
             APP.condominios.sort((a,b) => String(a.nome||'').localeCompare(String(b.nome||'')));
+        } else if (APP.userProfile.perfil !== 'admin') {
+            // Sem condomínio liberado no cadastro: as regras do servidor não deixam
+            // ver nenhum. Avisa em vez de falhar com erro de permissão.
+            setTimeout(() => toast('Sua conta ainda não foi liberada para nenhum condomínio. Peça ao administrador para marcar o seu condomínio em Usuários.', 'error'), 600);
         } else {
             const condoSnap = await APP.db.collection('condominios').orderBy('nome').get();
             condoSnap.forEach(d => APP.condominios.push({ id: d.id, ...d.data() }));
@@ -9365,8 +9369,15 @@ async function approveUser(userId) {
             aprovadoEm: new Date().toISOString()
         });
         auditLog('USER_APPROVED', { targetUserId: userId });
-        toast('Usuário aprovado com sucesso!');
+        toast('Usuário aprovado. Agora marque o condomínio, o perfil e as permissões dele.');
         await recarregarUsuarios();
+        try {
+            editUsuario(userId);
+            // Com um condomínio só, já deixa marcado (o administrador confere e salva)
+            const marcados = document.querySelectorAll('#accessCondos input[type="checkbox"]:checked').length;
+            const opcoes = document.querySelectorAll('#accessCondos input[type="checkbox"]');
+            if (!marcados && opcoes.length === 1) opcoes[0].checked = true;
+        } catch (e) { /* a aprovação já foi feita; o cadastro pode ser aberto pelo lápis */ }
     } catch(e) {
         toast('Erro ao aprovar: ' + e.message, 'error');
     }
