@@ -153,7 +153,7 @@ a { text-decoration: none; color: inherit; }
 
 /* ===== TELA DE LOGIN (padrão OdontoWorld) ============================
    Visual escuro fixo, que não muda com o tema. À esquerda, o painel do
-   CondoGest: a caneta escreve a frase, sublinha "completa" e desenha um
+   CondoGest: a caneta escreve a frase, sublinha "100% integrada" e desenha um
    prédio, que é construído andar por andar e acende as janelas. O painel
    some no celular. À direita, o cartão de acesso, com os mesmos IDs e as
    mesmas funções de antes (doLogin, doRegister, switchLoginTab...). */
@@ -199,7 +199,7 @@ a { text-decoration: none; color: inherit; }
 #loginScreen .auth-lado-marca { display: flex; align-items: center; gap: 12px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -.01em; color: #fff; }
 #loginScreen .auth-lado-texto { max-width: 600px; position: relative; }
 #loginScreen .auth-titulo {
-    font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: clamp(30px, 2.8vw, 40px); line-height: 1.22; letter-spacing: -.02em;
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: clamp(32px, 3.3vw, 48px); line-height: 1.18; letter-spacing: -.02em;
     font-weight: 700; margin: 0 0 42px; text-wrap: balance; color: #fff; font-style: normal;
 }
 /* frase escrita pela caneta: contorno azul-céu no traço, depois preenche de branco */
@@ -207,17 +207,28 @@ a { text-decoration: none; color: inherit; }
 #loginScreen .esc-p { white-space: nowrap; }
 #loginScreen .esc-l { color: transparent; -webkit-text-stroke: 1.1px transparent; }
 #loginScreen .esc-l.traco { -webkit-text-stroke-color: var(--ls-tinta); }
-#loginScreen .esc-l.traco.feito { color: #fff; -webkit-text-stroke-color: rgba(125,211,252,0); transition: color .6s ease .12s, -webkit-text-stroke-color .5s ease .3s; }
+/* Preenchimento por animação (e não por transição): letras estreitas como "l" e "t" às vezes são
+   escritas num quadro só e ganham as duas classes juntas; assim o contorno aparece sempre antes do branco */
+#loginScreen .esc-l.traco.feito { color: #fff; -webkit-text-stroke-color: rgba(125,211,252,0); animation: escPreenche .8s ease-out; }
+@keyframes escPreenche {
+    0%, 15% { color: rgba(255,255,255,0); -webkit-text-stroke-color: var(--ls-tinta); }
+    37% { -webkit-text-stroke-color: var(--ls-tinta); }
+    90% { color: #fff; }
+    100% { color: #fff; -webkit-text-stroke-color: rgba(125,211,252,0); }
+}
 #loginScreen .auth-titulo.apagando .esc-l { color: transparent; -webkit-text-stroke-color: transparent; transition: color .45s ease, -webkit-text-stroke-color .45s ease; }
 #loginScreen .esc-destaque { position: relative; }
 #loginScreen .esc-risco { position: absolute; left: -3%; width: 106%; bottom: -.12em; height: .34em; overflow: visible; pointer-events: none; }
-#loginScreen .esc-risco path { fill: none; stroke: var(--ls-ceu); stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+#loginScreen .esc-risco path { fill: none; stroke: var(--ls-ceu); stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+/* o sublinhado e o contorno do prédio só aparecem quando a caneta chega neles (sem pontinhos soltos antes) */
+#loginScreen .esc-risco.riscando path, #loginScreen .auth-titulo.escrito .esc-risco path { opacity: 1; }
 #loginScreen .auth-titulo.escrito .esc-l { color: #fff; -webkit-text-stroke-color: transparent; clip-path: none; }
 #loginScreen .auth-titulo.escrito .esc-risco path { stroke-dashoffset: 0; }
 
 /* o prédio: a caneta traça o contorno, a grua sobe os andares, as janelas acendem */
 #loginScreen .predio { display: inline-block; width: 1.74em; height: 1.5em; margin: -.34em 0 -.16em .2em; vertical-align: -.28em; overflow: visible; }
-#loginScreen .pr-contorno { fill: none; stroke: var(--ls-tinta); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 400; stroke-dashoffset: 400; }
+#loginScreen .pr-contorno { fill: none; stroke: var(--ls-tinta); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 400; stroke-dashoffset: 400; opacity: 0; }
+#loginScreen .predio.tracando .pr-contorno, #loginScreen .auth-titulo.escrito .pr-contorno { opacity: 1; }
 #loginScreen .pr-andar { opacity: 0; transform: translateY(-14px); }
 #loginScreen .pr-laje { fill: rgba(125,211,252,.42); }
 #loginScreen .pr-janela { fill: #0B1D42; }
@@ -1239,7 +1250,7 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
     <section class="auth-lado">
         <div class="auth-lado-marca"><span class="auth-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="cgMarca1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)" opacity=".78"/><path d="M9 9h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 14h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 19h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM20.8 15.5h2.4v2.4h-2.4zm0 5h2.4v2.4h-2.4zM10.8 23.6h2.4V28h-2.4z" fill="#0B1733" opacity=".6"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg></span><span>CondoGest</span></div>
         <div class="auth-lado-texto">
-            <h1 class="auth-titulo">Gestão condominial completa que integra cobrança, prestação de contas, moradores e assembleias.</h1>
+            <h1 class="auth-titulo">Sua gestão condominial 100% integrada e sem complicações</h1>
             <div class="caneta" aria-hidden="true"><div class="caneta-mov"></div></div>
             <ul class="auth-recursos">
                 <li><span class="auth-recurso-icone"><i class="ti ti-receipt-2"></i></span><div><strong>Cobrança sem planilha</strong><small>Taxas por apartamento, boletos com PIX, cobrança em lote e multa e juros calculados sozinhos.</small></div></li>
@@ -11816,15 +11827,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== TELA DE LOGIN: frase escrita pela caneta =====
 // A caneta escreve a frase do painel (cada letra: contorno azul-céu que se
-// preenche de branco), sublinha "completa" e desenha o contorno de um prédio
+// preenche de branco), sublinha "100% integrada" e desenha o contorno de um prédio
 // no fim da frase. Quando a caneta sai, uma grua sobe os andares um a um, as
 // janelas acendem, a luz da antena pisca e um brilho atravessa a fachada.
 // A frase fica parada para leitura, se apaga e o ciclo recomeça.
 // Só roda com o painel visível (computador); com a aba escondida o navegador pausa.
 // Celular (painel escondido) e "reduzir movimento": frase e prédio aparecem prontos.
 // Leitores de tela leem a frase uma vez (so-leitor).
-const LOGIN_FRASE = 'Gestão condominial completa que integra cobrança, prestação de contas, moradores e assembleias.'; // "prestação de contas" sempre na mesma linha
-const LOGIN_DESTAQUE = 'completa';
+const LOGIN_FRASE = 'Sua gest\u00e3o condominial 100%\u00a0integrada e sem\u00a0complica\u00e7\u00f5es'; // "100% integrada" e "sem complicações" sempre juntos na mesma linha
+const LOGIN_DESTAQUE = '100%\u00a0integrada'; // sublinhado pela caneta
 const LOGIN_TEMPO = { inicio: 650, chega: 380, risca: 520, ida: 620, predio: 1500, sai: 480, parada: 8000, apaga: 450, onda: 7, respiro: 600 };
 
 // Prédio (viewBox 84 x 72): duas torres sobre a linha do chão. A caneta traça o contorno
@@ -11946,7 +11957,8 @@ function escreverFraseLogin() {
         letras.forEach(l => { l.style.clipPath = ''; l.style.transitionDelay = ''; });
         if (traco) { traco.style.strokeDashoffset = ''; traco.style.transition = ''; }
         if (contorno) { contorno.style.strokeDasharray = ''; contorno.style.strokeDashoffset = ''; contorno.style.transition = ''; }
-        if (predio) predio.classList.remove('construindo', 'demolindo');
+        if (predio) predio.classList.remove('construindo', 'demolindo', 'tracando');
+        if (risco) risco.classList.remove('riscando');
         h1.classList.remove('apagando'); h1.classList.add('escrito');
         caneta.classList.remove('visivel', 'saindo');
     };
@@ -11958,7 +11970,8 @@ function escreverFraseLogin() {
     // recomeço (ex.: a janela mudou de tamanho no meio da escrita): limpa tudo antes
     letras.forEach(l => { l.classList.remove('traco', 'feito'); l.style.clipPath = ''; l.style.transitionDelay = ''; });
     if (traco) { traco.style.transition = ''; traco.style.strokeDashoffset = ''; }
-    if (predio) predio.classList.remove('construindo', 'demolindo');
+    if (predio) predio.classList.remove('construindo', 'demolindo', 'tracando');
+    if (risco) risco.classList.remove('riscando');
     if (contorno) { contorno.style.transition = ''; contorno.style.strokeDasharray = ''; contorno.style.strokeDashoffset = ''; }
     caneta.classList.remove('visivel', 'saindo');
 
@@ -12022,7 +12035,7 @@ function escreverFraseLogin() {
                     por(entre(ini, fim, g), 2.5 * Math.sin(g * Math.PI), -2 * Math.sin(g * Math.PI));
                     break;
                 }
-                letras[i].style.clipPath = ''; letras[i].classList.add('traco', 'feito'); // computador lento: a letra pode passar inteira num quadro só
+                letras[i].style.clipPath = 'inset(-35% -12% -35% -12%)'; letras[i].classList.add('traco', 'feito'); // letra inteira (o recorte fica aberto, sem trocar de modo de pintura); computador lento: pode passar inteira num quadro só
                 tempo -= p.desloca + p.escreve; i += 1;
                 if (i >= letras.length) { fase = risco ? 'chega' : contorno ? 'ida' : 'sai'; deOnde = fim; break; }
             }
@@ -12030,9 +12043,9 @@ function escreverFraseLogin() {
         if (fase === 'chega') { // vai até o começo do sublinhado
             f = Math.min(1, tempo / T.chega);
             por(entre(deOnde, noRisco(b, 0), suave(f)), 10 * Math.sin(f * Math.PI));
-            if (f >= 1) { tempo -= T.chega; fase = 'risca'; }
+            if (f >= 1) { tempo -= T.chega; fase = 'risca'; risco.classList.add('riscando'); }
         }
-        if (fase === 'risca') { // sublinha "completa"
+        if (fase === 'risca') { // sublinha "100% integrada"
             f = Math.min(1, tempo / T.risca);
             traco.style.strokeDashoffset = String(1 - f);
             por(noRisco(b, f), 0, -1.5 * Math.sin(f * Math.PI));
@@ -12041,7 +12054,7 @@ function escreverFraseLogin() {
         if (fase === 'ida') { // levanta e vai até o pé do prédio, no fim da frase
             f = Math.min(1, tempo / T.ida);
             por(entre(deOnde, noPredio(b, 0), suave(f)), 18 * Math.sin(f * Math.PI));
-            if (f >= 1) { tempo -= T.ida; fase = 'predio'; }
+            if (f >= 1) { tempo -= T.ida; fase = 'predio'; predio.classList.add('tracando'); }
         }
         if (fase === 'predio') { // traça o chão e o contorno das duas torres
             f = Math.min(1, tempo / T.predio);
@@ -12070,10 +12083,11 @@ function escreverFraseLogin() {
             contorno.style.strokeDashoffset = String(tamPredio);
         }
         esc.espera = setTimeout(() => {
-            letras.forEach(l => { l.classList.remove('traco', 'feito'); l.style.transitionDelay = ''; });
+            letras.forEach(l => { l.classList.remove('traco', 'feito'); l.style.transitionDelay = ''; l.style.clipPath = ''; });
             h1.classList.remove('apagando');
             if (traco) traco.style.transition = '';
-            if (predio) predio.classList.remove('demolindo');
+            if (risco) risco.classList.remove('riscando');
+            if (predio) predio.classList.remove('demolindo', 'tracando');
             esc.espera = setTimeout(escrever, T.respiro);
         }, T.apaga + letras.length * T.onda);
     }
