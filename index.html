@@ -4029,9 +4029,29 @@ const SESSION_TIMEOUT_MS = 60 * 60 * 1000; // 1 hora
 const SESSION_WARNING_MS = 55 * 60 * 1000; // Aviso aos 55 min
 let _lastActivity = Date.now();
 
-function touchActivity() { _lastActivity = Date.now(); }
-function isSessionExpired() { return (Date.now() - _lastActivity) > SESSION_TIMEOUT_MS; }
-function shouldWarnSession() { return (Date.now() - _lastActivity) > SESSION_WARNING_MS; }
+// A hora da última atividade também fica gravada no aparelho (só a hora,
+// nenhum dado pessoal). Assim o limite de 1 hora vale entre abas e também
+// quando o app é fechado sem clicar em Sair: ao abrir de novo depois do
+// limite, a sessão antiga é encerrada em vez de entrar direto.
+const CHAVE_ATIVIDADE = 'condogest_ultima_atividade';
+let _atividadeGravada = 0;
+function _lerMarca(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function _gravarMarca(k, v, soNestaAba) { try { (soNestaAba ? sessionStorage : localStorage).setItem(k, v); } catch (e) { /* armazenamento bloqueado */ } }
+function _apagarMarca(k) { try { localStorage.removeItem(k); } catch (e) { /* armazenamento bloqueado */ } }
+function _lerAtividadeGravada() { return parseInt(_lerMarca(CHAVE_ATIVIDADE) || '0', 10) || 0; }
+
+function touchActivity(forcar) {
+    _lastActivity = Date.now();
+    // Grava no máximo a cada 15 segundos; forcar === true grava na hora
+    // (nos cliques e teclas o argumento é o evento, então não força)
+    if (forcar === true || _lastActivity - _atividadeGravada > 15000) {
+        _atividadeGravada = _lastActivity;
+        _gravarMarca(CHAVE_ATIVIDADE, String(_lastActivity));
+    }
+}
+function _ultimaAtividade() { return Math.max(_lastActivity, _lerAtividadeGravada()); }
+function isSessionExpired() { return (Date.now() - _ultimaAtividade()) > SESSION_TIMEOUT_MS; }
+function shouldWarnSession() { return (Date.now() - _ultimaAtividade()) > SESSION_WARNING_MS; }
 
 // Registrar atividade em cliques e teclas
 document.addEventListener('click', touchActivity, true);
@@ -4039,14 +4059,107 @@ document.addEventListener('keydown', touchActivity, true);
 
 // Verificar sessão a cada 30 segundos
 setInterval(() => {
-    if (!APP.currentUser) return;
+    if (!APP.currentUser || _saindo) return;
     if (isSessionExpired()) {
-        toast('Sessão expirada por inatividade. Faça login novamente.', 'warning');
-        doLogout();
+        sairComSeguranca('inatividade');
     } else if (shouldWarnSession()) {
         toast('Sua sessão expira em 5 minutos. Interaja para manter ativa.', 'warning');
     }
 }, 30000);
+
+// ===== SAIR COM SEGURANÇA =====
+// O Firestore guarda no navegador uma cópia dos dados já abertos, para o app
+// funcionar sem internet. Em toda saída (botão Sair, 1 hora sem uso, conta
+// desativada, saída feita em outra aba) essa cópia é apagada e a página
+// recarrega do zero: a próxima pessoa no mesmo computador não encontra nada
+// da sessão anterior, nem na memória da página.
+// Exceção de propósito: se houver alteração que ainda não chegou ao servidor
+// (aparelho sem internet), a saída automática não apaga a cópia, para não
+// perder o trabalho; no botão Sair, a própria pessoa decide.
+const CHAVE_LIMPAR = 'condogest_limpar_dados';      // limpeza que ficou pendente
+const CHAVE_AVISO_SAIDA = 'condogest_aviso_saida';  // aviso exibido depois de recarregar
+const AVISOS_SAIDA = {
+    saiu:        ['Você saiu do CondoGest. Os dados da sessão foram apagados deste aparelho.', 'success'],
+    inatividade: ['Sessão encerrada por inatividade. Entre novamente para continuar.', 'warning'],
+    inativa:     ['Sua conta está inativa. Contate o administrador.', 'error'],
+    erro_perfil: ['Erro ao carregar perfil. Tente novamente.', 'error'],
+    encerrada:   ['Sua sessão foi encerrada. Entre novamente para continuar.', 'warning']
+};
+let _saindo = false;
+
+// true se a promessa terminar bem dentro do prazo; false se falhar ou demorar
+function _comPrazo(promessa, ms) {
+    return Promise.race([
+        Promise.resolve(promessa).then(() => true, () => false),
+        new Promise(ok => setTimeout(() => ok(false), ms))
+    ]);
+}
+
+// Apaga a cópia local do Firestore. O Firestore precisa estar encerrado; se
+// outra aba ainda estiver com ele aberto, tenta de novo por alguns instantes.
+async function _apagarCopiaLocal() {
+    try { await APP.db.terminate(); } catch (e) { /* já encerrado */ }
+    for (let i = 0; i < 4; i++) {
+        try { await APP.db.clearPersistence(); return true; }
+        catch (e) { await new Promise(ok => setTimeout(ok, 400)); }
+    }
+    return false;
+}
+
+// Limpeza que ficou pendente de uma saída anterior. Só funciona antes da
+// primeira leitura do Firestore, por isso roda antes de conferir o login.
+async function _limparNaAbertura() {
+    for (let i = 0; i < 3; i++) {
+        try { await APP.db.clearPersistence(); _apagarMarca(CHAVE_LIMPAR); return; }
+        catch (e) { await new Promise(ok => setTimeout(ok, 500)); }
+    }
+    console.warn('[Sair] Cópia local: limpeza adiada para a próxima abertura (outra aba aberta).');
+}
+
+// motivo: uma das chaves de AVISOS_SAIDA.
+// jaSaiu: a sessão já foi encerrada fora desta aba (outra aba ou o servidor).
+async function sairComSeguranca(motivo, jaSaiu) {
+    if (_saindo) return;
+    _saindo = true;
+    const manual = motivo === 'saiu';
+    try { telaCarregando.mostrar('Saindo com segurança...', 40, 20000); } catch (e) { /* segue */ }
+
+    let limpar;
+    if (jaSaiu) {
+        // Quem iniciou a saída já decidiu se apaga e deixou marcado
+        limpar = _lerMarca(CHAVE_LIMPAR) === '1';
+    } else {
+        // Espera as alterações em andamento chegarem ao servidor
+        limpar = APP.db ? await _comPrazo(APP.db.waitForPendingWrites(), 3000) : true;
+        if (!limpar && manual) {
+            try { telaCarregando.esconder(); } catch (e) { /* segue */ }
+            limpar = confirm('Algumas alterações ainda não chegaram ao servidor, provavelmente por falta de internet.\n\nSe sair agora, elas serão perdidas. Deseja sair mesmo assim?');
+            if (!limpar) {
+                _saindo = false;
+                toast('Você continua conectado. Confira a internet e tente sair de novo.', 'warning');
+                return;
+            }
+            try { telaCarregando.mostrar('Saindo com segurança...', 60, 20000); } catch (e) { /* segue */ }
+        }
+        await _comPrazo(auditLog('LOGOUT', { motivo: motivo }), 2500);
+        // Marca antes de sair: se algo falhar no meio (outra aba aberta,
+        // navegador fechado), a próxima abertura do app termina a limpeza
+        if (limpar) _gravarMarca(CHAVE_LIMPAR, '1');
+    }
+
+    _gravarMarca(CHAVE_AVISO_SAIDA, motivo, true);
+    _apagarMarca(CHAVE_ATIVIDADE);
+    if (!jaSaiu && APP.auth) await _comPrazo(APP.auth.signOut(), 4000);
+    try { telaCarregando.passo('Apagando os dados deste aparelho...', 80); } catch (e) { /* segue */ }
+    if (APP.db) {
+        if (limpar) {
+            if (await _apagarCopiaLocal()) _apagarMarca(CHAVE_LIMPAR);
+        } else {
+            await _comPrazo(APP.db.terminate(), 2000);
+        }
+    }
+    location.reload();
+}
 
 // ===== AUDIT TRAIL =====
 async function auditLog(action, details = {}) {
@@ -4113,27 +4226,55 @@ function doInit(cfg) {
     firebase.initializeApp(cfg);
     APP.auth = firebase.auth();
     APP.db = firebase.firestore();
-    APP.db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Persistence:', e));
     APP.firebaseReady = true;
 
-    APP.auth.onAuthStateChanged(user => {
-        if (user) {
-            APP.currentUser = user;
-            touchActivity();
-            // Se estiver no meio de um cadastro, NÃO processar aqui
-            // O doRegister controla o fluxo diretamente
-            if (APP._isRegistering) return;
-            telaCarregando.mostrar('Carregando seu perfil...', 35);
-            _btnEntrarCarregando(false);
-            loadUserProfile(user.uid);
-        } else {
-            APP.currentUser = null;
-            APP._isRegistering = false;
-            showLogin();
-        }
-    });
+    const ligarCopiaLocal = () => APP.db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Persistence:', e));
+    if (_lerMarca(CHAVE_LIMPAR) === '1') {
+        // Uma saída anterior não terminou de apagar a cópia local: termina
+        // agora, antes de qualquer leitura, e só então confere o login
+        _limparNaAbertura().then(() => {
+            ligarCopiaLocal();
+            APP.auth.onAuthStateChanged(_aoMudarLogin);
+        });
+    } else {
+        ligarCopiaLocal();
+        APP.auth.onAuthStateChanged(_aoMudarLogin);
+    }
 
     console.log('Firebase conectado — projeto:', cfg.projectId);
+}
+
+function _aoMudarLogin(user) {
+    if (user) {
+        // Sessão guardada de uma abertura anterior: vale o limite de 1 hora
+        // sem uso, mesmo que o app tenha sido fechado sem clicar em Sair
+        const gravada = _lerAtividadeGravada();
+        if (gravada && Date.now() - gravada > SESSION_TIMEOUT_MS) {
+            APP.currentUser = user;
+            sairComSeguranca('inatividade');
+            return;
+        }
+        // Sessão nova em andamento: uma limpeza antiga que ficou pendente não
+        // pode mais rodar, ou apagaria alterações desta sessão
+        _apagarMarca(CHAVE_LIMPAR);
+        APP.currentUser = user;
+        touchActivity(true);
+        // Se estiver no meio de um cadastro, NÃO processar aqui
+        // O doRegister controla o fluxo diretamente
+        if (APP._isRegistering) return;
+        telaCarregando.mostrar('Carregando seu perfil...', 35);
+        _btnEntrarCarregando(false);
+        loadUserProfile(user.uid);
+    } else {
+        const tinhaSessao = !!APP.userProfile;
+        APP.currentUser = null;
+        APP._isRegistering = false;
+        if (_saindo) return; // a própria saída recarrega a página
+        // A sessão acabou sem passar pela saída desta aba (saída em outra
+        // aba ou sessão derrubada): limpa e recarrega do mesmo jeito
+        if (tinhaSessao && !APP._cadastroEmAndamento) { sairComSeguranca('encerrada', true); return; }
+        showLogin();
+    }
 }
 
 // ===== AUTH =====
@@ -4156,6 +4297,16 @@ function showLogin() {
 
     // Voltar para aba Entrar
     switchLoginTab('entrar');
+
+    // Aviso de uma saída que recarregou a página (Sair, inatividade, conta inativa)
+    try {
+        const av = sessionStorage.getItem(CHAVE_AVISO_SAIDA);
+        if (av) {
+            sessionStorage.removeItem(CHAVE_AVISO_SAIDA);
+            const [msg, tipo] = AVISOS_SAIDA[av] || AVISOS_SAIDA.encerrada;
+            setTimeout(() => toast(msg, tipo), 300);
+        }
+    } catch (e) { /* armazenamento bloqueado */ }
 
     // Entrada animada e frase escrita pela caneta (a animação nunca pode impedir o login)
     try { iniciarTelaLogin(); } catch (e) { console.warn('Animação do login:', e); }
@@ -4466,6 +4617,7 @@ async function doLogin() {
     }
 
     _btnEntrarCarregando(true);
+    touchActivity(true); // login novo: não confundir com sessão antiga expirada
     try {
         const cred = await APP.auth.signInWithEmailAndPassword(email, pass);
         touchActivity();
@@ -4501,6 +4653,10 @@ async function doRegister() {
     }
 
     APP._isRegistering = true;
+    // O cadastro entra e sai da conta nova em seguida; essa saída não é uma
+    // sessão encerrada e segue o fluxo de sempre (sem recarregar a página)
+    APP._cadastroEmAndamento = true;
+    touchActivity(true); // conta nova: não confundir com sessão antiga expirada
 
     try {
         // 1. Criar APENAS a conta no Firebase Auth (nada no Firestore aqui)
@@ -4512,6 +4668,7 @@ async function doRegister() {
         // 3. Fazer logout imediato — o perfil será criado no primeiro login
         await APP.auth.signOut();
         APP._isRegistering = false;
+        setTimeout(() => { APP._cadastroEmAndamento = false; }, 3000);
 
         // 4. Mostrar mensagem de sucesso e voltar para aba "Entrar"
         toast('Conta criada com sucesso! Faça login para continuar.');
@@ -4522,6 +4679,7 @@ async function doRegister() {
 
     } catch(e) {
         APP._isRegistering = false;
+        APP._cadastroEmAndamento = false;
         if (e.code === 'auth/email-already-in-use') {
             errEl.textContent = 'Este e-mail já está cadastrado.';
         } else {
@@ -4532,9 +4690,8 @@ async function doRegister() {
 
 function doLogout() {
     if (APP.firebaseReady && APP.auth) {
-        auditLog('LOGOUT', {});
-        _lastActivity = 0;
-        APP.auth.signOut();
+        // Registra a saída, apaga a cópia local dos dados e recarrega a página
+        sairComSeguranca('saiu');
     } else {
         APP.currentUser = null;
         showLogin();
@@ -4551,8 +4708,7 @@ async function loadUserProfile(uid) {
 
             // Verificar se conta está inativa
             if (APP.userProfile.status === 'inativo') {
-                toast('Sua conta está inativa. Contate o administrador.', 'error');
-                APP.auth.signOut();
+                sairComSeguranca('inativa');
                 return;
             }
 
@@ -4637,8 +4793,7 @@ async function loadUserProfile(uid) {
         }
     } catch(e) {
         console.error('loadUserProfile:', e);
-        toast('Erro ao carregar perfil. Tente novamente.', 'error');
-        APP.auth.signOut();
+        sairComSeguranca('erro_perfil');
     }
 }
 
@@ -4676,7 +4831,7 @@ function pendingLogout() {
     APP._isRegistering = false;
     document.getElementById('pendingScreen').style.display = 'none';
     if (APP.firebaseReady && APP.auth) {
-        APP.auth.signOut();
+        sairComSeguranca('saiu');
     } else {
         showLogin();
     }
