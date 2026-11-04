@@ -17,7 +17,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512x512.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -151,50 +151,229 @@ a { text-decoration: none; color: inherit; }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,39,68,0.4); }
 .login-error { color: var(--accent-red); font-size: 0.85rem; margin-top: 0.5rem; min-height: 1.2rem; }
 
-/* LOGIN: layout igual ao OdontoWorld */
+/* ===== TELA DE LOGIN (padrão OdontoWorld) ============================
+   Visual escuro fixo, que não muda com o tema. À esquerda, o painel do
+   CondoGest: a caneta escreve a frase, sublinha "completa" e desenha um
+   prédio, que é construído andar por andar e acende as janelas. O painel
+   some no celular. À direita, o cartão de acesso, com os mesmos IDs e as
+   mesmas funções de antes (doLogin, doRegister, switchLoginTab...). */
+#loginScreen {
+    --ls-tinta: #7DD3FC; --ls-ceu: #38BDF8; --ls-luz: #FCD34D;
+    --ls-texto: #F1F6FF; --ls-texto-2: #A7B6D3; --ls-texto-3: #7486AA;
+    --ls-linha: rgba(148,190,255,.16); --ls-campo: #0A1530;
+    isolation: isolate; align-items: stretch; justify-content: flex-start; gap: 0; padding: 0;
+    overflow-y: auto; color: var(--ls-texto);
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased;
+}
+/* Fundo azul-noite (também nas telas de carregamento e de aprovação, para a passagem ser contínua) */
 .login-overlay {
-    background: linear-gradient(135deg, #1A237E 0%, #1565C0 50%, #0288D1 100%) !important;
+    background: radial-gradient(1000px 640px at 92% -12%, rgba(56,189,248,.17), transparent 62%),
+                radial-gradient(820px 560px at -8% 110%, rgba(45,212,191,.07), transparent 62%),
+                linear-gradient(135deg, #061126 0%, #0C1F45 50%, #133A6E 100%) !important;
 }
-#loginScreen { gap: 0; overflow-y: auto; padding: 1.5rem 0; font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; }
-#loginScreen .login-box {
-    background: #fff; border-radius: 22px; padding: 3rem 2.25rem 2.25rem;
-    max-width: 400px; box-shadow: 0 25px 60px rgba(10,25,80,0.35);
+/* quadriculado bem sutil */
+#loginScreen::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+    background-size: 28px 28px; background-position: -1px -1px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 85% at 28% 45%, #000 25%, transparent 80%);
+    mask-image: radial-gradient(ellipse 75% 85% at 28% 45%, #000 25%, transparent 80%);
 }
-#loginScreen .login-box h1 { font-style: normal !important; font-size: 1.75rem; font-weight: 700; color: #1A237E; margin-bottom: 0.2rem; letter-spacing: -0.2px; }
-#loginScreen .login-box > p.sub { color: #64748B; font-size: 0.95rem; margin-bottom: 2rem; }
-#loginScreen .login-tabs { border-bottom: 2px solid #E2E8F0; margin: 0 0 1.5rem; }
-#loginScreen .login-tab { font-family: inherit; font-size: 0.98rem; color: #64748B; padding: 0.75rem; }
-#loginScreen .login-tab.active { color: #1565C0; border-bottom-color: #1565C0; font-weight: 600; }
-#loginScreen .input-group { margin-bottom: 1.1rem; }
-#loginScreen .input-group label { font-size: 0.8rem; font-weight: 600; color: #475569; letter-spacing: 0.4px; margin-bottom: 7px; }
-#loginScreen .input-group input {
-    background: #fff; border: 1.5px solid #D9E0EA; border-radius: 10px;
-    padding: 0.8rem 0.9rem; font-family: inherit; font-size: 0.95rem; color: #1E293B;
-}
-#loginScreen .input-group input:focus { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,0.15); }
-#loginScreen .btn-primary {
-    background: #1565C0; border-radius: 10px; padding: 0.9rem; font-size: 1rem; font-family: inherit;
-    box-shadow: 0 6px 16px rgba(21,101,192,0.30); margin-top: 0.2rem !important;
-}
-#loginScreen .btn-primary:hover { background: #0D47A1; }
-#loginScreen .login-error { min-height: 0.6rem; margin-top: 0; }
-.login-esqueci { display: inline-flex; align-items: center; gap: 6px; margin-top: 1.4rem; background: none; border: none; color: #1565C0; font-weight: 600; font-size: 0.9rem; cursor: pointer; font-family: inherit; }
-.login-esqueci:hover { text-decoration: underline; }
-.login-seguro { display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 0.78rem; color: #94A3B8; margin-top: 0.9rem; }
-#loginScreen .login-versao { margin: 1.1rem 0 0 !important; font-size: 0.78rem !important; color: #94A3B8 !important; }
 
-.login-hero { display: none; color: #fff; max-width: 440px; margin-right: 64px; }
-.login-hero .marca { display: flex; align-items: center; gap: 14px; margin-bottom: 36px; }
-.login-hero .marca i { font-size: 26px; background: rgba(255,255,255,.16); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; }
-.login-hero .marca b { font-size: 28px; font-weight: 700; letter-spacing: .2px; }
-.login-hero h2 { font-size: 32px; line-height: 1.2; font-weight: 700; margin-bottom: 14px; color: #fff; }
-.login-hero p.lead { font-size: 15px; opacity: .88; line-height: 1.65; margin-bottom: 30px; }
-.login-hero ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 22px; }
-.login-hero li { display: flex; gap: 14px; align-items: flex-start; line-height: 1.5; }
-.login-hero li i { font-size: 20px; background: rgba(255,255,255,.16); border-radius: 10px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.login-hero li b { display: block; font-size: 15px; font-weight: 700; }
-.login-hero li span { opacity: .85; font-size: 13.5px; }
-@media (min-width: 960px) { .login-hero { display: block; } }
+/* marca (prédio em degradê âmbar, a cor do CondoGest) */
+#loginScreen .auth-marca {
+    display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(180deg, #13244A, #0B1733); box-shadow: inset 0 0 0 1px rgba(148,190,255,.18), 0 6px 16px -8px rgba(0,0,0,.6);
+}
+#loginScreen .auth-marca svg { width: 62%; height: 62%; }
+
+/* ---------- Painel do CondoGest ---------- */
+#loginScreen .auth-lado {
+    flex: 1.1 1 0; min-width: 0; position: sticky; top: 0; height: 100vh; min-height: 560px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 32px; padding: 44px clamp(32px, 6vw, 96px);
+}
+#loginScreen .auth-lado::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: calc(clamp(32px, 6vw, 96px) - 24px); width: 1px;
+    background: linear-gradient(transparent, rgba(56,189,248,.45) 18%, rgba(56,189,248,.45) 82%, transparent);
+}
+#loginScreen .auth-lado-marca { display: flex; align-items: center; gap: 12px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: -.01em; color: #fff; }
+#loginScreen .auth-lado-texto { max-width: 600px; position: relative; }
+#loginScreen .auth-titulo {
+    font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: clamp(30px, 2.8vw, 40px); line-height: 1.22; letter-spacing: -.02em;
+    font-weight: 700; margin: 0 0 42px; text-wrap: balance; color: #fff; font-style: normal;
+}
+/* frase escrita pela caneta: contorno azul-céu no traço, depois preenche de branco */
+#loginScreen .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+#loginScreen .esc-p { white-space: nowrap; }
+#loginScreen .esc-l { color: transparent; -webkit-text-stroke: 1.1px transparent; }
+#loginScreen .esc-l.traco { -webkit-text-stroke-color: var(--ls-tinta); }
+#loginScreen .esc-l.traco.feito { color: #fff; -webkit-text-stroke-color: rgba(125,211,252,0); transition: color .6s ease .12s, -webkit-text-stroke-color .5s ease .3s; }
+#loginScreen .auth-titulo.apagando .esc-l { color: transparent; -webkit-text-stroke-color: transparent; transition: color .45s ease, -webkit-text-stroke-color .45s ease; }
+#loginScreen .esc-destaque { position: relative; }
+#loginScreen .esc-risco { position: absolute; left: -3%; width: 106%; bottom: -.12em; height: .34em; overflow: visible; pointer-events: none; }
+#loginScreen .esc-risco path { fill: none; stroke: var(--ls-ceu); stroke-width: 3.2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+#loginScreen .auth-titulo.escrito .esc-l { color: #fff; -webkit-text-stroke-color: transparent; clip-path: none; }
+#loginScreen .auth-titulo.escrito .esc-risco path { stroke-dashoffset: 0; }
+
+/* o prédio: a caneta traça o contorno, a grua sobe os andares, as janelas acendem */
+#loginScreen .predio { display: inline-block; width: 1.74em; height: 1.5em; margin: -.34em 0 -.16em .2em; vertical-align: -.28em; overflow: visible; }
+#loginScreen .pr-contorno { fill: none; stroke: var(--ls-tinta); stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 400; stroke-dashoffset: 400; }
+#loginScreen .pr-andar { opacity: 0; transform: translateY(-14px); }
+#loginScreen .pr-laje { fill: rgba(125,211,252,.42); }
+#loginScreen .pr-janela { fill: #0B1D42; }
+#loginScreen .pr-halo { opacity: 0; }
+#loginScreen .pr-antena { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+#loginScreen .pr-antena path { fill: none; stroke: var(--ls-tinta); stroke-width: 1.4; stroke-linecap: round; }
+#loginScreen .pr-luz { opacity: 0; }
+#loginScreen .pr-brilho-mov { transform: translateX(-30px); opacity: 0; }
+#loginScreen .pr-grua { opacity: 0; }
+#loginScreen .pr-grua path { fill: none; stroke: rgba(186,230,253,.82); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+#loginScreen .pr-grua .pr-peso { fill: rgba(186,230,253,.55); stroke: none; }
+#loginScreen .pr-grua-mastro { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0); }
+#loginScreen .pr-grua-lanca { transform-box: fill-box; transform-origin: 79% 50%; transform: scaleX(0); }
+#loginScreen .pr-gancho { opacity: 0; }
+#loginScreen .faisca { fill: #E0F2FE; transform-box: fill-box; transform-origin: center; transform: scale(0); opacity: 0; }
+/* construindo (a classe entra quando a caneta termina o contorno) */
+#loginScreen .predio.construindo .pr-grua { animation: cgGrua 2.7s ease both; }
+#loginScreen .predio.construindo .pr-grua-mastro { animation: cgSobe .35s cubic-bezier(.2,.8,.2,1) .05s both; }
+#loginScreen .predio.construindo .pr-grua-lanca { animation: cgEstende .3s cubic-bezier(.2,.8,.2,1) .35s both; }
+#loginScreen .predio.construindo .pr-gancho { opacity: 1; transition: opacity .2s ease .55s; animation: cgCabo .22s ease-in-out .6s 6 alternate; }
+#loginScreen .predio.construindo .pr-andar {
+    opacity: 1; transform: none;
+    transition: transform .42s cubic-bezier(.34,1.45,.55,1) calc(.6s + var(--k) * .22s), opacity .16s ease calc(.6s + var(--k) * .22s);
+}
+#loginScreen .predio.construindo .pr-janela.acende { fill: var(--ls-luz); transition: fill .35s ease calc(2.15s + var(--j) * .05s); }
+#loginScreen .predio.construindo .pr-antena { transform: none; transition: transform .3s cubic-bezier(.2,.8,.2,1) 2s; }
+#loginScreen .predio.construindo .pr-luz { animation: cgPisca 1.6s ease-in-out 2.35s infinite; }
+#loginScreen .predio.construindo .pr-halo { opacity: 1; transition: opacity 1s ease 2.3s; }
+#loginScreen .predio.construindo .pr-brilho-mov { animation: cgVarre 1s ease 3.05s both; }
+#loginScreen .predio.construindo .faisca { animation: cgFaisca 1s cubic-bezier(.2,.8,.2,1) 3.2s both; }
+#loginScreen .predio.construindo .f2 { animation-delay: 3.4s; }
+/* demolindo (quando a frase se apaga para recomeçar) */
+#loginScreen .predio.demolindo .pr-andar { opacity: 0; transform: translateY(4px); transition: opacity .4s ease calc((5 - var(--k)) * .04s), transform .4s ease-in calc((5 - var(--k)) * .04s); }
+#loginScreen .predio.demolindo .pr-contorno { transition: stroke-dashoffset .6s ease; }
+#loginScreen .predio.demolindo .pr-halo { opacity: 0; transition: opacity .3s ease; }
+#loginScreen .predio.demolindo .pr-antena { transition: transform .3s ease; }
+#loginScreen .predio.demolindo .pr-janela { transition: fill .25s ease; }
+/* frase pronta e parada (celular, "reduzir movimento") */
+#loginScreen .auth-titulo.escrito .pr-contorno { stroke-dashoffset: 0; }
+#loginScreen .auth-titulo.escrito .pr-andar { opacity: 1; transform: none; }
+#loginScreen .auth-titulo.escrito .pr-janela.acende { fill: var(--ls-luz); }
+#loginScreen .auth-titulo.escrito .pr-antena { transform: none; }
+#loginScreen .auth-titulo.escrito .pr-luz { opacity: .9; }
+#loginScreen .auth-titulo.escrito .pr-halo { opacity: 1; }
+#loginScreen .auth-titulo.escrito .faisca { transform: scale(1); opacity: .9; }
+@keyframes cgGrua { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateX(5px); } }
+@keyframes cgSobe { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes cgEstende { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes cgCabo { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+@keyframes cgPisca { 0%, 100% { opacity: .25; } 45%, 60% { opacity: 1; } }
+@keyframes cgVarre { 0% { transform: translateX(-30px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateX(100px); opacity: 0; } }
+@keyframes cgFaisca { 0% { transform: scale(0) rotate(-45deg); opacity: 0; } 55% { transform: scale(1.25) rotate(0); opacity: 1; } 100% { transform: scale(1); opacity: .9; } }
+/* a caneta */
+#loginScreen .caneta { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .35s ease; }
+#loginScreen .caneta.visivel { opacity: 1; }
+#loginScreen .caneta-mov { position: absolute; left: 0; top: 0; }
+#loginScreen .caneta svg { position: absolute; left: 0; top: -10px; width: 124px; height: 20px; transform-origin: 0 10px; transform: rotate(-38deg); filter: drop-shadow(-3px 10px 8px rgba(2,6,23,.55)); }
+/* recursos */
+#loginScreen .auth-recursos { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+#loginScreen .auth-recursos li { display: flex; gap: 14px; align-items: flex-start; }
+#loginScreen .auth-recurso-icone {
+    width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(148,190,255,.16); color: var(--ls-ceu); font-size: 21px;
+}
+#loginScreen .auth-recursos strong { display: block; font-size: 15px; font-weight: 600; margin: 1px 0 3px; color: #fff; }
+#loginScreen .auth-recursos small { display: block; font-size: 13.5px; line-height: 1.5; color: rgba(225,235,255,.64); max-width: 46ch; }
+#loginScreen .auth-lado-rodape { font-size: 12px; color: rgba(225,235,255,.42); }
+
+/* ---------- Cartão de acesso ---------- */
+#loginScreen .auth-direita { flex: .9 1 0; min-width: 0; position: relative; display: flex; align-items: center; justify-content: center; padding: 40px 28px; }
+#loginScreen .auth-direita::before {
+    content: ''; position: absolute; width: 460px; height: 460px; max-width: 100%; border-radius: 50%; z-index: -1;
+    background: radial-gradient(circle, rgba(56,189,248,.14), transparent 68%); filter: blur(10px);
+}
+#loginScreen .login-box {
+    width: 100%; max-width: 448px; text-align: left; color: var(--ls-texto); border-radius: 22px; padding: 40px 38px 26px;
+    background: linear-gradient(180deg, #13213F, #101C37);
+    box-shadow: 0 44px 90px -28px rgba(2,6,23,.75), 0 0 0 1px rgba(148,190,255,.10), inset 0 1px 0 rgba(255,255,255,.05);
+}
+#loginScreen .auth-card-marca { text-align: center; margin-bottom: 26px; }
+#loginScreen .auth-card-nome { display: inline-flex; align-items: center; gap: 11px; font-family: 'Space Grotesk', 'Segoe UI', sans-serif; font-size: 29px; font-weight: 700; letter-spacing: -.015em; color: #fff; }
+#loginScreen .auth-card-nome .auth-marca { width: 40px; height: 40px; border-radius: 11px; }
+#loginScreen .auth-card-marca p { color: var(--ls-texto-2); font-size: 14px; margin: 3px 0 0; }
+#loginScreen .login-tabs { display: flex; border-bottom: 2px solid var(--ls-linha); margin: 0 0 24px; gap: 2px; }
+#loginScreen .login-tab {
+    flex: 1 1 auto; white-space: nowrap; padding: 11px 6px 12px; font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--ls-texto-2); background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; cursor: pointer;
+}
+#loginScreen .login-tab:hover { color: var(--ls-texto); }
+#loginScreen .login-tab.active { color: #fff; font-weight: 600; border-bottom-color: var(--ls-ceu); }
+#loginScreen .login-tab:focus-visible { outline: 2px solid var(--ls-ceu); outline-offset: 2px; border-radius: 4px; }
+#loginScreen .input-group { margin-bottom: 16px; text-align: left; }
+#loginScreen .input-group label { display: block; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: var(--ls-texto); margin-bottom: 6px; }
+#loginScreen .input-group input {
+    width: 100%; padding: 12px 14px; font-family: inherit; font-size: 14px; border-radius: 10px;
+    border: 1px solid var(--ls-linha); background: var(--ls-campo); color: var(--ls-texto); transition: border-color .15s, box-shadow .15s;
+}
+#loginScreen .input-group input::placeholder { color: var(--ls-texto-3); }
+#loginScreen .input-group input:focus { outline: none; border-color: var(--ls-ceu); box-shadow: 0 0 0 3px rgba(56,189,248,.18); }
+#loginScreen .input-group input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px var(--ls-campo) inset; -webkit-text-fill-color: var(--ls-texto); caret-color: var(--ls-texto); }
+#loginScreen .pass-toggle { color: var(--ls-texto-3); }
+#loginScreen .pass-toggle:hover, #loginScreen .pass-toggle:focus-visible { color: var(--ls-texto); }
+#loginScreen .caps-lock { display: flex; align-items: center; gap: 5px; color: #FCD34D; font-size: 11.5px; margin-top: 5px; }
+#loginScreen .caps-lock[hidden] { display: none; }
+#loginScreen .login-error { min-height: 0; margin: 0 0 12px; padding: 9px 12px; background: rgba(248,113,113,.12); color: #FCA5A5; border-radius: 9px; font-size: 13px; line-height: 1.45; text-align: left; }
+#loginScreen .login-error:empty { display: none; }
+#loginScreen .btn-primary {
+    width: 100%; padding: 13px; font-family: inherit; font-size: 15px; font-weight: 600; border-radius: 10px; margin-top: 4px !important;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(135deg, #1565C0, #0288D1); box-shadow: 0 10px 22px -10px rgba(14,165,233,.8), inset 0 1px 0 rgba(255,255,255,.18);
+    transition: filter .15s, transform .1s;
+}
+#loginScreen .btn-primary:hover { background: linear-gradient(135deg, #1565C0, #0288D1); filter: brightness(1.1); transform: none; box-shadow: 0 10px 22px -10px rgba(14,165,233,.8), inset 0 1px 0 rgba(255,255,255,.18); }
+#loginScreen .btn-primary:active:not(:disabled) { transform: translateY(1px); }
+#loginScreen .btn-primary:focus-visible { outline: 2px solid var(--ls-tinta); outline-offset: 3px; }
+#loginScreen .btn-primary:disabled { opacity: .85; cursor: wait; filter: none; }
+#loginScreen .login-esqueci {
+    display: flex; align-items: center; justify-content: center; gap: 6px; margin: 16px auto 0; background: none; border: none; font-family: inherit;
+    color: var(--ls-tinta); font-size: 13.5px; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+}
+#loginScreen .login-esqueci i { color: var(--ls-ceu); font-size: 16px; }
+#loginScreen .login-esqueci:hover { text-decoration: underline; text-underline-offset: 3px; }
+#loginScreen .login-esqueci:focus-visible { outline: 2px solid var(--ls-ceu); outline-offset: 2px; }
+#loginScreen .login-seguro { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 22px; color: var(--ls-texto-2); font-size: 12.5px; }
+#loginScreen .login-versao { margin: 8px 0 0; text-align: center; font-size: 12px; color: var(--ls-texto-3); }
+/* entrada da tela e troca de aba */
+#loginScreen.entrando .login-box { animation: lsSubir .6s cubic-bezier(.2,.8,.2,1) both; }
+#loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-recursos li { animation: lsSurgir .6s cubic-bezier(.2,.8,.2,1) both; }
+#loginScreen.entrando .auth-recursos li:nth-child(1) { animation-delay: .26s; }
+#loginScreen.entrando .auth-recursos li:nth-child(2) { animation-delay: .34s; }
+#loginScreen.entrando .auth-recursos li:nth-child(3) { animation-delay: .42s; }
+#loginScreen.entrando .auth-recursos li:nth-child(4) { animation-delay: .5s; }
+#loginScreen #formEntrar, #loginScreen #formCadastrar { animation: lsAparecer .22s ease both; }
+@keyframes lsSubir { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes lsSurgir { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes lsAparecer { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 960px) {
+    #loginScreen .auth-lado { display: none; }
+    #loginScreen .auth-direita { flex: 1 1 auto; padding: 28px 16px; }
+}
+@media (min-width: 961px) and (max-height: 640px) {
+    #loginScreen .auth-lado { padding-top: 32px; padding-bottom: 28px; }
+    #loginScreen .auth-titulo { margin-bottom: 26px; }
+    #loginScreen .auth-recursos { gap: 13px; }
+    #loginScreen .auth-recursos small { display: none; }
+}
+@media (max-width: 520px) {
+    #loginScreen .login-box { padding: 30px 20px 22px; border-radius: 18px; }
+    #loginScreen .auth-card-nome { font-size: 25px; }
+    #loginScreen .login-tab { font-size: 13px; }
+    #loginScreen .input-group input { font-size: 16px; } /* evita o zoom automático do iPhone ao tocar no campo */
+}
+@media (prefers-reduced-motion: reduce) {
+    #loginScreen.entrando .login-box, #loginScreen.entrando .auth-lado-marca, #loginScreen.entrando .auth-recursos li,
+    #loginScreen #formEntrar, #loginScreen #formCadastrar { animation: none; }
+}
 
 /* LOGIN TABS */
 .login-tabs {
@@ -966,11 +1145,12 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 
 /* ===== ANIMAÇÕES ===================================================== */
 /* Tela de carregamento: abertura do app e login, até o painel estar pronto.
-   Mesmo degradê da tela de login, para a passagem ser contínua. */
+   Mesmo azul-noite da tela de login, para a passagem ser contínua. */
 .tc {
     position: fixed; inset: 0; z-index: 9999;
     display: flex; align-items: center; justify-content: center; overflow: hidden;
-    background: linear-gradient(135deg, #1A237E 0%, #1565C0 50%, #0288D1 100%);
+    background: radial-gradient(1000px 640px at 92% -12%, rgba(56,189,248,.17), transparent 62%),
+                linear-gradient(135deg, #061126 0%, #0C1F45 50%, #133A6E 100%);
     color: #fff; font-family: var(--font-body);
     opacity: 0; visibility: hidden;
     transition: opacity .5s ease, visibility 0s linear .5s;
@@ -1052,43 +1232,54 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 <body>
 
 <!-- =================== LOGIN / CADASTRO =================== -->
+<!-- Tela de acesso no padrão do OdontoWorld: à esquerda o painel do CondoGest, com a frase
+     escrita pela caneta e o prédio construído no fim (some no celular); à direita o cartão
+     de acesso. Os IDs e as funções são os mesmos de antes. -->
 <div id="loginScreen" class="login-overlay">
-    <!-- Painel de apresentação: aparece só em telas a partir de 960px (no celular fica só o formulário) -->
-    <div class="login-hero">
-        <div class="marca"><i class="ti ti-building"></i><b>CondoGest</b></div>
-        <h2>Seu condomínio organizado, da cobrança à prestação de contas.</h2>
-        <p class="lead">Gestão completa para síndicos, administradoras e condomínios de todos os tamanhos.</p>
-        <ul>
-            <li><i class="ti ti-receipt-2"></i><div><b>Financeiro integrado</b><span>Taxas, boletos com PIX, inadimplência e balancete.</span></div></li>
-            <li><i class="ti ti-users-group"></i><div><b>Portal do Morador</b><span>Comunicados, reservas de áreas comuns e ocorrências.</span></div></li>
-            <li><i class="ti ti-shield-lock"></i><div><b>Dados protegidos</b><span>Acesso por perfil de usuário, com trilha de auditoria.</span></div></li>
-        </ul>
-    </div>
-    <div class="login-box">
-        <h1>CondoGest</h1>
-        <p class="sub">Gestão de Condomínios</p>
+    <section class="auth-lado">
+        <div class="auth-lado-marca"><span class="auth-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="cgMarca1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca1)" opacity=".78"/><path d="M9 9h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 14h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 19h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM20.8 15.5h2.4v2.4h-2.4zm0 5h2.4v2.4h-2.4zM10.8 23.6h2.4V28h-2.4z" fill="#0B1733" opacity=".6"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg></span><span>CondoGest</span></div>
+        <div class="auth-lado-texto">
+            <h1 class="auth-titulo">Gestão condominial completa que integra cobrança, prestação de contas, moradores e assembleias.</h1>
+            <div class="caneta" aria-hidden="true"><div class="caneta-mov"></div></div>
+            <ul class="auth-recursos">
+                <li><span class="auth-recurso-icone"><i class="ti ti-receipt-2"></i></span><div><strong>Cobrança sem planilha</strong><small>Taxas por apartamento, boletos com PIX, cobrança em lote e multa e juros calculados sozinhos.</small></div></li>
+                <li><span class="auth-recurso-icone"><i class="ti ti-scale"></i></span><div><strong>Prestação de contas</strong><small>Conciliação bancária assistida, balancete e relatórios prontos para o conselho.</small></div></li>
+                <li><span class="auth-recurso-icone"><i class="ti ti-users-group"></i></span><div><strong>Portal do Morador</strong><small>Comunicados, reservas de áreas comuns, ocorrências e boletos da própria unidade.</small></div></li>
+                <li><span class="auth-recurso-icone"><i class="ti ti-shield-lock"></i></span><div><strong>Dados protegidos</strong><small>Permissões por tela para cada usuário e trilha de auditoria.</small></div></li>
+            </ul>
+        </div>
+        <div class="auth-lado-rodape">Reis Tecnologia</div>
+    </section>
 
-        <!-- Abas Entrar / Cadastrar -->
+    <div class="auth-direita">
+    <div class="login-box">
+        <div class="auth-card-marca">
+            <div class="auth-card-nome"><span class="auth-marca"><svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="cgMarca2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FDE68A"/><stop offset="1" stop-color="#F59E0B"/></linearGradient></defs><path d="M6 28V6.5C6 5.7 6.7 5 7.5 5h9c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca2)"/><path d="M18 28V13.5c0-.8.7-1.5 1.5-1.5h5c.8 0 1.5.7 1.5 1.5V28z" fill="url(#cgMarca2)" opacity=".78"/><path d="M9 9h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 14h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM9 19h2.4v2.4H9zm4.6 0H16v2.4h-2.4zM20.8 15.5h2.4v2.4h-2.4zm0 5h2.4v2.4h-2.4zM10.8 23.6h2.4V28h-2.4z" fill="#0B1733" opacity=".6"/><path d="M3.5 28h25" stroke="#FDE68A" stroke-width="1.6" stroke-linecap="round"/></svg></span><span>CondoGest</span></div>
+            <p>Gestão de Condomínios</p>
+        </div>
+
+        <!-- Abas Entrar / Criar conta -->
         <div class="login-tabs">
-            <button class="login-tab active" id="tabEntrar" onclick="switchLoginTab('entrar')">Entrar</button>
-            <button class="login-tab" id="tabCadastrar" onclick="switchLoginTab('cadastrar')">Cadastrar</button>
+            <button type="button" class="login-tab active" id="tabEntrar" onclick="switchLoginTab('entrar')">Entrar</button>
+            <button type="button" class="login-tab" id="tabCadastrar" onclick="switchLoginTab('cadastrar')">Criar conta</button>
         </div>
 
         <!-- FORM ENTRAR -->
         <div id="formEntrar">
             <div class="input-group">
-                <label>E-MAIL</label>
+                <label for="loginEmail">E-mail</label>
                 <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
             </div>
             <div class="input-group">
-                <label>SENHA</label>
+                <label for="loginPass">Senha</label>
                 <div style="position:relative">
-                    <input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password" style="padding-right:2.5rem">
-                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('loginPass', this)"><i class="ti ti-eye"></i></button>
+                    <input type="password" id="loginPass" placeholder="Digite sua senha" autocomplete="current-password" style="padding-right:2.6rem">
+                    <button type="button" class="pass-toggle" title="Mostrar senha" aria-label="Mostrar senha" onclick="togglePassVisibility('loginPass', this)"><i class="ti ti-eye"></i></button>
                 </div>
+                <div class="caps-lock" id="caps-loginPass" hidden><i class="ti ti-alert-triangle"></i> Caps Lock ligado</div>
             </div>
-            <div class="login-error" id="loginError"></div>
-            <button class="btn-primary" onclick="doLogin()" style="margin-top:1rem">
+            <div class="login-error" id="loginError" role="alert"></div>
+            <button class="btn-primary" onclick="doLogin()">
                 <i class="ti ti-login"></i> Entrar
             </button>
             <button type="button" class="login-esqueci" onclick="esqueciSenha()"><i class="ti ti-key"></i> Esqueci minha senha</button>
@@ -1097,35 +1288,38 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
         <!-- FORM CADASTRAR -->
         <div id="formCadastrar" style="display:none">
             <div class="input-group">
-                <label>NOME COMPLETO</label>
-                <input type="text" id="regNome" placeholder="Seu nome completo">
+                <label for="regNome">Nome completo</label>
+                <input type="text" id="regNome" placeholder="Seu nome completo" autocomplete="name">
             </div>
             <div class="input-group">
-                <label>E-MAIL</label>
-                <input type="email" id="regEmail" placeholder="seu@email.com">
+                <label for="regEmail">E-mail</label>
+                <input type="email" id="regEmail" placeholder="seu@email.com" autocomplete="email">
             </div>
             <div class="input-group">
-                <label>SENHA</label>
+                <label for="regPass">Senha</label>
                 <div style="position:relative">
-                    <input type="password" id="regPass" placeholder="Mínimo 6 caracteres" style="padding-right:2.5rem">
-                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('regPass', this)"><i class="ti ti-eye"></i></button>
+                    <input type="password" id="regPass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:2.6rem">
+                    <button type="button" class="pass-toggle" title="Mostrar senha" aria-label="Mostrar senha" onclick="togglePassVisibility('regPass', this)"><i class="ti ti-eye"></i></button>
                 </div>
+                <div class="caps-lock" id="caps-regPass" hidden><i class="ti ti-alert-triangle"></i> Caps Lock ligado</div>
             </div>
             <div class="input-group">
-                <label>CONFIRMAR SENHA</label>
+                <label for="regPassConfirm">Confirmar senha</label>
                 <div style="position:relative">
-                    <input type="password" id="regPassConfirm" placeholder="Repita a senha" style="padding-right:2.5rem">
-                    <button type="button" class="pass-toggle" onclick="togglePassVisibility('regPassConfirm', this)"><i class="ti ti-eye"></i></button>
+                    <input type="password" id="regPassConfirm" placeholder="Repita a senha" autocomplete="new-password" style="padding-right:2.6rem">
+                    <button type="button" class="pass-toggle" title="Mostrar senha" aria-label="Mostrar senha" onclick="togglePassVisibility('regPassConfirm', this)"><i class="ti ti-eye"></i></button>
                 </div>
+                <div class="caps-lock" id="caps-regPassConfirm" hidden><i class="ti ti-alert-triangle"></i> Caps Lock ligado</div>
             </div>
-            <div class="login-error" id="regError"></div>
-            <button class="btn-primary" onclick="doRegister()" style="margin-top:1rem">
-                <i class="ti ti-user-plus"></i> Cadastrar
+            <div class="login-error" id="regError" role="alert"></div>
+            <button class="btn-primary" onclick="doRegister()">
+                <i class="ti ti-user-plus"></i> Criar conta
             </button>
         </div>
 
-        <div class="login-seguro"><i class="ti ti-shield-lock"></i> Conexão segura &middot; seus dados protegidos</div>
-        <p class="login-versao">v1.0 Reis Consultoria ©2026</p>
+        <div class="login-seguro"><i class="ti ti-lock"></i> Conexão segura e dados protegidos</div>
+        <p class="login-versao">v1.0 Reis Tecnologia &copy; 2026</p>
+    </div>
     </div>
 </div>
 
@@ -3847,6 +4041,9 @@ function showLogin() {
 
     // Voltar para aba Entrar
     switchLoginTab('entrar');
+
+    // Entrada animada e frase escrita pela caneta (a animação nunca pode impedir o login)
+    try { iniciarTelaLogin(); } catch (e) { console.warn('Animação do login:', e); }
 }
 
 function enterApp() {
@@ -11616,6 +11813,323 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') doRegister();
     });
 });
+
+// ===== TELA DE LOGIN: frase escrita pela caneta =====
+// A caneta escreve a frase do painel (cada letra: contorno azul-céu que se
+// preenche de branco), sublinha "completa" e desenha o contorno de um prédio
+// no fim da frase. Quando a caneta sai, uma grua sobe os andares um a um, as
+// janelas acendem, a luz da antena pisca e um brilho atravessa a fachada.
+// A frase fica parada para leitura, se apaga e o ciclo recomeça.
+// Só roda com o painel visível (computador); com a aba escondida o navegador pausa.
+// Celular (painel escondido) e "reduzir movimento": frase e prédio aparecem prontos.
+// Leitores de tela leem a frase uma vez (so-leitor).
+const LOGIN_FRASE = 'Gestão condominial completa que integra cobrança, prestação de contas, moradores e assembleias.'; // "prestação de contas" sempre na mesma linha
+const LOGIN_DESTAQUE = 'completa';
+const LOGIN_TEMPO = { inicio: 650, chega: 380, risca: 520, ida: 620, predio: 1500, sai: 480, parada: 8000, apaga: 450, onda: 7, respiro: 600 };
+
+// Prédio (viewBox 84 x 72): duas torres sobre a linha do chão. A caneta traça o contorno
+// da esquerda para a direita: chão, torre alta, degrau, torre baixa e chão de novo.
+const LOGIN_PREDIO_CONTORNO = 'M2 68H10V14H38V32H66V68H82';
+function predioLoginSvg() {
+    // Janelas de cada andar, de baixo para cima: 1 acesa, 0 apagada, P porta da portaria
+    const TORRES = [
+        { x: 10, w: 27.6, janelas: [12.5, 19, 25.5, 32], andares: ['1PP1', '1101', '0111', '1011', '1110', '0110'] },
+        { x: 38.4, w: 27.6, janelas: [41.5, 48, 54.5, 61], andares: ['1111', '1011', '1101', '0111'] }
+    ];
+    let andares = '', n = 0;
+    for (let k = 0; k < 6; k++) {
+        let html = '';
+        TORRES.forEach(t => {
+            const linha = t.andares[k];
+            if (!linha) return;
+            const topo = 68 - 9 * (k + 1);
+            html += `<rect x="${t.x}" y="${topo + 0.8}" width="${t.w}" height="8.2" fill="url(#cgPredioLaje)"/>`
+                  + `<rect class="pr-laje" x="${t.x}" y="${topo + 0.8}" width="${t.w}" height="0.9"/>`;
+            let porta = false;
+            [...linha].forEach((c, i) => {
+                if (c === 'P') {
+                    if (porta) return;
+                    porta = true;
+                    html += `<rect class="pr-janela acende" style="--j:0" x="21.6" y="${topo + 2.4}" width="4.8" height="6.6" rx=".6"/>`;
+                    return;
+                }
+                const acesa = c === '1';
+                const j = acesa ? (n++ * 7) % 17 : 0; // ordem "aleatória", mas sempre a mesma
+                html += `<rect class="pr-janela${acesa ? ' acende' : ''}" style="--j:${j}" x="${t.janelas[i]}" y="${topo + 2.6}" width="3.5" height="4" rx=".5"/>`;
+            });
+        });
+        andares += `<g class="pr-andar" style="--k:${k}">${html}</g>`;
+    }
+    // Treliça do mastro da grua
+    let trelica = 'M72.6 68V7M75.4 68V7M72.6 68';
+    for (let y = 68, lado = 1; y > 8; y -= 5.5, lado = -lado) trelica += `L${lado > 0 ? 75.4 : 72.6} ${(y - 5.5).toFixed(1)}`;
+    let lanca = 'M44 7H82M44 9.6H72.6M44 9.6';
+    for (let x = 44, cima = true; x < 72; x += 2.6, cima = !cima) lanca += `L${(x + 2.6).toFixed(1)} ${cima ? 7 : 9.6}`;
+    return `<svg class="predio" viewBox="0 0 84 72" aria-hidden="true"><defs>`
+        + `<clipPath id="cgPredioRecorte"><path d="M10 68V14H38V32H66V68Z"/></clipPath>`
+        + `<clipPath id="cgPredioCabo"><rect x="40" y="9.6" width="24" height="40"/></clipPath>`
+        + `<linearGradient id="cgPredioLaje" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#28508F"/><stop offset="1" stop-color="#173461"/></linearGradient>`
+        + `<radialGradient id="cgPredioHalo"><stop offset="0" stop-color="#FBBF24" stop-opacity=".34"/><stop offset="1" stop-color="#FBBF24" stop-opacity="0"/></radialGradient>`
+        + `<linearGradient id="cgPredioLuz" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`
+        + `</defs>`
+        + `<ellipse class="pr-halo" cx="38" cy="46" rx="44" ry="30" fill="url(#cgPredioHalo)"/>`
+        + `<g class="pr-grua">`
+        +   `<g class="pr-grua-mastro"><path d="${trelica}"/></g>`
+        +   `<g class="pr-grua-lanca"><path d="${lanca}"/><path d="M74 2.5 46 7M74 2.5 82 7M74 2.5V7"/><rect class="pr-peso" x="77.6" y="7.4" width="4.4" height="3.4" rx=".4"/></g>`
+        +   `<g clip-path="url(#cgPredioCabo)"><g class="pr-gancho"><path d="M54 9.6V24M52.6 24h2.8v1.2c0 1.9-2.8 1.9-2.8 0"/></g></g>`
+        + `</g>`
+        + andares
+        + `<g clip-path="url(#cgPredioRecorte)"><g class="pr-brilho-mov"><rect x="0" y="-10" width="14" height="100" fill="url(#cgPredioLuz)" transform="skewX(-22)"/></g></g>`
+        + `<g class="pr-antena"><path d="M24 14V5.6M21.4 9.4h5.2"/></g>`
+        + `<circle class="pr-luz" cx="24" cy="4.4" r="1.7" fill="#F87171"/>`
+        + `<path class="pr-contorno" d="${LOGIN_PREDIO_CONTORNO}"/>`
+        + `<g transform="translate(78 24)"><path class="faisca f1" d="M0-6C.6-1.2 1.2-.6 6 0 1.2.6.6 1.2 0 6-.6 1.2-1.2.6-6 0-1.2-.6-.6-1.2 0-6z"/></g>`
+        + `<g transform="translate(4 30)"><path class="faisca f2" d="M0-4C.4-.8.8-.4 4 0 .8.4.4.8 0 4-.4.8-.8.4-4 0-.8-.4-.4-.8 0-4z"/></g>`
+        + `</svg>`;
+}
+
+// Caneta de corpo azul laqueado e partes de metal; a ponta fica na origem (0, 11)
+const LOGIN_CANETA_SVG =
+    '<svg viewBox="0 0 136 22" aria-hidden="true"><defs>' +
+    '<linearGradient id="cgCanetaCorpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CB8FF"/><stop offset=".3" stop-color="#2F6FE0"/><stop offset=".7" stop-color="#173B8F"/><stop offset="1" stop-color="#0A1A45"/></linearGradient>' +
+    '<linearGradient id="cgCanetaMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8FAFC"/><stop offset=".45" stop-color="#CBD5E1"/><stop offset=".75" stop-color="#8A9BB4"/><stop offset="1" stop-color="#CBD5E1"/></linearGradient></defs>' +
+    '<path d="M0 11 5.5 9.4v3.2z" fill="#0F172A"/>' +
+    '<path d="M5 9.5 25 4.2v13.6L5 12.5z" fill="url(#cgCanetaMetal)"/>' +
+    '<rect x="25" y="3.6" width="3" height="14.8" fill="#E2E8F0"/>' +
+    '<rect x="28" y="3.4" width="88" height="15.2" fill="url(#cgCanetaCorpo)"/>' +
+    '<rect x="28" y="5.2" width="88" height="1.3" fill="#fff" opacity=".35"/>' +
+    '<rect x="70" y="3.4" width="4" height="15.2" fill="url(#cgCanetaMetal)"/>' +
+    '<rect x="116" y="3.4" width="2.6" height="15.2" fill="url(#cgCanetaMetal)"/>' +
+    '<path d="M118.6 3.4h8.6a7.6 7.6 0 0 1 0 15.2h-8.6z" fill="url(#cgCanetaCorpo)"/>' +
+    '<rect x="86" y=".6" width="38" height="3.4" rx="1.7" fill="url(#cgCanetaMetal)"/>' +
+    '<circle cx="87.6" cy="2.3" r="2.1" fill="#E2E8F0"/>' +
+    '</svg>';
+
+const _escritaLogin = { quadro: 0, espera: 0, ativa: false, volta: 0 };
+
+// Monta a frase letra por letra (uma vez), o prédio e a caneta
+function montarFraseLogin() {
+    const h1 = document.querySelector('#loginScreen .auth-titulo');
+    if (!h1 || h1.getAttribute('data-montada')) return;
+    const palavras = LOGIN_FRASE.split(' ');
+    const html = palavras.map((p, k) => {
+        const letras = [...p].map(c => `<span class="esc-l">${H(c)}</span>`).join('');
+        if (p === LOGIN_DESTAQUE) {
+            return `<span class="esc-p esc-destaque">${letras}`
+                + `<svg class="esc-risco" viewBox="0 0 200 14" preserveAspectRatio="none" aria-hidden="true"><path d="M3 9C45 5 90 4 130 6S185 9 197 5" pathLength="1"/></svg></span>`;
+        }
+        return `<span class="esc-p">${letras}${k === palavras.length - 1 ? predioLoginSvg() : ''}</span>`;
+    }).join(' ');
+    h1.innerHTML = `<span class="so-leitor">${H(LOGIN_FRASE)}</span><span class="esc" aria-hidden="true">${html}</span>`;
+    h1.setAttribute('data-montada', '1');
+    // Até a caneta começar, a frase fica pronta (se a animação não rodar, o texto continua legível)
+    h1.classList.add('escrito');
+    const mov = document.querySelector('#loginScreen .caneta-mov');
+    if (mov) mov.innerHTML = LOGIN_CANETA_SVG;
+}
+
+function escreverFraseLogin() {
+    const esc = _escritaLogin, T = LOGIN_TEMPO;
+    cancelAnimationFrame(esc.quadro); clearTimeout(esc.espera);
+    const t = document.getElementById('loginScreen');
+    const h1 = t && t.querySelector('.auth-titulo'), caixa = t && t.querySelector('.auth-lado-texto'), caneta = t && t.querySelector('.caneta');
+    if (!h1 || !caixa || !caneta) return;
+    const letras = [...h1.querySelectorAll('.esc-l')];
+    const risco = h1.querySelector('.esc-risco'), traco = risco && risco.querySelector('path');
+    const predio = h1.querySelector('.predio'), contorno = predio && predio.querySelector('.pr-contorno');
+    const mov = caneta.firstElementChild;
+    let tamPredio = 0;
+    const naTela = () => h1.isConnected && t.style.display !== 'none' && !!caixa.offsetParent;
+    // Frase pronta e parada (celular, "reduzir movimento", saiu da tela de login)
+    const pronto = () => {
+        cancelAnimationFrame(esc.quadro); clearTimeout(esc.espera); esc.ativa = false;
+        letras.forEach(l => { l.style.clipPath = ''; l.style.transitionDelay = ''; });
+        if (traco) { traco.style.strokeDashoffset = ''; traco.style.transition = ''; }
+        if (contorno) { contorno.style.strokeDasharray = ''; contorno.style.strokeDashoffset = ''; contorno.style.transition = ''; }
+        if (predio) predio.classList.remove('construindo', 'demolindo');
+        h1.classList.remove('apagando'); h1.classList.add('escrito');
+        caneta.classList.remove('visivel', 'saindo');
+    };
+    let reduzir = false;
+    try { reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* segue */ }
+    if (reduzir || !caixa.offsetParent || !letras.length) { pronto(); return; }
+    esc.ativa = true;
+    const volta = ++esc.volta; // um novo começo cancela a espera da fonte do anterior
+    // recomeço (ex.: a janela mudou de tamanho no meio da escrita): limpa tudo antes
+    letras.forEach(l => { l.classList.remove('traco', 'feito'); l.style.clipPath = ''; l.style.transitionDelay = ''; });
+    if (traco) { traco.style.transition = ''; traco.style.strokeDashoffset = ''; }
+    if (predio) predio.classList.remove('construindo', 'demolindo');
+    if (contorno) { contorno.style.transition = ''; contorno.style.strokeDasharray = ''; contorno.style.strokeDashoffset = ''; }
+    caneta.classList.remove('visivel', 'saindo');
+
+    // Roteiro (refeito a cada volta, com a fonte carregada e a largura atual): em cada
+    // letra a caneta primeiro se desloca (espaço, vírgula, troca de linha) e depois escreve
+    let passos = [];
+    const roteiro = () => {
+        const r0 = letras.map(l => l.getBoundingClientRect());
+        passos = letras.map((l, i) => {
+            const anterior = i ? letras[i - 1].textContent : '';
+            const novaLinha = i > 0 && r0[i].top - r0[i - 1].top > 4;
+            const novaPalavra = i > 0 && !l.previousElementSibling;
+            let desloca = i === 0 || novaLinha ? 420 : novaPalavra ? 70 : 0;
+            if (novaPalavra && anterior === ',') desloca += 200;
+            return { desloca, escreve: 12 + r0[i].width * 0.95 + Math.random() * 10, novaLinha, novaPalavra };
+        });
+        if (contorno) {
+            tamPredio = contorno.getTotalLength();
+            contorno.style.transition = '';
+            contorno.style.strokeDasharray = String(tamPredio);
+            contorno.style.strokeDashoffset = String(tamPredio);
+        }
+    };
+    const suave = f => (f < 0.5 ? 2 * f * f : 1 - Math.pow(-2 * f + 2, 2) / 2);
+    const ponta = (r, b, direita) => ({ x: (direita ? r.right : r.left) - b.left, y: r.top + r.height * 0.8 - b.top });
+    const por = (p, sobe = 0, gira = 0) => {
+        caneta.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px)`;
+        mov.style.transform = `translateY(${(-sobe).toFixed(1)}px) rotate(${gira.toFixed(2)}deg)`;
+    };
+    const entre = (a, c, f) => ({ x: a.x + (c.x - a.x) * f, y: a.y + (c.y - a.y) * f });
+    const noRisco = (b, f) => {
+        const rr = risco.getBoundingClientRect(), pt = traco.getPointAtLength(f * traco.getTotalLength());
+        return { x: rr.left + (pt.x / 200) * rr.width - b.left, y: rr.top + (pt.y / 14) * rr.height - b.top };
+    };
+    const noPredio = (b, f) => { // ponto do contorno do prédio, em coordenadas da caixa
+        const m = contorno.getScreenCTM(), pt = contorno.getPointAtLength(f * tamPredio);
+        return { x: m.a * pt.x + m.c * pt.y + m.e - b.left, y: m.b * pt.x + m.d * pt.y + m.f - b.top };
+    };
+    let i = 0, tempo = 0, fase = 'letras', ultimo = null, deOnde = null;
+
+    function quadro(agora) {
+        if (!naTela()) { pronto(); return; }
+        tempo += ultimo === null ? 0 : Math.min(agora - ultimo, 50); // aba escondida: continua de onde parou
+        ultimo = agora;
+        const b = caixa.getBoundingClientRect();
+        let f, g;
+        if (fase === 'letras') {
+            for (;;) {
+                const p = passos[i], r = letras[i].getBoundingClientRect();
+                const ini = ponta(r, b, false), fim = ponta(r, b, true);
+                if (tempo < p.desloca) { // indo até o começo da letra
+                    f = tempo / p.desloca;
+                    const de = i ? ponta(letras[i - 1].getBoundingClientRect(), b, true) : { x: ini.x + 34, y: ini.y - 40 };
+                    por(entre(de, ini, i === 0 || p.novaLinha ? suave(f) : f), (p.novaLinha ? 12 : p.novaPalavra ? 4 : 0) * Math.sin(f * Math.PI));
+                    break;
+                }
+                g = (tempo - p.desloca) / p.escreve;
+                if (g < 1) { // escrevendo a letra, da esquerda para a direita
+                    letras[i].classList.add('traco');
+                    letras[i].style.clipPath = `inset(-35% ${((1 - g) * 100).toFixed(1)}% -35% -12%)`;
+                    por(entre(ini, fim, g), 2.5 * Math.sin(g * Math.PI), -2 * Math.sin(g * Math.PI));
+                    break;
+                }
+                letras[i].style.clipPath = ''; letras[i].classList.add('traco', 'feito'); // computador lento: a letra pode passar inteira num quadro só
+                tempo -= p.desloca + p.escreve; i += 1;
+                if (i >= letras.length) { fase = risco ? 'chega' : contorno ? 'ida' : 'sai'; deOnde = fim; break; }
+            }
+        }
+        if (fase === 'chega') { // vai até o começo do sublinhado
+            f = Math.min(1, tempo / T.chega);
+            por(entre(deOnde, noRisco(b, 0), suave(f)), 10 * Math.sin(f * Math.PI));
+            if (f >= 1) { tempo -= T.chega; fase = 'risca'; }
+        }
+        if (fase === 'risca') { // sublinha "completa"
+            f = Math.min(1, tempo / T.risca);
+            traco.style.strokeDashoffset = String(1 - f);
+            por(noRisco(b, f), 0, -1.5 * Math.sin(f * Math.PI));
+            if (f >= 1) { tempo -= T.risca; deOnde = noRisco(b, 1); fase = contorno ? 'ida' : 'sai'; }
+        }
+        if (fase === 'ida') { // levanta e vai até o pé do prédio, no fim da frase
+            f = Math.min(1, tempo / T.ida);
+            por(entre(deOnde, noPredio(b, 0), suave(f)), 18 * Math.sin(f * Math.PI));
+            if (f >= 1) { tempo -= T.ida; fase = 'predio'; }
+        }
+        if (fase === 'predio') { // traça o chão e o contorno das duas torres
+            f = Math.min(1, tempo / T.predio);
+            g = f * 0.85 + suave(f) * 0.15;
+            contorno.style.strokeDashoffset = String(tamPredio * (1 - g));
+            por(noPredio(b, g), 0, -1.2 * Math.sin(g * Math.PI * 2));
+            if (f >= 1) { tempo -= T.predio; fase = 'sai'; deOnde = noPredio(b, 1); predio.classList.add('construindo'); }
+        }
+        if (fase === 'sai') { // levanta e some; a frase fica parada para leitura
+            f = Math.min(1, tempo / T.sai);
+            if (!caneta.classList.contains('saindo')) { caneta.classList.add('saindo'); caneta.classList.remove('visivel'); }
+            por(entre(deOnde, { x: deOnde.x + 30, y: deOnde.y - 38 }, suave(f)));
+            if (f >= 1) { esc.espera = setTimeout(apagar, T.parada); return; }
+        }
+        esc.quadro = requestAnimationFrame(quadro);
+    }
+
+    // Apaga numa onda da esquerda para a direita, desmonta o prédio e recomeça
+    function apagar() {
+        if (!naTela()) { pronto(); return; }
+        letras.forEach((l, k) => { l.style.transitionDelay = (k * T.onda) + 'ms'; });
+        h1.classList.add('apagando');
+        if (traco) { traco.style.transition = 'stroke-dashoffset .6s ease'; traco.style.strokeDashoffset = '1'; }
+        if (predio) {
+            predio.classList.remove('construindo'); predio.classList.add('demolindo');
+            contorno.style.strokeDashoffset = String(tamPredio);
+        }
+        esc.espera = setTimeout(() => {
+            letras.forEach(l => { l.classList.remove('traco', 'feito'); l.style.transitionDelay = ''; });
+            h1.classList.remove('apagando');
+            if (traco) traco.style.transition = '';
+            if (predio) predio.classList.remove('demolindo');
+            esc.espera = setTimeout(escrever, T.respiro);
+        }, T.apaga + letras.length * T.onda);
+    }
+
+    function escrever() {
+        if (!naTela()) { pronto(); return; }
+        roteiro();
+        i = 0; tempo = 0; fase = 'letras'; ultimo = null; deOnde = null;
+        caneta.classList.remove('saindo'); caneta.classList.add('visivel');
+        esc.quadro = requestAnimationFrame(quadro);
+    }
+
+    h1.classList.remove('escrito', 'apagando');
+    // espera a fonte carregar; começa no máximo em 1,5 s
+    const fontes = document.fonts && document.fonts.ready
+        ? Promise.race([document.fonts.ready, new Promise(ok => setTimeout(ok, 1500))]) : Promise.resolve();
+    const comeco = Date.now();
+    fontes.then(() => {
+        if (!esc.ativa || volta !== esc.volta) return;
+        esc.espera = setTimeout(escrever, Math.max(0, T.inicio - (Date.now() - comeco)));
+    });
+}
+
+// Chamada pelo showLogin(): entrada animada da tela e caneta (se ainda não estiver escrevendo)
+function iniciarTelaLogin() {
+    const t = document.getElementById('loginScreen');
+    if (!t) return;
+    montarFraseLogin();
+    t.classList.remove('entrando'); void t.offsetWidth; t.classList.add('entrando');
+    clearTimeout(iniciarTelaLogin._t);
+    iniciarTelaLogin._t = setTimeout(() => t.classList.remove('entrando'), 1400);
+    if (!_escritaLogin.ativa) escreverFraseLogin();
+}
+
+// Preparação ao abrir a página: monta a frase e liga o aviso de Caps Lock
+(function prepararTelaLogin() {
+    const t = document.getElementById('loginScreen');
+    if (!t) return;
+    try { montarFraseLogin(); } catch (e) { console.warn('Tela de login:', e); }
+    const capsLock = e => {
+        const aviso = e.target && e.target.id && document.getElementById('caps-' + e.target.id);
+        if (aviso && e.getModifierState) aviso.hidden = !e.getModifierState('CapsLock');
+    };
+    t.addEventListener('keydown', capsLock);
+    t.addEventListener('keyup', capsLock);
+    t.addEventListener('focusout', e => {
+        const aviso = e.target && e.target.id && document.getElementById('caps-' + e.target.id);
+        if (aviso) aviso.hidden = true;
+    });
+    // mudou de tamanho (girou o tablet, abriu o painel): recomeça com o roteiro novo
+    let redim = 0;
+    window.addEventListener('resize', () => {
+        clearTimeout(redim);
+        redim = setTimeout(() => { if (t.style.display !== 'none' && document.getElementById('appContainer').style.display === 'none') escreverFraseLogin(); }, 400);
+    });
+})();
 
 // ===== MODO CELULAR: rótulos das tabelas =====
 // Copia o título de cada coluna (thead) para data-label das células, usado pelo CSS de cartões.
