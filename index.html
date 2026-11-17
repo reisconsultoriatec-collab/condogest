@@ -783,6 +783,107 @@ body.entrando-app #loginScreen { display: flex !important; }
     place-items: center; font-size: 11px; font-weight: 700; }
 .sidebar-nav .nav-item .nav-badge.warn { background: var(--secondary); color: #1A2744; }
 
+/* ===== BARRA DO TOPO NO PADRÃO DO FROTAGEST (nov/2026) =====
+ * Título da tela com o condomínio embaixo; à direita o seletor de condomínio, tempo conectado,
+ * tema, atualizar, imprimir, avisos (sino), usuário e sair. No celular os botões menos usados
+ * ficam no "⋮" e o seletor de condomínio volta para o menu lateral. */
+.top-header.tb { height: 68px; gap: 14px; padding: 0 26px; background: var(--bg-card); border-bottom: 1px solid var(--border);
+    box-shadow: none; z-index: 60; }
+.tb .tb-title { min-width: 90px; flex: 1 1 auto; }
+.tb .header-title { display: block; margin: 0; font-size: 20px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb .tb-sub { font-size: 12.5px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb .tb-sub:empty { display: none; }
+.tb .tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.tb .tb-btn { position: relative; width: 38px; height: 38px; flex: none; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text-secondary); display: grid; place-items: center; cursor: pointer; padding: 0;
+    transition: color .15s, border-color .15s, background .15s; }
+.tb .tb-btn .ti { font-size: 19px; line-height: 1; }
+.tb .tb-btn:hover { color: var(--text-primary); border-color: var(--text-light); }
+.tb .tb-btn:disabled { cursor: wait; opacity: .7; }
+.tb .tb-btn.spin .ti { animation: tbGirar .7s linear; }
+@keyframes tbGirar { to { transform: rotate(360deg); } }
+.tb .tb-btn .cnt { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+    background: var(--accent-red); color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; }
+.tb .tb-btn .cnt[hidden] { display: none; }
+.tb .tb-menu { display: none; }
+.tb .tb-chip { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border-radius: 10px;
+    background: var(--bg-main); color: var(--text-secondary); font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: default; }
+.tb .tb-tempo .ti { color: var(--accent); font-size: 16px; }
+/* seletor de condomínio (o mesmo #condoSelect: no computador fica aqui, no celular volta para o menu) */
+.tb .tb-condo:empty { display: none; }
+.tb .tb-condo .sidebar-condo-select { width: auto; max-width: 220px; height: 38px; margin: 0; padding: 0 10px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.tb .tb-condo .sidebar-condo-select:focus { border-color: var(--secondary); box-shadow: 0 0 0 3px rgba(245,158,11,.15); }
+.tb .tb-condo .sidebar-condo-select option { background: var(--bg-card); color: var(--text-primary); }
+/* usuário */
+.tb .tb-user { display: flex; align-items: center; gap: 10px; padding-left: 6px; cursor: pointer; min-width: 0; }
+.tb .avatar { width: 36px; height: 36px; flex: none; border-radius: 10px; background: #1A2744; color: var(--secondary);
+    display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 14px; }
+[data-theme="dark"] .tb .avatar { background: #26365C; }
+.tb .tb-user-txt { line-height: 1.2; max-width: 190px; min-width: 0; }
+.tb .tb-user-txt b { display: block; font-size: 13px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb .tb-user-txt span { display: block; font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* avisos (sino) */
+.tb .tb-avisos-box { position: relative; }
+.tb .tb-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 320px; z-index: 70; display: flex; flex-direction: column; gap: 2px;
+    padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 18px 44px rgba(16,24,40,.16); }
+[data-theme="dark"] .tb .tb-pop { box-shadow: 0 18px 44px rgba(0,0,0,.5); }
+.tb .tb-pop[hidden] { display: none; }
+.tb .tb-pop-tit { display: flex; align-items: center; gap: 8px; padding: 2px 4px 8px; font-weight: 700; font-size: 13px; color: var(--text-primary); }
+.tb .tb-pop-tit .ti { color: var(--secondary); font-size: 17px; }
+.tb .tb-pop-link { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 6px; border: 0; border-radius: 10px; background: none;
+    color: var(--text-primary); text-align: left; cursor: pointer; font: inherit; }
+.tb .tb-pop-link:hover { background: var(--bg-main); }
+.tb .tb-pop-link > .ti:first-child { flex: none; font-size: 18px; color: var(--secondary); }
+.tb .tb-pop-link > .ti:first-child.urgente { color: var(--accent-red); }
+.tb .tb-pop-link > .ti:last-child { flex: none; margin-left: auto; color: var(--text-light); font-size: 16px; }
+.tb .tb-pop-link span { display: flex; flex-direction: column; min-width: 0; }
+.tb .tb-pop-link b { font-size: 13.5px; font-weight: 600; }
+.tb .tb-pop-link small { font-size: 11.5px; color: var(--text-light); }
+.tb .tb-pop-vazio { padding: 10px 6px 6px; font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+.tb .tb-pop-vazio .ti { color: var(--accent); font-size: 18px; }
+/* "⋮" só no celular */
+.tb .tb-extras { display: contents; }
+.tb .tb-mais, .tb .tb-so-celular { display: none !important; }
+@media (min-width: 769px) { .sidebar-condo { display: none; } }
+@media (max-width: 1080px) {
+    .tb .tb-tempo { display: none; }
+    .tb .tb-user-txt { display: none; }
+    .tb .tb-condo .sidebar-condo-select { max-width: 170px; }
+}
+@media (max-width: 900px) {
+    .tb .header-title { font-size: 17px; }
+    .tb .tb-sub { display: none; }
+    .top-header.tb { padding: 0 16px; gap: 10px; }
+    .tb .tb-title { min-width: 70px; }
+    .tb .tb-right { gap: 8px; }
+    .tb .tb-condo .sidebar-condo-select { max-width: 120px; }
+}
+@media (max-width: 768px) {
+    .top-header.tb { padding: 0 16px; }
+    .tb .tb-menu { display: grid; }
+    .tb .tb-condo { display: none; }
+}
+@media (max-width: 560px) {
+    .top-header.tb { gap: 8px; }
+    .tb .tb-user { display: none !important; }
+    .tb .tb-mais { display: grid !important; }
+    #tbSair { display: none !important; }
+    .tb .tb-extras { display: none; position: absolute; top: calc(100% + 6px); right: 12px; z-index: 70; min-width: 250px;
+        flex-direction: column; gap: 2px; padding: 6px; background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 14px; box-shadow: 0 18px 40px rgba(15,23,42,.2); }
+    .tb.mais-aberto .tb-extras { display: flex; }
+    .tb.mais-aberto .tb-mais { color: var(--text-primary); border-color: var(--text-light); }
+    .tb .tb-extras .tb-btn, .tb .tb-extras .tb-so-celular { display: flex !important; align-items: center; justify-content: flex-start; gap: 12px;
+        width: 100%; height: 46px; padding: 0 12px; border: 0; border-radius: 10px; background: none; font: inherit; font-size: 14.5px;
+        font-weight: 500; color: var(--text-primary); }
+    .tb .tb-extras .tb-btn:hover { background: var(--bg-main); }
+    .tb .tb-extras .tb-btn::after { content: attr(aria-label); }
+    .tb .tb-extras #tbSairCel { color: var(--accent-red); }
+    .tb .tb-pop { position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
+}
+
 /* rodapé: usuário num cartão, como o quadro de status do FrotaGest */
 .sidebar-footer { margin: 0 12px; padding: 12px; border-top: 0; border-radius: 12px; background: rgba(255,255,255,.04); }
 .sidebar-session { padding: 12px 24px 16px; font-size: 11.5px; color: #6F7C9C; }
@@ -1810,15 +1911,34 @@ table tbody tr:hover { background: rgba(37,99,235,0.03); }
 
 <!-- MAIN -->
 <main class="main-content">
-    <header class="top-header">
-        <div class="header-left">
-            <button class="btn-menu-mobile" onclick="toggleSidebar()"><i class="ti ti-menu-2"></i></button>
-            <span class="header-title" id="pageTitle">Dashboard</span>
+    <!-- Barra do topo no padrão do FrotaGest: título da tela e condomínio; à direita o seletor de
+         condomínio (no celular ele fica no menu lateral), tempo conectado, tema, atualizar, imprimir,
+         avisos, usuário e sair. No celular os botões menos usados ficam no "⋮". -->
+    <header class="top-header tb" id="topBar">
+        <button class="tb-btn tb-menu" type="button" onclick="toggleSidebar()" aria-label="Menu"><i class="ti ti-menu-2"></i></button>
+        <div class="tb-title">
+            <h1 class="header-title" id="pageTitle">Dashboard</h1>
+            <div class="tb-sub" id="tbSub"></div>
         </div>
-        <div class="header-right">
-            <button class="btn-icon" onclick="toggleTheme()" title="Tema"><i class="ti ti-moon-stars"></i></button>
-            <button class="btn-icon" onclick="window.print()" title="Imprimir"><i class="ti ti-printer"></i></button>
-            <div class="user-avatar" id="userAvatar" onclick="navigateTo('configuracoes')">U</div>
+        <div class="tb-right">
+            <div class="tb-condo" id="tbCondo"></div>
+            <div class="tb-chip tb-tempo" id="tbTempo" title="Tempo conectado"><i class="ti ti-clock"></i><span>agora</span></div>
+            <div class="tb-extras" id="tbExtras">
+                <button class="tb-btn" id="tbTema" type="button" onclick="toggleTheme()" title="Tema escuro" aria-label="Trocar o tema (claro ou escuro)"><i class="ti ti-moon"></i></button>
+                <button class="tb-btn" id="tbAtualizar" type="button" onclick="atualizarTela()" title="Atualizar os dados da tela" aria-label="Atualizar os dados da tela"><i class="ti ti-refresh"></i></button>
+                <button class="tb-btn" id="tbImprimir" type="button" onclick="window.print()" title="Imprimir" aria-label="Imprimir"><i class="ti ti-printer"></i></button>
+                <button class="tb-btn tb-so-celular" id="tbSairCel" type="button" onclick="doLogout()" aria-label="Sair"><i class="ti ti-logout"></i></button>
+            </div>
+            <div class="tb-avisos-box">
+                <button class="tb-btn" id="tbAvisos" type="button" onclick="abrirAvisosTopo(event)" title="Avisos" aria-label="Avisos" aria-haspopup="true" aria-expanded="false"><i class="ti ti-bell"></i><span class="cnt" id="tbAvisosN" hidden></span></button>
+                <div class="tb-pop" id="tbAvisosPop" hidden></div>
+            </div>
+            <button class="tb-btn tb-mais" id="tbMais" type="button" onclick="alternarMaisTopo(event)" title="Mais opções" aria-label="Mais opções" aria-haspopup="true" aria-expanded="false"><i class="ti ti-dots-vertical"></i></button>
+            <div class="tb-user" onclick="navigateTo('configuracoes')" title="Configurações">
+                <div class="avatar" id="userAvatar">U</div>
+                <div class="tb-user-txt"><b id="tbNome"></b><span id="tbPerfil"></span></div>
+            </div>
+            <button class="tb-btn" id="tbSair" type="button" onclick="doLogout()" title="Sair" aria-label="Sair"><i class="ti ti-logout"></i></button>
         </div>
     </header>
 
@@ -3978,6 +4098,185 @@ document.addEventListener('keydown', (e) => {
     alvo.click();
 });
 
+// ===== BARRA DO TOPO (padrão do FrotaGest) =====
+const CHAVE_INICIO_SESSAO = 'condogest_inicio_sessao'; // só a hora da entrada, nenhum dado pessoal
+const PERFIS_TOPO = { admin:'Administrador', sindico:'Síndico', usuario:'Usuário', morador:'Morador', visualizador:'Visualizador' };
+
+function iniciaisTopo(nome) {
+    const p = String(nome || '?').trim().split(/\s+/);
+    return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
+}
+
+/** Nome do condomínio embaixo do título, usuário e perfil, e o número do sino. */
+function atualizarBarraTopo() {
+    const condo = (APP.condominios || []).find(c => c.id === APP.currentCondoId);
+    const sub = document.getElementById('tbSub');
+    if (sub) sub.textContent = condo ? (condo.nome || '') : '';
+    if (APP.userProfile) {
+        const nome = APP.userProfile.nome || (APP.currentUser && APP.currentUser.email) || '';
+        const n = document.getElementById('tbNome'); if (n) n.textContent = nome;
+        const p = document.getElementById('tbPerfil'); if (p) p.textContent = PERFIS_TOPO[APP.userProfile.perfil] || APP.userProfile.perfil || '';
+        const a = document.getElementById('userAvatar'); if (a) a.textContent = iniciaisTopo(nome);
+    }
+    const avisos = calcularAvisosTopo();
+    const total = avisos.reduce((t, x) => t + x.n, 0);
+    const cnt = document.getElementById('tbAvisosN');
+    if (cnt) { cnt.hidden = !total; cnt.textContent = total > 99 ? '99+' : String(total); }
+    const sino = document.getElementById('tbAvisos');
+    if (sino) sino.title = total ? `Avisos: ${total}` : 'Avisos';
+    const pop = document.getElementById('tbAvisosPop');
+    if (pop && !pop.hidden) desenharAvisosTopo(avisos);
+}
+
+/**
+ * Os mesmos avisos do Dashboard (contas a vencer em 7 dias, chamados urgentes em aberto, contratos
+ * vencidos ou vencendo em 30 dias) e os cadastros aguardando aprovação. Cada um só entra para
+ * quem pode abrir a tela correspondente. Nada que identifique apartamento inadimplente.
+ */
+function calcularAvisosTopo() {
+    const lista = [];
+    if (!APP.userProfile) return lista;
+    const pode = (pg) => { try { return podeAbrirPagina(pg); } catch (e) { return false; } };
+    const hoje = new Date().toISOString().split('T')[0];
+    const dias = (n) => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; };
+    const plural = (n, um, varios) => n === 1 ? um : varios.replace('#', n);
+    if (pode('usuarios')) {
+        const n = (APP.usuarios || []).filter(u => u.aprovado === false).length;
+        if (n) lista.push({ n, ico: 'user-plus', pagina: 'usuarios', onde: 'Sistema › Usuários',
+            tit: plural(n, '1 cadastro aguardando aprovação', '# cadastros aguardando aprovação') });
+    }
+    if (pode('contas')) {
+        const lim = dias(7);
+        const n = (APP.contas || []).filter(c => c.vencimento && !c.pago && c.vencimento >= hoje && c.vencimento <= lim).length;
+        if (n) lista.push({ n, ico: 'clock-exclamation', pagina: 'contas', onde: 'Financeiro › Contas a Pagar',
+            tit: plural(n, '1 conta vence em até 7 dias', '# contas vencem em até 7 dias') });
+    }
+    if (pode('ocorrencias')) {
+        const n = (APP.ocorrencias || []).filter(o => o.prioridade === 'urgente' && (o.status === 'aberto' || o.status === 'em_andamento')).length;
+        if (n) lista.push({ n, ico: 'urgent', urgente: true, pagina: 'ocorrencias', onde: 'Operacional › Ocorrências',
+            tit: plural(n, '1 chamado urgente em aberto', '# chamados urgentes em aberto') });
+    }
+    if (pode('fornecedores')) {
+        const lim = dias(30);
+        const forn = APP.fornecedores || [];
+        const vencidos = forn.filter(f => f.contratoFim && f.contratoFim < hoje).length;
+        const vencendo = forn.filter(f => f.contratoFim && f.contratoFim >= hoje && f.contratoFim <= lim).length;
+        if (vencidos) lista.push({ n: vencidos, ico: 'file-alert', urgente: true, pagina: 'fornecedores', onde: 'Cadastros › Fornecedores',
+            tit: plural(vencidos, '1 contrato vencido', '# contratos vencidos') });
+        if (vencendo) lista.push({ n: vencendo, ico: 'file-alert', pagina: 'fornecedores', onde: 'Cadastros › Fornecedores',
+            tit: plural(vencendo, '1 contrato vence em até 30 dias', '# contratos vencem em até 30 dias') });
+    }
+    return lista;
+}
+
+function desenharAvisosTopo(avisos) {
+    const pop = document.getElementById('tbAvisosPop');
+    if (!pop) return;
+    pop.innerHTML = `<div class="tb-pop-tit"><i class="ti ti-bell"></i>Avisos</div>` + (avisos.length
+        ? avisos.map(a => `<button type="button" class="tb-pop-link" data-pagina="${H(a.pagina)}">
+            <i class="ti ti-${H(a.ico)}${a.urgente ? ' urgente' : ''}"></i>
+            <span><b>${H(a.tit)}</b><small>${H(a.onde)}</small></span><i class="ti ti-chevron-right"></i></button>`).join('')
+        : `<div class="tb-pop-vazio"><i class="ti ti-circle-check"></i>Nenhum aviso no momento.</div>`);
+}
+
+function fecharPopsTopo() {
+    const pop = document.getElementById('tbAvisosPop');
+    if (pop) pop.hidden = true;
+    const sino = document.getElementById('tbAvisos');
+    if (sino) sino.setAttribute('aria-expanded', 'false');
+    const tb = document.getElementById('topBar');
+    if (tb) tb.classList.remove('mais-aberto');
+    const mais = document.getElementById('tbMais');
+    if (mais) mais.setAttribute('aria-expanded', 'false');
+}
+
+function abrirAvisosTopo(e) {
+    if (e) e.stopPropagation();
+    const pop = document.getElementById('tbAvisosPop');
+    if (!pop) return;
+    const abrir = pop.hidden;
+    fecharPopsTopo();
+    if (!abrir) return;
+    desenharAvisosTopo(calcularAvisosTopo());
+    pop.hidden = false;
+    document.getElementById('tbAvisos').setAttribute('aria-expanded', 'true');
+}
+
+/** Celular: os botões menos usados do topo ficam no "⋮". */
+function alternarMaisTopo(e) {
+    if (e) e.stopPropagation();
+    const tb = document.getElementById('topBar');
+    const abrir = !tb.classList.contains('mais-aberto');
+    fecharPopsTopo();
+    tb.classList.toggle('mais-aberto', abrir);
+    document.getElementById('tbMais').setAttribute('aria-expanded', String(abrir));
+}
+
+document.addEventListener('click', (e) => {
+    const link = e.target.closest && e.target.closest('#tbAvisosPop .tb-pop-link');
+    if (link) { fecharPopsTopo(); navigateTo(link.dataset.pagina); return; }
+    // botão escolhido no "⋮" fecha o menu; clique fora fecha o menu e os avisos
+    if (e.target.closest && e.target.closest('#tbExtras .tb-btn')) { fecharPopsTopo(); return; }
+    if (!(e.target.closest && e.target.closest('#tbAvisosPop, #tbExtras, #tbMais, #tbAvisos'))) fecharPopsTopo();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fecharPopsTopo(); });
+
+/** Ícone e dica do botão de tema: lua no tema claro, sol no escuro (como no FrotaGest). */
+function atualizarBotaoTema(t) {
+    const b = document.getElementById('tbTema');
+    if (!b) return;
+    const escuro = t === 'dark';
+    b.innerHTML = `<i class="ti ti-${escuro ? 'sun' : 'moon'}"></i>`;
+    b.title = escuro ? 'Tema claro' : 'Tema escuro';
+    b.setAttribute('aria-pressed', String(escuro));
+}
+
+/** Tempo conectado desde a entrada (a sessão continua encerrando depois de 1 hora sem uso). */
+function atualizarTempoConectado() {
+    const chip = document.getElementById('tbTempo');
+    if (!chip || !APP.currentUser) return;
+    let ini = parseInt(_lerMarca(CHAVE_INICIO_SESSAO) || '0', 10) || 0;
+    if (!ini || ini > Date.now()) { ini = Date.now(); _gravarMarca(CHAVE_INICIO_SESSAO, String(ini)); }
+    const min = Math.floor((Date.now() - ini) / 60000);
+    chip.querySelector('span').textContent = min < 1 ? 'agora'
+        : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, '0')} min`;
+    const d = new Date(ini);
+    chip.title = `Conectado desde ${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · a sessão encerra depois de 1 hora sem uso`;
+}
+setInterval(() => { atualizarTempoConectado(); if (APP.userProfile) atualizarBarraTopo(); }, 30000);
+
+/** Botão Atualizar: busca de novo os dados e redesenha a tela aberta. */
+async function atualizarTela() {
+    const b = document.getElementById('tbAtualizar');
+    if (!b || b.disabled) return;
+    b.classList.remove('spin'); void b.offsetWidth; b.classList.add('spin');
+    b.disabled = true;
+    const aberta = (document.querySelector('.page-section.active')?.id || 'pg-dashboard').replace(/^pg-/, '');
+    barraTopo.iniciar();
+    try {
+        await loadAllData();
+        navigateTo(aberta);
+        toast('Dados da tela atualizados.', 'success');
+    } catch (e) {
+        toast('Não foi possível atualizar: ' + e.message, 'error');
+    } finally {
+        barraTopo.concluir();
+        setTimeout(() => { b.disabled = false; }, 600);
+    }
+}
+
+// O seletor de condomínio é um só (#condoSelect): no computador fica na barra do topo, como o
+// seletor de empresa do FrotaGest; no celular volta para o menu lateral, onde sempre esteve.
+const _mqTopoCelular = window.matchMedia('(max-width: 768px)');
+function posicionarSeletorCondominio() {
+    const sel = document.getElementById('condoSelect');
+    const destino = _mqTopoCelular.matches ? document.querySelector('.sidebar-condo') : document.getElementById('tbCondo');
+    if (sel && destino && sel.parentElement !== destino) destino.appendChild(sel);
+}
+document.addEventListener('DOMContentLoaded', posicionarSeletorCondominio);
+try { _mqTopoCelular.addEventListener('change', posicionarSeletorCondominio); }
+catch (e) { _mqTopoCelular.addListener(posicionarSeletorCondominio); }
+
 function restoreMenuState() {
     const states = JSON.parse(localStorage.getItem('condogest_menu_state') || '{}');
     Object.entries(states).forEach(([name, collapsed]) => {
@@ -3998,6 +4297,7 @@ function setTheme(t) {
     localStorage.setItem('condogest_theme', t);
     const sel = document.getElementById('cfgTema');
     if (sel) sel.value = t;
+    atualizarBotaoTema(t);
     // Os gráficos são desenhados em canvas: as cores não acompanham o CSS
     // sozinhas. Sem isto, no tema escuro os textos dos eixos ficavam
     // praticamente ilegíveis.
@@ -4181,6 +4481,7 @@ function navigateTo(page) {
         if (parentSection && parentSection.classList.contains('collapsed')) abrirGrupoMenu(parentSection);
     }
     atualizarMenuLateral();
+    atualizarBarraTopo();
 
     const titles = {
         dashboard:'Dashboard', condominios:'Condomínios', responsaveis:'Responsáveis Legais',
@@ -4472,6 +4773,11 @@ function _aoMudarLogin(user) {
         _apagarMarca(CHAVE_LIMPAR);
         APP.currentUser = user;
         touchActivity(true);
+        // Hora da entrada, para o "tempo conectado" da barra do topo: renova a cada entrada pelo
+        // formulário ou conta nova; numa sessão guardada continua valendo a hora da entrada original
+        if (APP._entrouPeloFormulario === true || APP._isRegistering || !_lerMarca(CHAVE_INICIO_SESSAO)) {
+            _gravarMarca(CHAVE_INICIO_SESSAO, String(Date.now()));
+        }
         // Se estiver no meio de um cadastro, NÃO processar aqui
         // O doRegister controla o fluxo diretamente
         if (APP._isRegistering) return;
@@ -4550,6 +4856,8 @@ function enterApp() {
         document.getElementById('footerAvatar').textContent = inicial;
         document.getElementById('userAvatar').textContent = inicial;
     }
+    atualizarBarraTopo();       // nome, perfil e iniciais na barra do topo
+    atualizarTempoConectado();
 
     applyMenuPermissions();
     applyBoletoPermissions();
@@ -5294,10 +5602,12 @@ async function loadCondoData() {
     } catch(e) {
         console.error('loadCondoData:', e);
     }
+    atualizarBarraTopo(); // condomínio embaixo do título e avisos do sino
 }
 
 function switchCondo() {
     APP.currentCondoId = document.getElementById('condoSelect').value;
+    atualizarBarraTopo();
     if (APP.currentCondoId) {
         barraTopo.iniciar();
         Promise.resolve(loadCondoData()).finally(() => { barraTopo.concluir(); reanimarPagina(); });
@@ -5386,6 +5696,7 @@ function renderCondoSelect() {
         sel.innerHTML += `<option value="${H(c.id)}">${H(c.nome)}</option>`;
     });
     if (APP.currentCondoId) sel.value = APP.currentCondoId;
+    atualizarBarraTopo();
 }
 
 // ===== CONDOMÍNIOS CRUD =====
@@ -9740,6 +10051,7 @@ function renderUsuarios() {
         navUsuarios.appendChild(badge);
     }
     atualizarMenuLateral();
+    atualizarBarraTopo();
 }
 
 async function approveUser(userId) {
